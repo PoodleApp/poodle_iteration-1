@@ -30,9 +30,10 @@
   },
   "dependencies": {
     "immutable": "^3.7.4",
+    "lens": "hallettj/lens.js#master",
+    "mailparser": "^0.5.2",
     "react": "^0.13.3",
     "react-router": "^0.13.3",
-    "sunshine": "hallettj/sunshine#master",
-    "lens": "hallettj/lens.js#master"
+    "sunshine": "hallettj/sunshine#master"
   }
 }
