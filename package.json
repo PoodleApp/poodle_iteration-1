@@ -1,0 +1,26 @@
+{
+  "name": "poodle",
+  "version": "1.0.0",
+  "description": "Experimental email client with social features",
+  "main": "main.js",
+  "scripts": {
+    "start": "node_modules/.bin/electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hallettj/poodle.git"
+  },
+  "keywords": [
+    "email"
+  ],
+  "author": "Jesse Hallett <jesse@sitr.us>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hallettj/poodle/issues"
+  },
+  "homepage": "https://github.com/hallettj/poodle#readme",
+  "devDependencies": {
+    "electron-prebuilt": "^0.30.4"
+  }
+}
