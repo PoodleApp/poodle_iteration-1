@@ -2,7 +2,6 @@ require('babel/register')
 
 var app = require('app')
 var BrowserWindow = require('browser-window')
-var api = require('./lib/api')
 
 require('crash-reporter').start()
 

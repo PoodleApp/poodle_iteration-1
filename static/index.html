@@ -1,11 +1,16 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Poodle</title>
-    </head>
-    <body>
-        <section id="app"></section>
-        <script src="js/index.js"></script>
-    </body>
+  <head>
+    <meta charset="utf-8">
+    <title>Poodle</title>
+  </head>
+  <body>
+    <section id="app"></section>
+    <script>
+      require('babel/register')({
+        ignore: /babel|immutable\/|mailparser|ramda|react\/|react-router|kefir/
+      });
+      require('../client/index');
+    </script>
+  </body>
 </html>
