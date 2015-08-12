@@ -1,13 +1,19 @@
 require('babel/register')
 
 var app = require('app')
+var ipc = require('ipc')
 var BrowserWindow = require('browser-window')
+var api = require('./lib/api')
 
 require('crash-reporter').start()
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is GCed.
 var mainWindow = null
+
+ipc.on('asynchronous-message', function(event, arg) {
+  api.handle(event, arg)
+})
 
 app.on('window-all-closed', function() {
   // On OS X it is common for applications and their menu bar
@@ -19,7 +25,7 @@ app.on('window-all-closed', function() {
 
 app.on('ready', function() {
   mainWindow = new BrowserWindow({ width: 800, height: 600 })
-  mainWindow.loadUrl('file:///'+ __dirname +'/client/static/index.html')
+  mainWindow.loadUrl('file:///'+ __dirname +'/../client/static/index.html')
   mainWindow.openDevTools()
   mainWindow.on('closed', function() {
     mainWindow = null

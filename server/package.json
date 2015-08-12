@@ -4,7 +4,7 @@
   "description": "Experimental email client with social features",
   "main": "main.js",
   "scripts": {
-    "start": "make -C client && node_modules/.bin/electron .",
+    "start": "make -C ../client && node_modules/.bin/electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
