@@ -8,5 +8,5 @@ clean:
 node_modules: package.json
 	npm install
 
-static/js/index.js: index.js $(shell find lib) webpack.config.js node_modules
+static/js/index.js: client/index.js $(shell find client) $(shell find lib) webpack.config.js node_modules
 	node_modules/.bin/webpack --config webpack.config.js
