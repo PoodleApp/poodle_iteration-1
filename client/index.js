@@ -26,3 +26,14 @@ var routes = (
 Router.run(routes, Router.HashLocation, Root => {
   React.render(<Root/>, document.getElementById('app'))
 })
+
+
+var ipc = window.require('ipc')
+
+ipc.on('queryConversations-response', msg => {
+  console.log('got conversations', JSON.parse(msg))
+})
+ipc.on('queryConversations-fail', msg => {
+  console.log('error getting conversations', JSON.parse(msg))
+})
+ipc.send('queryConversations', 'date:1month..')

@@ -7,6 +7,7 @@ static/.*
 [include]
 
 [libs]
+./types/
 ./node_modules/sunshine/lib/
 
 [options]
