@@ -1,0 +1,23 @@
+{
+  "name": "poodle-client",
+  "version": "1.0.0",
+  "description": "Browser-side UI for poodle",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jesse Hallett",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "babel-loader": "git://github.com/babel/babel-loader",
+    "flow-bin": "^0.14.0",
+    "webpack": "^1.9.10"
+  },
+  "dependencies": {
+    "immutable": "^3.7.4",
+    "react": "^0.13.3",
+    "react-router": "^0.13.3",
+    "sunshine": "hallettj/sunshine#master",
+    "lens": "hallettj/lens.js#master"
+  }
+}
