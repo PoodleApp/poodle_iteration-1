@@ -66,9 +66,14 @@ function init(app: Sunshine.App<AppState>) {
   })
 
   app.on(ViewConversation, (state, { id }) => {
-    return set(State.view, 'conversation',
-           set(State.routeParams, { conversationId: id },
-           state))
+    var state_ = set(State.view, 'conversation',
+                 set(State.routeParams, { conversationId: id },
+                 state))
+    var conv = State.currentConversation(state_)
+    if (!conv) {
+      app.emit(new QueryConversations(id))
+    }
+    return state_
   })
 
   app.on(GenericError, (state, { err }) => {
