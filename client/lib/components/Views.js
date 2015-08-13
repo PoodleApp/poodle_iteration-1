@@ -6,7 +6,9 @@ import { get, lookup } from 'lens'
 import * as State      from '../state'
 import * as Ev         from '../event'
 import { AppBar
-       , AppCanvas
+       , Avatar
+       , Card
+       , CardHeader
        , FlatButton
        , LeftNav
        , Paper
@@ -118,11 +120,12 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
               <label>
               <ToolbarTitle text='Enter notmuch query'/>
               <TextField
-                hintText='date:1month..'
-                defaultValue='date:1month..'
+                hintText='date:1week..'
+                defaultValue='date:1week..'
                 ref='query'
                 />
               </label>
+              &nbsp;
               <FlatButton label='Search' disabled={this.state.loading} onTouchTap={this.onSearch.bind(this)} />
             </form>
           </ToolbarGroup>
@@ -135,12 +138,6 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
     )
   }
 
-  componentDidMount() {
-    super.componentDidMount()
-    var input = React.findDOMNode(this.refs.query)
-    input.value = 'date:1month..'
-  }
-
   onSearch(event: Event) {
     event.preventDefault()
     this.emit(new Ev.QueryConversations(this.refs.query.getValue()))
@@ -151,11 +148,18 @@ class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta 
   render(): React.Element {
     var { subject, participants, lastActive, uri } = this.props.conv
     return (
-      <Paper>
-        <h3><a href={`#/conversations/${uri}`}>{subject}</a></h3>
-        <p>{lastActive}</p>
-        <p>{participants.join(', ')}</p>
-      </Paper>
+      <div>
+        <br/>
+        <a href={`#/conversations/${uri}`}>
+        <Card>
+          <CardHeader
+            title={subject}
+            subtitle={participants.join(', ')}
+            avatar={<Avatar>N</Avatar>}
+            />
+        </Card>
+        </a>
+      </div>
     )
   }
 }
@@ -184,11 +188,15 @@ class ConversationView extends Sunshine.Component<{},{ focus: ?Focus },{}> {
 class ActivityView extends Sunshine.Component<{},{ activity: Message },{}> {
   render(): React.Element {
     var { date_relative, from, html, text } = this.props.activity
+    var fromStr = from[0].name || from[0].address
     return (
       <Paper>
-        <p>{date_relative}</p>
-        <p>from: {from[0].name || from[0].address}</p>
-        <p><pre>{text || html}</pre></p>
+        <CardHeader
+          title={fromStr}
+          subtitle={date_relative}
+          avatar={<Avatar>{fromStr[0]}</Avatar>}
+          />
+        <pre style={{padding:'16px'}}>{text || html}</pre>
       </Paper>
     )
   }
