@@ -34,6 +34,7 @@
     "ramda": "^0.17.1",
     "react": "^0.13.3",
     "react-tap-event-plugin": "^0.1.7",
+    "repa": "^1.0.0",
     "sunshine": "hallettj/sunshine#6167e997dbd0c0e897d8ada387e34835dd2a13d5"
   }
 }

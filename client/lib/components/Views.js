@@ -3,6 +3,7 @@
 import * as Sunshine   from 'sunshine/react'
 import React           from 'react'
 import { get, lookup } from 'lens'
+import repa            from 'repa'
 import * as State      from '../state'
 import * as Ev         from '../event'
 import { AppBar
@@ -179,6 +180,7 @@ class ConversationView extends Sunshine.Component<{},{ focus: ?Focus },{}> {
 
     return (
       <div>
+        <br/>
         {activities}
       </div>
     )
@@ -189,6 +191,7 @@ class ActivityView extends Sunshine.Component<{},{ activity: Message },{}> {
   render(): React.Element {
     var { date_relative, from, html, text } = this.props.activity
     var fromStr = from[0].name || from[0].address
+    var body    = text ? repa(text) : html
     return (
       <Paper>
         <CardHeader
@@ -196,7 +199,7 @@ class ActivityView extends Sunshine.Component<{},{ activity: Message },{}> {
           subtitle={date_relative}
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           />
-        <pre style={{padding:'16px'}}>{text || html}</pre>
+        <pre style={{padding:'16px'}}>{body}</pre>
       </Paper>
     )
   }
