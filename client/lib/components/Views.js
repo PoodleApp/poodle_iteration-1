@@ -199,7 +199,7 @@ class ActivityView extends Sunshine.Component<{},{ activity: Message },{}> {
           subtitle={date_relative}
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           />
-        <pre style={{padding:'16px'}}>{body}</pre>
+        <p style={{padding:'16px', paddingTop:0, whiteSpace: 'pre-wrap'}}>{body}</p>
       </Paper>
     )
   }
