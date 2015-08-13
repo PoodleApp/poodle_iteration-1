@@ -152,7 +152,7 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
         </Toolbar>
         <section>{conversations}</section>
         {this.state.loading ?
-          <RefreshIndicator size={40} left={30} top={30} status="loading" /> : ''
+          <RefreshIndicator size={40} left={400} top={100} status="loading" /> : ''
         }
       </div>
     )
