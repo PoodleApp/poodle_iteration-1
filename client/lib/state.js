@@ -40,7 +40,7 @@ function routeParam(key: string): Getter<AppState,string> {
 
 function participants(conv: Conversation): string[] {
   var names = addresses => (addresses || []).map(a => a.name || a.address)
-  var ppl = chain(msg => chain(names, [msg.from, msg.to, msg.cc]), conv.messages)
+  var ppl = chain(msg => chain(names, [msg.to, msg.cc, msg.from]), conv.messages)
   return reverse(uniq(ppl))
 }
 

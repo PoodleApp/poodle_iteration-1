@@ -7,6 +7,7 @@ import repa            from 'repa'
 import * as State      from '../state'
 import * as Ev         from '../event'
 import { AppBar
+       , AppCanvas
        , Avatar
        , Card
        , CardHeader
@@ -14,6 +15,7 @@ import { AppBar
        , LeftNav
        , Paper
        , RefreshIndicator
+       , Styles
        , TextField
        , Toolbar
        , ToolbarGroup
@@ -24,6 +26,8 @@ import type { List } from 'immutable'
 import type { Conversation, Message, Attachment } from '../../../lib/notmuch'
 import type { URI } from '../../../lib/activity'
 import type { AppState } from '../state'
+
+var { Spacing } = Styles
 
 type AppComponentState = {
   view: State.View,
@@ -43,6 +47,21 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     }
   }
 
+  getStyles(): Object {
+    return {
+      root: {
+        paddingTop: Spacing.desktopKeylineIncrement + 'px',
+        position: 'relative',
+      },
+      content: {
+        boxSizing: 'border-box',
+        padding: Spacing.desktopGutter + 'px',
+        maxWidth: (Spacing.desktopKeylineIncrement * 14) + 'px',
+        minHeight: '800px',
+      }
+    }
+  }
+
   render(): React.Element {
     var { view, focus } = this.state
     var content, selected
@@ -57,10 +76,11 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       if (focus) { title = focus.conv.subject }
     }
 
+    var styles = this.getStyles()
+
     return (
-      <div>
+      <AppCanvas>
         <AppBar title={title} onLeftIconButtonTouchTap={() => this.refs.leftNav.toggle()} />
-        {content}
         <LeftNav
           ref="leftNav"
           docked={false}
@@ -69,7 +89,12 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
             { route: '#/',         text: 'Activity Stream' },
             { route: '#/settings', text: 'Settings', disabled: true },
           ]} />
-      </div>
+        <div style={styles.root}>
+          <div style={styles.content}>
+            {content}
+          </div>
+        </div>
+      </AppCanvas>
     )
   }
 
@@ -148,6 +173,7 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
 class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta },{}> {
   render(): React.Element {
     var { subject, participants, lastActive, uri } = this.props.conv
+    var partStr = participants.join(', ')
     return (
       <div>
         <br/>
@@ -155,8 +181,8 @@ class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta 
         <Card>
           <CardHeader
             title={subject}
-            subtitle={participants.join(', ')}
-            avatar={<Avatar>N</Avatar>}
+            subtitle={partStr}
+            avatar={<Avatar>{partStr[0]}</Avatar>}
             />
         </Card>
         </a>

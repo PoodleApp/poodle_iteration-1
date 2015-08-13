@@ -48,5 +48,5 @@ ContextWrapper.childContextTypes = {
 
 React.render(
   <ContextWrapper />,
-  document.getElementById('app')
+  document.body
 )
