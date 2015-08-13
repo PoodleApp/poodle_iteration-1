@@ -27,13 +27,24 @@ class ViewConversation {
   constructor(id: string) { this.id = id }
 }
 
+class DismissError {}
+class GenericError {
+  err: Object;
+  constructor(err: Object) { this.err = err }
+}
+
 function init(app: Sunshine.App<AppState>) {
   app.on(QueryConversations, (state, { query }) => {
     app.emit(new Loading())
-    queryConversations(query).then(convs => {
-      app.emit(new Conversations(convs))
-      app.emit(new DoneLoading())
-    })
+    queryConversations(query).then(
+      convs => {
+        app.emit(new Conversations(convs))
+        app.emit(new DoneLoading())
+      },
+      err => {
+        app.emit(new GenericError(err))
+      }
+    )
   })
 
   app.on(Conversations, (state, { convs }) => {
@@ -59,10 +70,20 @@ function init(app: Sunshine.App<AppState>) {
            set(State.routeParams, { conversationId: id },
            state))
   })
+
+  app.on(GenericError, (state, { err }) => {
+    return set(State.genericError, err, state)
+  })
+
+  app.on(DismissError, (state, _) => {
+    return set(State.genericError, null, state)
+  })
 }
 
 export {
   init,
+  DismissError,
+  GenericError,
   QueryConversations,
   ViewConversation,
   ViewRoot,

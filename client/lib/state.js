@@ -16,6 +16,7 @@ export type AppState = Record<{
   loading: number,
   view: View,
   routeParams: Object,
+  genericError: ?Object,
 }>
 
 export type View = 'root' | 'conversation'
@@ -25,6 +26,7 @@ var AppStateRecord = Record({
   loading: 0,
   view: 'root',
   routeParams: {},
+  genericError: null,
 })
 
 var initialState: AppState = new AppStateRecord()
@@ -34,6 +36,7 @@ var loading: Lens_<AppState,number> = field('loading')
 var isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
 var view: Lens_<AppState,View> = field('view')
 var routeParams: Lens_<AppState,Object> = field('routeParams')
+var genericError: Lens_<AppState,?Object> = field('genericError')
 
 function routeParam(key: string): Getter<AppState,string> {
   return getter(state => state.routeParams[key])
@@ -83,6 +86,7 @@ export {
   conversation,
   conversations,
   currentConversation,
+  genericError,
   initialState,
   isLoading,
   lastActive,

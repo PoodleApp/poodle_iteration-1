@@ -11,6 +11,7 @@ import { AppBar
        , Avatar
        , Card
        , CardHeader
+       , Dialog
        , FlatButton
        , LeftNav
        , Paper
@@ -28,9 +29,18 @@ import type { AppState } from '../state'
 
 var { Spacing } = Styles
 
+var styles = {
+  body: {
+    padding: '16px',
+    paddingTop: 0,
+    whiteSpace: 'pre-wrap',
+  }
+}
+
 type AppComponentState = {
   view: State.View,
   conversation: ?Conversation,
+  error: ?Object,
 }
 
 export class App extends Sunshine.Component<{},{},AppComponentState> {
@@ -38,6 +48,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     return {
       view: get(State.view, state),
       conversation: State.currentConversation(state),
+      error: get(State.genericError, state),
     }
   }
 
@@ -88,7 +99,24 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
             {content}
           </div>
         </div>
+        {this.state.error ? this.showError(this.state.error) : ''}
       </AppCanvas>
+    )
+  }
+
+  showError(error: Object): React.Element {
+    var actions = [
+      { text: 'Ok', onTouchTap: this.dismissError.bind(this), ref: 'ok' }
+    ]
+    return (
+      <Dialog
+        title='An error occurred'
+        actions={actions}
+        actionFocus='ok'
+        openImmediately={true}
+        >
+        <p style={styles.body}>{String(error)}</p>
+      </Dialog>
     )
   }
 
@@ -99,6 +127,10 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
 
   navChange(event: Event, selectedIndex: number, menuItem: { route: string }) {
     window.location = menuItem.route
+  }
+
+  dismissError() {
+    this.emit(new Ev.DismissError())
   }
 
 }
