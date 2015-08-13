@@ -1,11 +1,11 @@
 /* @flow */
 
-import * as Sunshine   from 'sunshine/react'
-import React           from 'react'
-import { get, lookup } from 'lens'
-import repa            from 'repa'
-import * as State      from '../state'
-import * as Ev         from '../event'
+import * as Sunshine    from 'sunshine/react'
+import React            from 'react'
+import { get, lookup }  from 'lens'
+import * as State       from '../state'
+import * as Ev          from '../event'
+import { ActivityView } from './activities'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -23,27 +23,21 @@ import { AppBar
        } from 'material-ui'
 
 import type { List } from 'immutable'
-import type { Conversation, Message, Attachment } from '../../../lib/notmuch'
-import type { URI } from '../../../lib/activity'
+import type { Activity, Conversation, URI } from '../../../lib/activity'
 import type { AppState } from '../state'
 
 var { Spacing } = Styles
 
 type AppComponentState = {
   view: State.View,
-  params: Object,
-  focus: ?Focus,
+  conversation: ?Conversation,
 }
-
-type Focus = { conv: Conversation, msg: ?Message, part: ?Attachment }
 
 export class App extends Sunshine.Component<{},{},AppComponentState> {
   getState(state: AppState): AppComponentState {
-    var params = get(State.routeParams, state)
     return {
       view: get(State.view, state),
-      params,
-      focus: params.uri ? State.lookupUri(params.uri, state) : null,
+      conversation: State.currentConversation(state),
     }
   }
 
@@ -63,7 +57,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   render(): React.Element {
-    var { view, focus } = this.state
+    var { view, conversation } = this.state
     var content, selected
     var title = 'Activity Stream'
 
@@ -72,8 +66,8 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       selected = 0
     }
     else if (view === 'conversation') {
-      content = <ConversationView focus={focus} />
-      if (focus) { title = focus.conv.subject }
+      content = <ConversationView conversation={conversation} />
+      if (conversation) { title = conversation.subject }
     }
 
     var styles = this.getStyles()
@@ -110,7 +104,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
 }
 
 type ConversationMeta = {
-  uri: URI,
+  id: string,
   subject: string,
   participants: string[],
   lastActive: string,
@@ -125,7 +119,7 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
   getState(state: AppState): ConversationsState {
     return {
       conversations: get(State.conversations, state).map(conv => ({
-        uri:          `mid:${conv.id}`,
+        id:           conv.id,
         subject:      conv.subject,
         participants: State.participants(conv),
         lastActive:   State.lastActive(conv),
@@ -172,12 +166,12 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
 
 class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta },{}> {
   render(): React.Element {
-    var { subject, participants, lastActive, uri } = this.props.conv
+    var { id, subject, participants, lastActive } = this.props.conv
     var partStr = participants.join(', ')
     return (
       <div>
         <br/>
-        <a href={`#/conversations/${uri}`}>
+        <a href={`#/conversations/${id}`}>
         <Card>
           <CardHeader
             title={subject}
@@ -191,17 +185,16 @@ class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta 
   }
 }
 
-class ConversationView extends Sunshine.Component<{},{ focus: ?Focus },{}> {
+class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversation },{}> {
   render(): React.Element {
-    var focus = this.props.focus
-    if (!focus) {
+    var conversation = this.props.conversation
+    if (!conversation) {
       return <p>not found</p>
     }
 
-    var { conv } = focus
-    var { subject } = conv
-    var activities = conv.messages.map(msg => (
-      <ActivityView activity={msg} key={msg.id} />
+    var { subject } = conversation
+    var activities = conversation.activities.map(act => (
+      <ActivityView activity={act} key={act.id} />
     ))
 
     return (
@@ -209,24 +202,6 @@ class ConversationView extends Sunshine.Component<{},{ focus: ?Focus },{}> {
         <br/>
         {activities}
       </div>
-    )
-  }
-}
-
-class ActivityView extends Sunshine.Component<{},{ activity: Message },{}> {
-  render(): React.Element {
-    var { date_relative, from, html, text } = this.props.activity
-    var fromStr = from[0].name || from[0].address
-    var body    = text ? repa(text) : html
-    return (
-      <Paper>
-        <CardHeader
-          title={fromStr}
-          subtitle={date_relative}
-          avatar={<Avatar>{fromStr[0]}</Avatar>}
-          />
-        <p style={{padding:'16px', paddingTop:0, whiteSpace: 'pre-wrap'}}>{body}</p>
-      </Paper>
     )
   }
 }

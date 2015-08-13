@@ -3,11 +3,10 @@
 import * as Sunshine          from 'sunshine'
 import { over, set }          from 'lens'
 import * as State             from './state'
-import { queryConversations } from '../../lib/notmuch'
+import { queryConversations } from '../../lib/activity'
 
-import type { URI }          from '../../lib/activity'
-import type { Conversation } from '../../lib/notmuch'
-import type { AppState }     from './state'
+import type { Conversation, URI } from '../../lib/activity'
+import type { AppState }          from './state'
 
 class QueryConversations {
   query: string;
@@ -24,8 +23,8 @@ class DoneLoading {}
 
 class ViewRoot {}
 class ViewConversation {
-  uri: URI;
-  constructor(uri: URI) { this.uri = uri }
+  id: string;
+  constructor(id: string) { this.id = id }
 }
 
 function init(app: Sunshine.App<AppState>) {
@@ -55,9 +54,9 @@ function init(app: Sunshine.App<AppState>) {
            state))
   })
 
-  app.on(ViewConversation, (state, { uri }) => {
+  app.on(ViewConversation, (state, { id }) => {
     return set(State.view, 'conversation',
-           set(State.routeParams, { uri },
+           set(State.routeParams, { conversationId: id },
            state))
   })
 }

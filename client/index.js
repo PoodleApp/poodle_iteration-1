@@ -20,8 +20,8 @@ router.add('/', () => {
   app.emit(new Event.ViewRoot())
 })
 
-router.add('/conversations/:uri', params => {
-  app.emit(new Event.ViewConversation(params.uri))
+router.add('/conversations/:id', params => {
+  app.emit(new Event.ViewConversation(params.id))
 })
 
 var ThemeManager = new Styles.ThemeManager()

@@ -4,11 +4,12 @@ import { List, Record }                                    from 'immutable'
 import { getter }                                          from 'lens'
 import { field }                                           from 'lens/immutable'
 import { chain, filter, map, pipe, reverse, sortBy, uniq } from 'ramda'
-import { parseMidUri }                                     from '../../lib/activity'
+import { parseMidUri, published }                          from '../../lib/activity'
 
-import type { Getter, Lens_ }                     from 'lens'
-import type { Attachment, Conversation, Message } from '../../lib/notmuch'
-import type { URI }                               from '../../lib/activity'
+import type { Moment }            from 'moment'
+import type { Getter, Lens_ }     from 'lens'
+import type { Conversation, URI } from '../../lib/activity'
+import type { ThreadId }          from '../../lib/notmuch'
 
 export type AppState = Record<{
   conversations: List<Conversation>,
@@ -38,33 +39,32 @@ function routeParam(key: string): Getter<AppState,string> {
   return getter(state => state.routeParams[key])
 }
 
+// TODO: Currently only returns senders, not recipients.
 function participants(conv: Conversation): string[] {
-  var names = addresses => (addresses || []).map(a => a.name || a.address)
-  var ppl = chain(msg => chain(names, [msg.to, msg.cc, msg.from]), conv.messages)
-  return reverse(uniq(ppl))
-}
-
-function lastActive(conv: Conversation): string {
   return pipe(
-    filter(msg => !!msg.date),
-    sortBy(msg => msg.date),
-    map(msg => msg.date_relative)
-  )(conv.messages).pop()
+    map(act => act.actor.displayName),
+    reverse,
+    uniq
+  )(conv.activities)
 }
 
-function lookupUri(threadId: string, state: AppState): ?{ conv: Conversation, msg: ?Message, part: ?Attachment } {
-  var parsed = parseMidUri(threadId)
-  if (!parsed) { return }
-  var { msgId, partId } = parsed
-  var conv = state.conversations.find(c => c.id === msgId)
-  var msg = conv ? conv.messages.find(m => m.id === msgId) : null
-  var part = msg ? msg.attachments.find(p => p.contentId === partId) : null
-  if (conv) {
-    return { conv, msg, part }
-  }
+function lastActive(conv: Conversation): Moment {
+  return pipe(
+    sortBy(act => published(act)),
+    map(act => published(act))
+  )(conv.activities).pop()
 }
 
-// TODO: lookup by Activity URI instead of Conversation ID
+function conversation(id: ThreadId, state: AppState): ?Conversation {
+  return state.conversations.find(c => c.id === id)
+}
+
+function currentConversation(state: AppState): ?Conversation {
+  var id = state.routeParams.conversationId
+  if (id) { return conversation(id, state) }
+}
+
+// TODO: lookup by Activity URI
 // function lookupUri(uri: URI, state: AppState): ?{ conv: Conversation, msg: ?Message, part: ?Attachment } {
 //   var parsed = parseMidUri(uri)
 //   if (!parsed) { return }
@@ -80,12 +80,14 @@ function lookupUri(threadId: string, state: AppState): ?{ conv: Conversation, ms
 // }
 
 export {
+  conversation,
   conversations,
+  currentConversation,
   initialState,
   isLoading,
   lastActive,
   loading,
-  lookupUri,
+  // lookupUri,
   participants,
   routeParam,
   routeParams,
