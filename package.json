@@ -26,12 +26,14 @@
     "flow-bin": "^0.14.0"
   },
   "dependencies": {
+    "hash-brown-router": "^1.5.0",
     "immutable": "^3.7.4",
     "lens": "hallettj/lens.js#master",
     "mailparser": "^0.5.2",
+    "material-ui": "^0.10.4",
     "ramda": "^0.17.1",
     "react": "^0.13.3",
-    "react-router": "^0.13.3",
+    "react-tap-event-plugin": "^0.1.7",
     "sunshine": "hallettj/sunshine#6167e997dbd0c0e897d8ada387e34835dd2a13d5"
   }
 }

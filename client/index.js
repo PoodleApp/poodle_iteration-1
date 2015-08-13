@@ -1,17 +1,52 @@
 /* @flow */
 
-import * as Sunshine     from 'sunshine/react'
-import React             from 'react'
-import Router            from 'react-router'
-import { initialState }  from './lib/state'
-import * as Event        from './lib/event'
-import { Conversations } from './lib/components/Views'
+import * as Sunshine          from 'sunshine/react'
+import React                  from 'react'
+import makeRouter             from 'hash-brown-router'
+import { Styles }             from 'material-ui'
+import { initialState }       from './lib/state'
+import * as Event             from './lib/event'
+import { App, Conversations } from './lib/components/Views'
+import {}                     from './polyfills'
+
+var router = makeRouter()
 
 var app = new Sunshine.App(initialState, () => {
-  Event.init(app)
+  Event.init(app, router)
+  router.evaluateCurrent('/')
 })
 
+router.add('/', () => {
+  app.emit(new Event.ViewRoot())
+})
+
+router.add('/conversations/:uri', params => {
+  app.emit(new Event.ViewConversation(params.uri))
+})
+
+var ThemeManager = new Styles.ThemeManager()
+ThemeManager.setTheme(ThemeManager.types.LIGHT)
+
+class ContextWrapper extends React.Component<{},{},{}> {
+  getChildContext(): Object {
+    return {
+      _sunshineApp: app,
+      muiTheme: ThemeManager.getCurrentTheme(),
+    }
+  }
+
+  render(): React.Element {
+    return (
+      <App/>
+    )
+  }
+}
+ContextWrapper.childContextTypes = {
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+  muiTheme: React.PropTypes.object.isRequired,
+}
+
 React.render(
-  <Conversations app={app} />,
+  <ContextWrapper />,
   document.getElementById('app')
 )

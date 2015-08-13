@@ -5,6 +5,7 @@ import { over, set }          from 'lens'
 import * as State             from './state'
 import { queryConversations } from '../../lib/notmuch'
 
+import type { URI }          from '../../lib/activity'
 import type { Conversation } from '../../lib/notmuch'
 import type { AppState }     from './state'
 
@@ -20,6 +21,12 @@ class Conversations {
 
 class Loading {}
 class DoneLoading {}
+
+class ViewRoot {}
+class ViewConversation {
+  uri: URI;
+  constructor(uri: URI) { this.uri = uri }
+}
 
 function init(app: Sunshine.App<AppState>) {
   app.on(QueryConversations, (state, { query }) => {
@@ -41,9 +48,23 @@ function init(app: Sunshine.App<AppState>) {
   app.on(DoneLoading, (state, _) => {
     return over(State.loading, n => Math.max(0, n - 1), state)
   })
+
+  app.on(ViewRoot, (state, _) => {
+    return set(State.view, 'root',
+           set(State.routeParams, {},
+           state))
+  })
+
+  app.on(ViewConversation, (state, { uri }) => {
+    return set(State.view, 'conversation',
+           set(State.routeParams, { uri },
+           state))
+  })
 }
 
 export {
   init,
   QueryConversations,
+  ViewConversation,
+  ViewRoot,
 }
