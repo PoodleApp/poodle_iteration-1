@@ -13,6 +13,7 @@ var router = makeRouter()
 
 var app = new Sunshine.App(initialState, () => {
   Event.init(app, router)
+  app.emit(new Event.LoadConfig())
   router.evaluateCurrent('/')
 })
 
@@ -22,6 +23,10 @@ router.add('/', () => {
 
 router.add('/conversations/:id', params => {
   app.emit(new Event.ViewConversation(params.id))
+})
+
+router.add('/settings', () => {
+  app.emit(new Event.ViewSettings())
 })
 
 var ThemeManager = new Styles.ThemeManager()

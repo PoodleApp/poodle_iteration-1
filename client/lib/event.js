@@ -1,11 +1,13 @@
 /* @flow */
 
-import * as Sunshine          from 'sunshine'
-import { over, set }          from 'lens'
-import * as State             from './state'
-import { queryConversations } from '../../lib/activity'
+import * as Sunshine              from 'sunshine'
+import { over, set }              from 'lens'
+import * as State                 from './state'
+import { queryConversations }     from '../../lib/activity'
+import { loadConfig, saveConfig } from '../../lib/config'
 
 import type { Conversation, URI } from '../../lib/activity'
+import type { Config }            from '../../lib/config'
 import type { AppState }          from './state'
 
 class QueryConversations {
@@ -26,24 +28,37 @@ class ViewConversation {
   id: string;
   constructor(id: string) { this.id = id }
 }
+class ViewSettings {}
 
 class DismissError {}
 class GenericError {
-  err: Object;
-  constructor(err: Object) { this.err = err }
+  err: any;
+  constructor(err: any) { this.err = err }
 }
+
+class LoadConfig {}
+class SaveConfig {
+  config: Config;
+  constructor(config: Config) { this.config = config }
+}
+class GotConfig {
+  config: Config;
+  constructor(config: Config) { this.config = config }
+}
+
+class Notify {
+  message: string;
+  constructor(message: string) { this.message = message }
+}
+class DismissNotify {}
 
 function init(app: Sunshine.App<AppState>) {
   app.on(QueryConversations, (state, { query }) => {
-    app.emit(new Loading())
-    queryConversations(query).then(
-      convs => {
-        app.emit(new Conversations(convs))
-        app.emit(new DoneLoading())
-      },
-      err => {
-        app.emit(new GenericError(err))
-      }
+    indicateLoading('conversations',
+      queryConversations(query).then(
+        convs => app.emit(new Conversations(convs)),
+        err   => app.emit(new GenericError(err))
+      )
     )
   })
 
@@ -76,6 +91,10 @@ function init(app: Sunshine.App<AppState>) {
     return state_
   })
 
+  app.on(ViewSettings, (state, _) => {
+    return set(State.view, 'settings', state)
+  })
+
   app.on(GenericError, (state, { err }) => {
     return set(State.genericError, err, state)
   })
@@ -83,13 +102,60 @@ function init(app: Sunshine.App<AppState>) {
   app.on(DismissError, (state, _) => {
     return set(State.genericError, null, state)
   })
+
+  app.on(GotConfig, (state, { config }) => {
+    return set(State.config, config, state)
+  })
+
+  app.on(LoadConfig, (_, __) => {
+    indicateLoading('config',
+      loadConfig().then(
+        config => app.emit(new GotConfig(config)),
+        err    => app.emit(new GenericError(`Error loading configuration: ${err}`))
+      )
+    )
+  })
+
+  app.on(SaveConfig, (state, { config }) => {
+    indicateLoading('config',
+      saveConfig(config).then(
+        _ => {
+          app.emit(new GotConfig(config))
+          app.emit(new Notify('Saved settings'))
+        },
+        err => app.emit(new GenericError(`Error saving configuration: ${err}`))
+      )
+    )
+  })
+
+  app.on(Notify, (state, { message }) => {
+    return set(State.notification, message, state)
+  })
+
+  app.on(DismissNotify, (state, _) => {
+    return set(State.notification, null, state)
+  })
+
+  function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
+    app.emit(new Loading())
+    p.then(
+      success => app.emit(new DoneLoading()),
+      err => app.emit(new DoneLoading())
+    )
+    return p
+  }
 }
 
 export {
   init,
   DismissError,
   GenericError,
+  LoadConfig,
+  SaveConfig,
+  Notify,
+  DismissNotify,
   QueryConversations,
   ViewConversation,
   ViewRoot,
+  ViewSettings,
 }

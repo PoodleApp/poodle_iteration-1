@@ -1,32 +1,44 @@
 /* @flow */
 
-import { List, Record }                                    from 'immutable'
-import { getter }                                          from 'lens'
-import { field }                                           from 'lens/immutable'
-import { chain, filter, map, pipe, reverse, sortBy, uniq } from 'ramda'
-import { parseMidUri, published }                          from '../../lib/activity'
+import { List, Record }               from 'immutable'
+import { compose, filtering, getter } from 'lens'
+import { field, index }               from 'lens/immutable'
+import { parseMidUri, published }     from '../../lib/activity'
+import { chain
+       , filter
+       , map
+       , pipe
+       , reverse
+       , sortBy
+       , uniq
+       } from 'ramda'
 
-import type { Moment }            from 'moment'
-import type { Getter, Lens_ }     from 'lens'
-import type { Conversation, URI } from '../../lib/activity'
-import type { ThreadId }          from '../../lib/notmuch'
+import type { Moment }                    from 'moment'
+import type { Getter, Lens_, Traversal_ } from 'lens'
+import type { Conversation, URI }         from '../../lib/activity'
+import type { ThreadId }                  from '../../lib/notmuch'
+import type { Config }                    from '../../lib/config'
 
 export type AppState = Record<{
   conversations: List<Conversation>,
-  loading: number,
-  view: View,
-  routeParams: Object,
-  genericError: ?Object,
+  loading:       number,
+  view:          View,
+  routeParams:   Object,
+  genericError:  ?Object,
+  config?:       Config,
+  notification?: string,
 }>
 
-export type View = 'root' | 'conversation'
+export type View = 'root' | 'conversation' | 'settings'
 
 var AppStateRecord = Record({
   conversations: List(),
-  loading: 0,
-  view: 'root',
-  routeParams: {},
-  genericError: null,
+  loading:       0,
+  view:          'root',
+  routeParams:   {},
+  genericError:  null,
+  config:        null,
+  notification:  null,
 })
 
 var initialState: AppState = new AppStateRecord()
@@ -37,6 +49,12 @@ var isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
 var view: Lens_<AppState,View> = field('view')
 var routeParams: Lens_<AppState,Object> = field('routeParams')
 var genericError: Lens_<AppState,?Object> = field('genericError')
+var notification = field('notification')
+
+var config: Lens_<AppState,?Config> = field('config')
+var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
+var username: Traversal_<AppState,string> = compose(config_, field('name'))
+var useremail: Traversal_<AppState,string> = compose(config_, field('email'))
 
 function routeParam(key: string): Getter<AppState,string> {
   return getter(state => state.routeParams[key])
@@ -83,6 +101,7 @@ function currentConversation(state: AppState): ?Conversation {
 // }
 
 export {
+  config,
   conversation,
   conversations,
   currentConversation,
@@ -92,8 +111,11 @@ export {
   lastActive,
   loading,
   // lookupUri,
+  notification,
   participants,
   routeParam,
   routeParams,
+  username,
+  useremail,
   view,
 }

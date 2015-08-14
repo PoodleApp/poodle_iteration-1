@@ -6,6 +6,7 @@ import { get, lookup }  from 'lens'
 import * as State       from '../state'
 import * as Ev          from '../event'
 import { ActivityView } from './activities'
+import Settings         from '../../../lib/components/Settings'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -16,6 +17,7 @@ import { AppBar
        , LeftNav
        , Paper
        , RefreshIndicator
+       , Snackbar
        , Styles
        , TextField
        , Toolbar
@@ -41,6 +43,7 @@ type AppComponentState = {
   view: State.View,
   conversation: ?Conversation,
   error: ?Object,
+  notification: ?string,
 }
 
 export class App extends Sunshine.Component<{},{},AppComponentState> {
@@ -49,6 +52,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       view: get(State.view, state),
       conversation: State.currentConversation(state),
       error: get(State.genericError, state),
+      notification: get(State.notification, state),
     }
   }
 
@@ -80,6 +84,10 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       content = <ConversationView conversation={conversation} />
       if (conversation) { title = conversation.subject }
     }
+    else if (view === 'settings') {
+      content = <Settings />
+      title = 'Settings'
+    }
 
     var styles = this.getStyles()
 
@@ -92,7 +100,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
           onChange={this.navChange.bind(this)}
           selectedIndex={selected} menuItems={[
             { route: '#/',         text: 'Activity Stream' },
-            { route: '#/settings', text: 'Settings', disabled: true },
+            { route: '#/settings', text: 'Settings' },
           ]} />
         <div style={styles.root}>
           <div style={styles.content}>
@@ -100,6 +108,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
           </div>
         </div>
         {this.state.error ? this.showError(this.state.error) : ''}
+        {this.state.notification ? this.showNotification(this.state.notification) : ''}
       </AppCanvas>
     )
   }
@@ -117,6 +126,16 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
         >
         <p style={styles.body}>{String(error)}</p>
       </Dialog>
+    )
+  }
+
+  showNotification(message: string): React.Element {
+    return (
+      <Snackbar
+        message={message}
+        openOnMount={true}
+        onDismiss={() => this.emit(new Ev.DismissNotify())}
+        />
     )
   }
 
