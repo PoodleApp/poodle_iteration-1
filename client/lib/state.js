@@ -1,9 +1,10 @@
 /* @flow */
 
-import { List, Record }               from 'immutable'
-import { compose, filtering, getter } from 'lens'
-import { field, index }               from 'lens/immutable'
-import { parseMidUri, published }     from '../../lib/activity'
+import { List, Record }                     from 'immutable'
+import { compose, filtering, getter }       from 'lens'
+import { field, index }                     from 'lens/immutable'
+import { messages, parseMidUri, published } from '../../lib/activity'
+import { displayName }                      from '../../lib/notmuch'
 import { chain
        , filter
        , map
@@ -62,11 +63,9 @@ function routeParam(key: string): Getter<AppState,string> {
 
 // TODO: Currently only returns senders, not recipients.
 function participants(conv: Conversation): string[] {
-  return pipe(
-    map(act => act.actor.displayName),
-    reverse,
-    uniq
-  )(conv.activities)
+  var names = msg => msg.from.map(displayName).concat(msg.to.map(displayName)).concat(msg.cc.map(displayName))
+  var allNames: string[] = chain(names, messages(conv))
+  return uniq(reverse(allNames))
 }
 
 function lastActive(conv: Conversation): Moment {

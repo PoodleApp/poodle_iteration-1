@@ -1,11 +1,12 @@
 /* @flow */
 
-import * as Sunshine from 'sunshine/react'
-import React         from 'react'
-import moment        from 'moment'
-import { published } from '../../../lib/activity'
-import * as Ev       from '../event'
-import * as State    from '../state'
+import * as Sunshine   from 'sunshine/react'
+import React           from 'react'
+import moment          from 'moment'
+import { published }   from '../../../lib/activity'
+import { displayName } from '../../../lib/notmuch'
+import * as Ev         from '../event'
+import * as State      from '../state'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -22,10 +23,10 @@ import { AppBar
        , ToolbarTitle
        } from 'material-ui'
 
-import type { Activity } from '../../../lib/activity'
+import type { Activity, Zack } from '../../../lib/activity'
 
 type ActivityProps = {
-  activity: Activity,
+  activity: Zack,
 }
 
 var styles = {
@@ -38,7 +39,7 @@ var styles = {
 
 export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var { object } = this.props.activity
+    var [{ object }, msg] = this.props.activity
     if (object && object.objectType === 'note') {
       return (
         <NoteView {...this.props} />
@@ -60,9 +61,9 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 
 export class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var { object } = this.props.activity
+    var [{ object }, msg] = this.props.activity
     var { author, content } = object
-    var fromStr = author.displayName
+    var fromStr = displayName(msg.from[0])
     var dateStr = published(this.props.activity).fromNow()
     return (
       <Paper>
