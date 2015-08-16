@@ -1,6 +1,7 @@
 /* @flow */
 
 import * as Sunshine              from 'sunshine'
+import { Map, fromJS }            from 'immutable'
 import { over, set }              from 'lens'
 import * as State                 from './state'
 import { queryConversations }     from '../../lib/activity'
@@ -24,6 +25,10 @@ class Loading {}
 class DoneLoading {}
 
 class ViewRoot {}
+class ViewCompose {
+  params: Map<string,string>;
+  constructor(params: Map<string,string>) { this.params = params }
+}
 class ViewConversation {
   id: string;
   constructor(id: string) { this.id = id }
@@ -76,13 +81,19 @@ function init(app: Sunshine.App<AppState>) {
 
   app.on(ViewRoot, (state, _) => {
     return set(State.view, 'root',
-           set(State.routeParams, {},
+           set(State.routeParams, Map(),
+           state))
+  })
+
+  app.on(ViewCompose, (state, { params }) => {
+    return set(State.view, 'compose',
+           set(State.routeParams, params,
            state))
   })
 
   app.on(ViewConversation, (state, { id }) => {
     var state_ = set(State.view, 'conversation',
-                 set(State.routeParams, { conversationId: id },
+                 set(State.routeParams, fromJS({ conversationId: id }),
                  state))
     var conv = State.currentConversation(state_)
     if (!conv) {
@@ -155,6 +166,7 @@ export {
   Notify,
   DismissNotify,
   QueryConversations,
+  ViewCompose,
   ViewConversation,
   ViewRoot,
   ViewSettings,

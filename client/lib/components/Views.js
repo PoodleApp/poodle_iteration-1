@@ -7,6 +7,7 @@ import { activityId }   from '../../../lib/activity'
 import * as State       from '../state'
 import * as Ev          from '../event'
 import { ActivityView } from './activities'
+import { ComposeView }  from '../../../lib/components/compose'
 import Settings         from '../../../lib/components/Settings'
 import { AppBar
        , AppCanvas
@@ -15,6 +16,8 @@ import { AppBar
        , CardHeader
        , Dialog
        , FlatButton
+       , IconButton
+       , IconMenu
        , LeftNav
        , Paper
        , RefreshIndicator
@@ -25,6 +28,8 @@ import { AppBar
        , ToolbarGroup
        , ToolbarTitle
        } from 'material-ui'
+import MenuItem      from 'material-ui/lib/menus/menu-item'
+import ContentCreate from 'material-ui/lib/svg-icons/content/create'
 
 import type { List } from 'immutable'
 import type { Activity, Conversation, URI } from '../../../lib/activity'
@@ -81,6 +86,10 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       content  = <Conversations/>
       selected = 0
     }
+    else if (view === 'compose') {
+      content = <ComposeView />
+      title = 'New Activity'
+    }
     else if (view === 'conversation') {
       content = <ConversationView conversation={conversation} />
       if (conversation) { title = conversation.subject }
@@ -91,12 +100,28 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     }
 
     var styles = this.getStyles()
+    var { muiTheme } = (this.context:any)
 
     return (
       <AppCanvas>
-        <AppBar title={title} onLeftIconButtonTouchTap={() => this.refs.leftNav.toggle()} />
+        <AppBar
+          title={title}
+          onLeftIconButtonTouchTap={() => this.refs.leftNav.toggle()}
+          iconElementRight={
+            <IconMenu
+              iconButtonElement={
+                <IconButton>
+                  <ContentCreate color={muiTheme.component.appBar.textColor} />
+                </IconButton>
+              }
+              onItemTouchTap={this.onCompose.bind(this)}
+              >
+              <MenuItem value='note' primaryText='Note' />
+            </IconMenu>
+          }
+          />
         <LeftNav
-          ref="leftNav"
+          ref='leftNav'
           docked={false}
           onChange={this.navChange.bind(this)}
           selectedIndex={selected} menuItems={[
@@ -149,10 +174,20 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     window.location = menuItem.route
   }
 
+  onCompose(event: Event, item: Object) {
+    var activityType = item.props.value
+    window.location = `#/compose/${activityType}`
+  }
+
   dismissError() {
     this.emit(new Ev.DismissError())
   }
 
+}
+
+App.contextTypes = {
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App),
+  muiTheme:     React.PropTypes.object,
 }
 
 type ConversationMeta = {

@@ -2,6 +2,7 @@
 
 import * as Sunshine          from 'sunshine/react'
 import React                  from 'react'
+import { fromJS }             from 'immutable'
 import makeRouter             from 'hash-brown-router'
 import { Styles }             from 'material-ui'
 import { initialState }       from './lib/state'
@@ -19,6 +20,10 @@ var app = new Sunshine.App(initialState, () => {
 
 router.add('/', () => {
   app.emit(new Event.ViewRoot())
+})
+
+router.add('/compose/:activityType', params => {
+  app.emit(new Event.ViewCompose(fromJS(params)))
 })
 
 router.add('/conversations/:id', params => {

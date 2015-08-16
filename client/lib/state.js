@@ -1,6 +1,6 @@
 /* @flow */
 
-import { List, Record }                     from 'immutable'
+import { List, Map, Record }                from 'immutable'
 import { compose, filtering, getter }       from 'lens'
 import { field, index }                     from 'lens/immutable'
 import { messages, parseMidUri, published } from '../../lib/activity'
@@ -24,19 +24,19 @@ export type AppState = Record<{
   conversations: List<Conversation>,
   loading:       number,
   view:          View,
-  routeParams:   Object,
+  routeParams:   Map<string,string>,
   genericError:  ?Object,
   config?:       Config,
   notification?: string,
 }>
 
-export type View = 'root' | 'conversation' | 'settings'
+export type View = 'root' | 'compose' | 'conversation' | 'settings'
 
 var AppStateRecord = Record({
   conversations: List(),
   loading:       0,
   view:          'root',
-  routeParams:   {},
+  routeParams:   Map(),
   genericError:  null,
   config:        null,
   notification:  null,
@@ -48,7 +48,7 @@ var conversations: Lens_<AppState,List<Conversation>> = field('conversations')
 var loading: Lens_<AppState,number> = field('loading')
 var isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
 var view: Lens_<AppState,View> = field('view')
-var routeParams: Lens_<AppState,Object> = field('routeParams')
+var routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
 var genericError: Lens_<AppState,?Object> = field('genericError')
 var notification = field('notification')
 
@@ -57,8 +57,8 @@ var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
 var username: Traversal_<AppState,string> = compose(config_, field('name'))
 var useremail: Traversal_<AppState,string> = compose(config_, field('email'))
 
-function routeParam(key: string): Getter<AppState,string> {
-  return getter(state => state.routeParams[key])
+function routeParam(key: string): Traversal_<AppState,string> {
+  return compose(routeParams, index(key))
 }
 
 // TODO: Currently only returns senders, not recipients.
@@ -81,7 +81,7 @@ function conversation(id: ThreadId, state: AppState): ?Conversation {
 }
 
 function currentConversation(state: AppState): ?Conversation {
-  var id = state.routeParams.conversationId
+  var id = state.routeParams.get('conversationId')
   if (id) { return conversation(id, state) }
 }
 
