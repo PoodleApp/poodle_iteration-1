@@ -3,12 +3,15 @@
 import * as Sunshine              from 'sunshine'
 import { Map, fromJS }            from 'immutable'
 import { over, set }              from 'lens'
+import fs                         from 'fs'
 import * as State                 from './state'
 import { queryConversations }     from '../../lib/activity'
 import { loadConfig, saveConfig } from '../../lib/config'
+import { assemble }               from '../../lib/compose'
 
 import type { Conversation, URI } from '../../lib/activity'
 import type { Config }            from '../../lib/config'
+import type { Draft }             from '../../lib/compose'
 import type { AppState }          from './state'
 
 class QueryConversations {
@@ -56,6 +59,11 @@ class Notify {
   constructor(message: string) { this.message = message }
 }
 class DismissNotify {}
+
+class Send {
+  draft: Draft;
+  constructor(draft: Draft) { this.draft = draft }
+}
 
 function init(app: Sunshine.App<AppState>) {
   app.on(QueryConversations, (state, { query }) => {
@@ -147,6 +155,11 @@ function init(app: Sunshine.App<AppState>) {
     return set(State.notification, null, state)
   })
 
+  app.on(Send, (state, { draft }) => {
+    var msg = assemble(draft)
+    msg.pipe(fs.createWriteStream('/home/jesse/msg'))
+  })
+
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
     app.emit(new Loading())
     p.then(
@@ -166,6 +179,7 @@ export {
   Notify,
   DismissNotify,
   QueryConversations,
+  Send,
   ViewCompose,
   ViewConversation,
   ViewRoot,

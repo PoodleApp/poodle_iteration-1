@@ -88,8 +88,8 @@ function currentConversation(state: AppState): ?Conversation {
 // TODO: lookup by Activity URI
 // function lookupUri(uri: URI, state: AppState): ?{ conv: Conversation, msg: ?Message, part: ?Attachment } {
 //   var parsed = parseMidUri(uri)
-//   if (!parsed) { return }
-//   var { msgId, partId } = parsed
+//   if (!parsed || !parsed.messageId) { return }
+//   var { messageId, partId } = parsed
 //   var conv = state.conversations.find(
 //     c => c.messages.some(m => m.id === msgId)
 //   )
