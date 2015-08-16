@@ -63,7 +63,8 @@ function routeParam(key: string): Getter<AppState,string> {
 
 // TODO: Currently only returns senders, not recipients.
 function participants(conv: Conversation): string[] {
-  var names = msg => msg.from.map(displayName).concat(msg.to.map(displayName)).concat(msg.cc.map(displayName))
+  var display = addrs => addrs ? addrs.map(displayName) : []
+  var names   = msg   => chain(display, [msg.from, msg.cc, msg.to])
   var allNames: string[] = chain(names, messages(conv))
   return uniq(reverse(allNames))
 }

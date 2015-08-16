@@ -3,6 +3,7 @@
 import * as Sunshine    from 'sunshine/react'
 import React            from 'react'
 import { get, lookup }  from 'lens'
+import { activityId }   from '../../../lib/activity'
 import * as State       from '../state'
 import * as Ev          from '../event'
 import { ActivityView } from './activities'
@@ -245,7 +246,7 @@ class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversati
 
     var { subject } = conversation
     var activities = conversation.activities.map(act => (
-      <ActivityView activity={act} key={act.id} />
+      <ActivityView activity={act} key={activityId(act)} />
     ))
 
     return (
