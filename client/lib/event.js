@@ -1,21 +1,23 @@
 /* @flow */
 
-import * as Sunshine                      from 'sunshine'
-import { Map, fromJS }                    from 'immutable'
-import { lookup, over, set }              from 'lens'
-import fs                                 from 'fs'
-import * as State                         from './state'
-import * as Act                           from '../../lib/activityTypes'
-import { activityId, participants, queryConversations } from '../../lib/activity'
-import { loadConfig, saveConfig }         from '../../lib/config'
-import { assemble }                       from '../../lib/compose'
-import { msmtp }                          from '../../lib/msmtp'
+import * as Sunshine                        from 'sunshine'
+import { Map, fromJS }                      from 'immutable'
+import { lookup, over, set }                from 'lens'
+import fs                                   from 'fs'
+import * as State                           from './state'
+import * as Act                             from '../../lib/activityTypes'
+import { activityId }                       from '../../lib/activity'
+import { participants, queryConversations } from '../../lib/conversation'
+import { loadConfig, saveConfig }           from '../../lib/config'
+import { assemble }                         from '../../lib/compose'
+import { msmtp }                            from '../../lib/msmtp'
 
-import type { Activity, Conversation, URI, Zack } from '../../lib/activity'
-import type { Address, Message }                  from '../../lib/notmuch'
-import type { Config }                            from '../../lib/config'
-import type { Burger, Draft }                     from '../../lib/compose'
-import type { AppState }                          from './state'
+import type { Activity, URI, Zack } from '../../lib/activity'
+import type { Conversation }        from '../../lib/conversation'
+import type { Address, Message }    from '../../lib/notmuch'
+import type { Config }              from '../../lib/config'
+import type { Burger, Draft }       from '../../lib/compose'
+import type { AppState }            from './state'
 
 class QueryConversations {
   query: string;

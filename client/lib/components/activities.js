@@ -25,7 +25,8 @@ import { AppBar
        , ToolbarTitle
        } from 'material-ui'
 
-import type { Activity, Conversation, Zack } from '../../../lib/activity'
+import type { Activity, Zack } from '../../../lib/activity'
+import type { Conversation }   from '../../../lib/conversation'
 
 type ActivityProps = {
   activity:     Zack,

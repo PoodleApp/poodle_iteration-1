@@ -31,9 +31,10 @@ import { AppBar
 import MenuItem      from 'material-ui/lib/menus/menu-item'
 import ContentCreate from 'material-ui/lib/svg-icons/content/create'
 
-import type { List } from 'immutable'
-import type { Activity, Conversation, URI } from '../../../lib/activity'
-import type { AppState } from '../state'
+import type { List }          from 'immutable'
+import type { Activity, URI } from '../../../lib/activity'
+import type { Conversation }  from '../../../lib/conversation'
+import type { AppState }      from '../state'
 
 var { Spacing } = Styles
 

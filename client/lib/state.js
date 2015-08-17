@@ -1,10 +1,11 @@
 /* @flow */
 
-import { List, Map, Record }                from 'immutable'
-import { compose, filtering, getter }       from 'lens'
-import { field, index }                     from 'lens/immutable'
-import { messages, parseMidUri, published } from '../../lib/activity'
-import { displayName }                      from '../../lib/notmuch'
+import { List, Map, Record }          from 'immutable'
+import { compose, filtering, getter } from 'lens'
+import { field, index }               from 'lens/immutable'
+import { parseMidUri, published }     from '../../lib/activity'
+import { messages }                   from '../../lib/conversation'
+import { displayName }                from '../../lib/notmuch'
 import { chain
        , filter
        , map
@@ -16,7 +17,8 @@ import { chain
 
 import type { Moment }                    from 'moment'
 import type { Getter, Lens_, Traversal_ } from 'lens'
-import type { Conversation, URI }         from '../../lib/activity'
+import type { URI }                       from '../../lib/activity'
+import type { Conversation }              from '../../lib/conversation'
 import type { ThreadId }                  from '../../lib/notmuch'
 import type { Config }                    from '../../lib/config'
 
