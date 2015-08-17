@@ -218,13 +218,14 @@ function init(app: Sunshine.App<AppState>) {
     var subject          = `Re: ${msg.subject}`
     var author           = { name: username, address: useremail }
 
-    var toWithoutSelf = withoutSelf(author, to)
-    var recipients    = toWithoutSelf.length > 0 ? toWithoutSelf : to
+    var recipients    = to.concat(from)
+    var toWithoutSelf = withoutSelf(author, recipients)
+    var recipients_   = toWithoutSelf.length > 0 ? toWithoutSelf : recipients
 
     var draft: Draft = {
       activities: [reply],
       from:       author,
-      to:         recipients,
+      to:         recipients_,
       cc:         withoutSelf(author, without(recipients, cc)),
       subject,
       inReplyTo:  msg.messageId,
