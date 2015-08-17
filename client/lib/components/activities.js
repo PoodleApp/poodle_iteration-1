@@ -8,6 +8,7 @@ import { objectContent, published } from '../../../lib/activity'
 import { displayName }              from '../../../lib/notmuch'
 import * as Ev                      from '../event'
 import * as State                   from '../state'
+import * as Act                     from '../../../lib/activityTypes'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -24,10 +25,11 @@ import { AppBar
        , ToolbarTitle
        } from 'material-ui'
 
-import type { Activity, Zack } from '../../../lib/activity'
+import type { Activity, Conversation, Zack } from '../../../lib/activity'
 
 type ActivityProps = {
-  activity: Zack,
+  activity:     Zack,
+  conversation: Conversation,
 }
 
 var styles = {
@@ -62,24 +64,32 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   }
 }
 
+// TODO: disable +1 button if already liked
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var [{ object }, msg] = this.props.activity
-    var fromStr = displayName(msg.from[0])
-    var dateStr = published(this.props.activity).fromNow()
+    var [_, msg] = this.props.activity
+    var fromStr  = displayName(msg.from[0])
+    var dateStr  = published(this.props.activity).fromNow()
     return (
-      <div>
-        <Paper>
-          <CardHeader
-            title={fromStr}
-            subtitle={dateStr}
-            avatar={<Avatar>{fromStr[0]}</Avatar>}
+      <Paper>
+        <CardHeader
+          title={fromStr}
+          subtitle={dateStr}
+          avatar={<Avatar>{fromStr[0]}</Avatar>}
+          >
+          <FlatButton
+            style={{ float:'right' }}
+            label='+1'
+            onTouchTap={this.like.bind(this)}
             />
-          {displayContent(this.props.activity)}
-        </Paper>
-        <br/>
-      </div>
+        </CardHeader>
+        {displayContent(this.props.activity)}
+      </Paper>
     )
+  }
+
+  like() {
+    this.emit(new Ev.Like(this.props.activity, this.props.conversation))
   }
 }
 

@@ -281,7 +281,7 @@ class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversati
 
     var { subject } = conversation
     var activities = conversation.activities.map(act => (
-      <ActivityView activity={act} key={activityId(act)} />
+      <ActivityView activity={act} conversation={conversation} key={activityId(act)} />
     ))
 
     return (

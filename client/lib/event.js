@@ -1,19 +1,21 @@
 /* @flow */
 
-import * as Sunshine              from 'sunshine'
-import { Map, fromJS }            from 'immutable'
-import { over, set }              from 'lens'
-import fs                         from 'fs'
-import * as State                 from './state'
-import { queryConversations }     from '../../lib/activity'
-import { loadConfig, saveConfig } from '../../lib/config'
-import { assemble }               from '../../lib/compose'
-import { msmtp }                  from '../../lib/msmtp'
+import * as Sunshine                      from 'sunshine'
+import { Map, fromJS }                    from 'immutable'
+import { lookup, over, set }              from 'lens'
+import fs                                 from 'fs'
+import * as State                         from './state'
+import * as Act                           from '../../lib/activityTypes'
+import { activityId, participants, queryConversations } from '../../lib/activity'
+import { loadConfig, saveConfig }         from '../../lib/config'
+import { assemble }                       from '../../lib/compose'
+import { msmtp }                          from '../../lib/msmtp'
 
-import type { Conversation, URI } from '../../lib/activity'
-import type { Config }            from '../../lib/config'
-import type { Draft }             from '../../lib/compose'
-import type { AppState }          from './state'
+import type { Activity, Conversation, URI, Zack } from '../../lib/activity'
+import type { Address, Message }                  from '../../lib/notmuch'
+import type { Config }                            from '../../lib/config'
+import type { Burger, Draft }                     from '../../lib/compose'
+import type { AppState }                          from './state'
 
 class QueryConversations {
   query: string;
@@ -64,6 +66,26 @@ class DismissNotify {}
 class Send {
   draft: Draft;
   constructor(draft: Draft) { this.draft = draft }
+}
+
+class SendReply {
+  reply:        Burger;
+  message:      Message;
+  conversation: Conversation;
+  constructor(act: Burger, msg: Message, conv: Conversation) {
+    this.reply        = act
+    this.message      = msg
+    this.conversation = conv
+  }
+}
+
+class Like {
+  activity:     Zack;
+  conversation: Conversation;
+  constructor(activity: Zack, conversation: Conversation) {
+    this.activity     = activity
+    this.conversation = conversation
+  }
 }
 
 function init(app: Sunshine.App<AppState>) {
@@ -156,11 +178,21 @@ function init(app: Sunshine.App<AppState>) {
     return set(State.notification, null, state)
   })
 
-  app.on(Send, (state, { draft }) => {
-    var msg = assemble(draft)
-    indicateLoading('send',
-      msmtp(msg).catch(err => app.emit(new GenericError(err)))
-    )
+  app.on(Send, (_, { draft }) => {
+    send(draft)
+  })
+
+  app.on(SendReply, (state, { reply, message, conversation }) => {
+    sendReply(reply, message, conversation, state)
+  })
+
+  app.on(Like, (state, { activity, conversation }) => {
+    var [_, msg] = activity
+    var like = Act.like({
+      objectType: 'activity',
+      uri: activityId(activity),
+    })
+    sendReply(like, msg, conversation, state)
   })
 
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
@@ -171,18 +203,70 @@ function init(app: Sunshine.App<AppState>) {
     )
     return p
   }
+
+  function sendReply(reply: Burger, msg: Message, conv: Conversation, state: AppState) {
+    var username  = lookup(State.username, state)
+    var useremail = lookup(State.useremail, state)
+    if (!username || !useremail) {
+      app.emit(new GenericError("Please set your name and email address in 'Settings'"))
+      return
+    }
+
+    var { to, from, cc } = participants(conv)
+    var subject          = `Re: ${msg.subject}`
+    var author           = { name: username, address: useremail }
+
+    var toWithoutSelf = withoutSelf(author, to)
+    var recipients    = toWithoutSelf.length > 0 ? toWithoutSelf : to
+
+    var draft: Draft = {
+      activities: [reply],
+      from:       author,
+      to:         recipients,
+      cc:         withoutSelf(author, without(recipients, cc)),
+      subject,
+      inReplyTo:  msg.messageId,
+      references: (msg.references || []).concat(msg.messageId),
+    }
+
+    if (reply[0].verb === 'like') {
+      var fallback = lookup(State.likeMessage, state)
+      if (fallback) {
+        draft.fallback = fallback
+      }
+    }
+
+    send(draft)
+  }
+
+  function send(draft: Draft) {
+    var msg = assemble(draft)
+    indicateLoading('send',
+      msmtp(msg).catch(err => app.emit(new GenericError(err)))
+    )
+  }
+}
+
+function withoutSelf(self: Address, addrs: Address[]): Address[] {
+  return addrs.filter(a => a.address !== self.address)
+}
+
+function without(exclude: Address[], addrs: Address[]): Address[] {
+  return addrs.filter(a => !exclude.some(e => e.address === a.address))
 }
 
 export {
   init,
   DismissError,
   GenericError,
+  Like,
   LoadConfig,
   SaveConfig,
   Notify,
   DismissNotify,
   QueryConversations,
   Send,
+  SendReply,
   ViewCompose,
   ViewConversation,
   ViewRoot,
