@@ -155,7 +155,7 @@ function init(app: Sunshine.App<AppState>) {
     indicateLoading('config',
       loadConfig().then(
         config => app.emit(new GotConfig(config)),
-        err    => app.emit(new GenericError(`Error loading configuration: ${err}`))
+        err    => app.emit(new GenericError(err))
       )
     )
   })

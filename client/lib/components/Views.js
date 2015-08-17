@@ -158,7 +158,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     ]
     return (
       <Dialog
-        title='An error occurred'
+        title='Excuse me,'
         actions={actions}
         actionFocus='ok'
         openImmediately={true}
