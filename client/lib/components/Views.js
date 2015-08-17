@@ -1,14 +1,14 @@
 /* @flow */
 
-import * as Sunshine    from 'sunshine/react'
-import React            from 'react'
-import { get, lookup }  from 'lens'
-import { activityId }   from '../../../lib/activity'
-import * as State       from '../state'
-import * as Ev          from '../event'
-import { ActivityView } from './activities'
-import { ComposeView }  from '../../../lib/components/compose'
-import Settings         from '../../../lib/components/Settings'
+import * as Sunshine                 from 'sunshine/react'
+import React                         from 'react'
+import { get, lookup }               from 'lens'
+import { activityId }                from '../../../lib/activity'
+import * as State                    from '../state'
+import * as Ev                       from '../event'
+import { ActivityView }              from './activities'
+import { ComposeReply, ComposeView } from '../../../lib/components/compose'
+import Settings                      from '../../../lib/components/Settings'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -288,6 +288,7 @@ class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversati
       <div>
         <br/>
         {activities}
+        <ComposeReply inReplyTo={conversation} />
       </div>
     )
   }
