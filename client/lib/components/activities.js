@@ -1,14 +1,18 @@
 /* @flow */
 
-import * as Sunshine                from 'sunshine/react'
-import React                        from 'react'
-import moment                       from 'moment'
-import repa                         from 'repa'
-import { objectContent, published } from '../../../lib/activity'
-import { displayName }              from '../../../lib/notmuch'
-import * as Ev                      from '../event'
-import * as State                   from '../state'
-import * as Act                     from '../../../lib/activityTypes'
+import * as Sunshine from 'sunshine/react'
+import React         from 'react'
+import moment        from 'moment'
+import repa          from 'repa'
+import { mailtoUri
+       , objectContent
+       , published
+       }                    from '../../../lib/activity'
+import { likes, likeCount } from '../../../lib/derivedActivity'
+import { displayName }      from '../../../lib/notmuch'
+import * as Ev              from '../event'
+import * as State           from '../state'
+import * as Act             from '../../../lib/activityTypes'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -31,6 +35,9 @@ import type { Conversation }   from '../../../lib/conversation'
 type ActivityProps = {
   activity:     Zack,
   conversation: Conversation,
+  loading:      boolean,
+  username:     string,
+  useremail:    string,
 }
 
 var styles = {
@@ -65,12 +72,11 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   }
 }
 
-// TODO: disable +1 button if already liked
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var [_, msg] = this.props.activity
-    var fromStr  = displayName(msg.from[0])
-    var dateStr  = published(this.props.activity).fromNow()
+    var fromStr    = displayName(msg.from[0])
+    var dateStr    = published(this.props.activity).fromNow()
     return (
       <Paper>
         <CardHeader
@@ -78,19 +84,11 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           subtitle={dateStr}
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           >
-          <FlatButton
-            style={{ float:'right' }}
-            label='+1'
-            onTouchTap={this.like.bind(this)}
-            />
+          <LikeButton style={{ float:'right' }} {...this.props} />
         </CardHeader>
         {displayContent(this.props.activity)}
       </Paper>
     )
-  }
-
-  like() {
-    this.emit(new Ev.Like(this.props.activity, this.props.conversation))
   }
 }
 
@@ -109,6 +107,29 @@ class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
         {displayContent(this.props.activity)}
       </Paper>
     )
+  }
+}
+
+type LikeButtonProps = ActivityProps & {
+  style?: Object
+}
+
+class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
+  render(): React.Element {
+    var activity     = this.props.activity
+    var alreadyLiked = likes(activity).some(l => l.id === mailtoUri(this.props.useremail))
+    return (
+      <FlatButton
+        style={this.props.style || {}}
+        label={`+${likeCount(activity)}`}
+        onTouchTap={this.like.bind(this)}
+        disabled={alreadyLiked || this.props.loading}
+        />
+    )
+  }
+
+  like() {
+    this.emit(new Ev.Like(this.props.activity, this.props.conversation))
   }
 }
 

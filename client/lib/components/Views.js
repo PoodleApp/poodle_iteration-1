@@ -4,6 +4,7 @@ import * as Sunshine                 from 'sunshine/react'
 import React                         from 'react'
 import { get, lookup }               from 'lens'
 import { activityId }                from '../../../lib/activity'
+import { allNames }                  from '../../../lib/conversation'
 import * as State                    from '../state'
 import * as Ev                       from '../event'
 import { ActivityView }              from './activities'
@@ -47,19 +48,25 @@ var styles = {
 }
 
 type AppComponentState = {
-  view: State.View,
+  view:         State.View,
+  loading:      boolean,
   conversation: ?Conversation,
-  error: ?Object,
+  error:        ?Object,
   notification: ?string,
+  username:     ?string,
+  useremail:    ?string,
 }
 
 export class App extends Sunshine.Component<{},{},AppComponentState> {
   getState(state: AppState): AppComponentState {
     return {
-      view: get(State.view, state),
+      view:         get(State.view, state),
+      loading:      get(State.isLoading, state),
       conversation: State.currentConversation(state),
-      error: get(State.genericError, state),
+      error:        get(State.genericError, state),
       notification: get(State.notification, state),
+      username:     lookup(State.username, state),
+      useremail:    lookup(State.useremail, state),
     }
   }
 
@@ -79,7 +86,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   render(): React.Element {
-    var { view, conversation } = this.state
+    var { view, conversation, loading, username, useremail } = this.state
     var content, selected
     var title = 'Activity Stream'
 
@@ -92,7 +99,12 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       title = 'New Activity'
     }
     else if (view === 'conversation') {
-      content = <ConversationView conversation={conversation} />
+      content = <ConversationView
+                  conversation={conversation}
+                  username={username}
+                  useremail={useremail}
+                  loading={loading}
+                  />
       if (conversation) { title = conversation.subject }
     }
     else if (view === 'settings') {
@@ -209,7 +221,7 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
       conversations: get(State.conversations, state).map(conv => ({
         id:           conv.id,
         subject:      conv.subject,
-        participants: State.participants(conv),
+        participants: allNames(conv),
         lastActive:   State.lastActive(conv),
       })),
       loading: get(State.isLoading, state),
@@ -282,7 +294,7 @@ class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversati
 
     var { subject } = conversation
     var activities = conversation.activities.map(act => (
-      <ActivityView activity={act} conversation={conversation} key={activityId(act)} />
+      <ActivityView activity={act} {...this.props} key={activityId(act)} />
     ))
 
     return (

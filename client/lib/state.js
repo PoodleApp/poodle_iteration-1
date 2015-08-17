@@ -4,15 +4,9 @@ import { List, Map, Record }          from 'immutable'
 import { compose, filtering, getter } from 'lens'
 import { field, index }               from 'lens/immutable'
 import { parseMidUri, published }     from '../../lib/activity'
-import { messages }                   from '../../lib/conversation'
-import { displayName }                from '../../lib/notmuch'
-import { chain
-       , filter
-       , map
+import { map
        , pipe
-       , reverse
        , sortBy
-       , uniq
        } from 'ramda'
 
 import type { Moment }                    from 'moment'
@@ -64,14 +58,6 @@ function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))
 }
 
-// TODO: Currently only returns senders, not recipients.
-function participants(conv: Conversation): string[] {
-  var display = addrs => addrs ? addrs.map(displayName) : []
-  var names   = msg   => chain(display, [msg.from, msg.cc, msg.to])
-  var allNames: string[] = chain(names, messages(conv))
-  return uniq(reverse(allNames))
-}
-
 function lastActive(conv: Conversation): Moment {
   return pipe(
     sortBy(act => published(act)),
@@ -116,7 +102,6 @@ export {
   loading,
   // lookupUri,
   notification,
-  participants,
   routeParam,
   routeParams,
   username,
