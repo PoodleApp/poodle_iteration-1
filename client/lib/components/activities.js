@@ -117,7 +117,7 @@ type LikeButtonProps = ActivityProps & {
 class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   render(): React.Element {
     var activity     = this.props.activity
-    var alreadyLiked = likes(activity).some(l => l.id === mailtoUri(this.props.useremail))
+    var alreadyLiked = likes(activity).some(l => l.uri === mailtoUri(this.props.useremail))
     return (
       <FlatButton
         style={this.props.style || {}}
