@@ -8,6 +8,7 @@ import * as State                 from './state'
 import { queryConversations }     from '../../lib/activity'
 import { loadConfig, saveConfig } from '../../lib/config'
 import { assemble }               from '../../lib/compose'
+import { msmtp }                  from '../../lib/msmtp'
 
 import type { Conversation, URI } from '../../lib/activity'
 import type { Config }            from '../../lib/config'
@@ -157,7 +158,9 @@ function init(app: Sunshine.App<AppState>) {
 
   app.on(Send, (state, { draft }) => {
     var msg = assemble(draft)
-    msg.pipe(fs.createWriteStream('/home/jesse/msg'))
+    indicateLoading('send',
+      msmtp(msg).catch(err => app.emit(new GenericError(err)))
+    )
   })
 
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
