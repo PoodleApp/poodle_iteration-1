@@ -5,19 +5,21 @@ import { Map, fromJS }                      from 'immutable'
 import { lookup, over, set }                from 'lens'
 import fs                                   from 'fs'
 import * as State                           from './state'
-import * as Act                             from '../../lib/activityTypes'
-import { activityId }                       from '../../lib/activity'
+import * as Create                          from '../../lib/activityTypes'
+import { activityId }                       from '../../lib/derivedActivity'
+import * as Act                             from '../../lib/derivedActivity'
 import { participants, queryConversations } from '../../lib/conversation'
 import { loadConfig, saveConfig }           from '../../lib/config'
 import { assemble }                         from '../../lib/compose'
 import { msmtp }                            from '../../lib/msmtp'
 
-import type { Activity, URI, Zack } from '../../lib/activity'
-import type { Conversation }        from '../../lib/conversation'
-import type { Address, Message }    from '../../lib/notmuch'
-import type { Config }              from '../../lib/config'
-import type { Burger, Draft }       from '../../lib/compose'
-import type { AppState }            from './state'
+import type { List }             from 'immutable'
+import type { DerivedActivity }  from '../../lib/derivedActivity'
+import type { Conversation }     from '../../lib/conversation'
+import type { Address, Message } from '../../lib/notmuch'
+import type { Config }           from '../../lib/config'
+import type { Burger, Draft }    from '../../lib/compose'
+import type { AppState }         from './state'
 
 class QueryConversations {
   query: string;
@@ -25,8 +27,8 @@ class QueryConversations {
 }
 
 class Conversations {
-  convs: Conversation[];
-  constructor(convs: Conversation[]) { this.convs = convs }
+  convs: List<Conversation>;
+  constructor(convs: List<Conversation>) { this.convs = convs }
 }
 
 class Loading {}
@@ -89,9 +91,9 @@ class SendReply {
 }
 
 class Like {
-  activity:     Zack;
+  activity:     DerivedActivity;
   conversation: Conversation;
-  constructor(activity: Zack, conversation: Conversation) {
+  constructor(activity: DerivedActivity, conversation: Conversation) {
     this.activity     = activity
     this.conversation = conversation
   }
@@ -196,11 +198,11 @@ function init(app: Sunshine.App<AppState>) {
   })
 
   app.on(Like, (state, { activity, conversation }) => {
-    var [_, message] = activity
-    var like = Act.like({
+    var like = Create.like({
       objectType: 'activity',
       uri: activityId(activity),
     })
+    var message = Act.message(activity)
     sendReply(new SendReply({ reply: like, message, conversation }), state)
   })
 

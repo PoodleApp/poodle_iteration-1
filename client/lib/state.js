@@ -10,7 +10,6 @@ import { map
        , sortBy
        } from 'ramda'
 
-import type { Moment }                    from 'moment'
 import type { Getter, Lens_, Traversal_ } from 'lens'
 import type { URI }                       from '../../lib/activity'
 import type { Conversation }              from '../../lib/conversation'
@@ -63,13 +62,6 @@ function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))
 }
 
-function lastActive(conv: Conversation): Moment {
-  return pipe(
-    sortBy(act => published(act)),
-    map(act => published(act))
-  )(conv.activities).pop()
-}
-
 function conversation(id: ThreadId, state: AppState): ?Conversation {
   return state.conversations.find(c => c.id === id)
 }
@@ -103,7 +95,6 @@ export {
   genericError,
   initialState,
   isLoading,
-  lastActive,
   likeMessage,
   loading,
   // lookupUri,

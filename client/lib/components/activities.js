@@ -4,16 +4,17 @@ import * as Sunshine from 'sunshine/react'
 import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'
-import { actor
-       , mailtoUri
+import { mailtoUri } from '../../../lib/activity'
+import * as Ev       from '../event'
+import * as State    from '../state'
+import { activityId
+       , actor
+       , likes
+       , likeCount
        , objectContent
+       , objectType
        , published
-       }                    from '../../../lib/activity'
-import { likes, likeCount } from '../../../lib/derivedActivity'
-import { displayName }      from '../../../lib/notmuch'
-import * as Ev              from '../event'
-import * as State           from '../state'
-import * as Act             from '../../../lib/activityTypes'
+       } from '../../../lib/derivedActivity'
 import { AppBar
        , AppCanvas
        , Avatar
@@ -30,11 +31,11 @@ import { AppBar
        , ToolbarTitle
        } from 'material-ui'
 
-import type { Activity, Zack } from '../../../lib/activity'
-import type { Conversation }   from '../../../lib/conversation'
+import type { DerivedActivity } from '../../../lib/derivedActivity'
+import type { Conversation }    from '../../../lib/conversation'
 
 type ActivityProps = {
-  activity:     Zack,
+  activity:     DerivedActivity,
   conversation: Conversation,
   loading:      boolean,
   username:     string,
@@ -51,8 +52,8 @@ var styles = {
 
 export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var [{ object }, msg] = this.props.activity
-    if (object && object.objectType === 'note') {
+    var activity = this.props.activity
+    if (objectType(activity) === 'note') {
       return (
         <NoteView {...this.props} />
       )
@@ -75,9 +76,9 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var [_, msg] = this.props.activity
-    var fromStr    = displayName(msg.from[0])
-    var dateStr    = published(this.props.activity).fromNow()
+    var activity = this.props.activity
+    var fromStr  = actor(activity).displayName || '[unknown sender]'
+    var dateStr  = published(activity).fromNow()
     return (
       <Paper>
         <CardHeader
@@ -87,7 +88,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           >
           <LikeButton style={{ float:'right' }} {...this.props} />
         </CardHeader>
-        {displayContent(this.props.activity)}
+        {displayContent(activity)}
       </Paper>
     )
   }
@@ -95,9 +96,9 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
 
 class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var [{ object }, msg] = this.props.activity
-    var fromStr = displayName(msg.from[0])
-    var dateStr = published(this.props.activity).fromNow()
+    var activity = this.props.activity
+    var fromStr  = actor(activity).displayName || '[unknown sender]'
+    var dateStr  = published(activity).fromNow()
     return (
       <Paper>
         <CardHeader
@@ -105,7 +106,7 @@ class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
           subtitle={dateStr}
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           />
-        {displayContent(this.props.activity)}
+        {displayContent(activity)}
       </Paper>
     )
   }
@@ -136,9 +137,8 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   }
 }
 
-function displayContent(z: Zack): React.Element {
-  var [act, msg] = z
-  var content = objectContent(z)
+function displayContent(activity: DerivedActivity): React.Element {
+  var content = objectContent(activity)
   .sort((a,b) => {
     // prefer text/plain
     if (a.contentType === 'text/plain' && b.contentType !== 'text/plain') {
