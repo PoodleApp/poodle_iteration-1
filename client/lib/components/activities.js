@@ -124,7 +124,7 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
     return (
       <FlatButton
         style={this.props.style || {}}
-        label={`+${likeCount(activity)}`}
+        label={`+${likeCount(activity)+1}`}
         onTouchTap={this.like.bind(this)}
         disabled={myContent || alreadyLiked || this.props.loading}
         />
