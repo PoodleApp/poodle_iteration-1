@@ -7,16 +7,19 @@ import makeRouter       from 'hash-brown-router'
 import { Styles }       from 'material-ui'
 import { initialState } from './lib/state'
 import * as Event       from './lib/event'
+import * as CE          from '../lib/composer/event'
 import { App }          from './lib/components/Views'
 import {}               from './polyfills'
 
 var router = makeRouter()
 
 var app = new Sunshine.App(initialState, () => {
-  Event.init(app, router)
   app.emit(new Event.LoadConfig())
   router.evaluateCurrent('/')
 })
+
+Event.init(app, router)
+CE.init(app)
 
 router.add('/', () => {
   app.emit(new Event.ViewRoot())

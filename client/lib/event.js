@@ -74,10 +74,17 @@ class SendReply {
   reply:        Burger;
   message:      Message;
   conversation: Conversation;
-  constructor(act: Burger, msg: Message, conv: Conversation) {
-    this.reply        = act
-    this.message      = msg
-    this.conversation = conv
+  addPeople:    Address[];
+  constructor(opts: {
+    reply: Burger,
+    message: Message,
+    conversation: Conversation,
+    addPeople?: Address[],
+  }) {
+    this.reply        = opts.reply
+    this.message      = opts.message
+    this.conversation = opts.conversation
+    this.addPeople    = opts.addPeople || []
   }
 }
 
@@ -184,17 +191,17 @@ function init(app: Sunshine.App<AppState>) {
     send(draft)
   })
 
-  app.on(SendReply, (state, { reply, message, conversation }) => {
-    sendReply(reply, message, conversation, state)
+  app.on(SendReply, (state, event) => {
+    sendReply(event, state)
   })
 
   app.on(Like, (state, { activity, conversation }) => {
-    var [_, msg] = activity
+    var [_, message] = activity
     var like = Act.like({
       objectType: 'activity',
       uri: activityId(activity),
     })
-    sendReply(like, msg, conversation, state)
+    sendReply(new SendReply({ reply: like, message, conversation }, state))
   })
 
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
@@ -206,7 +213,7 @@ function init(app: Sunshine.App<AppState>) {
     return p
   }
 
-  function sendReply(reply: Burger, msg: Message, conv: Conversation, state: AppState) {
+  function sendReply({ reply, message, conversation, addPeople }: SendReply, state: AppState) {
     var username  = lookup(State.username, state)
     var useremail = lookup(State.useremail, state)
     if (!username || !useremail) {
@@ -214,11 +221,11 @@ function init(app: Sunshine.App<AppState>) {
       return
     }
 
-    var { to, from, cc } = participants(conv)
-    var subject          = `Re: ${msg.subject}`
+    var { to, from, cc } = participants(conversation)
+    var subject          = `Re: ${message.subject}`
     var author           = { name: username, address: useremail }
 
-    var recipients    = to.concat(from)
+    var recipients    = to.concat(from).concat(addPeople)
     var toWithoutSelf = withoutSelf(author, recipients)
     var recipients_   = toWithoutSelf.length > 0 ? toWithoutSelf : recipients
 
@@ -228,8 +235,8 @@ function init(app: Sunshine.App<AppState>) {
       to:         recipients_,
       cc:         withoutSelf(author, without(recipients, cc)),
       subject,
-      inReplyTo:  msg.messageId,
-      references: (msg.references || []).concat(msg.messageId),
+      inReplyTo:  message.messageId,
+      references: (message.references || []).concat(message.messageId),
     }
 
     if (reply[0].verb === 'like') {
