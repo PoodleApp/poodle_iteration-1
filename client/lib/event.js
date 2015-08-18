@@ -201,7 +201,7 @@ function init(app: Sunshine.App<AppState>) {
       objectType: 'activity',
       uri: activityId(activity),
     })
-    sendReply(new SendReply({ reply: like, message, conversation }, state))
+    sendReply(new SendReply({ reply: like, message, conversation }), state)
   })
 
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
