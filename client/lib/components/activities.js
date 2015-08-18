@@ -4,7 +4,8 @@ import * as Sunshine from 'sunshine/react'
 import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'
-import { mailtoUri
+import { actor
+       , mailtoUri
        , objectContent
        , published
        }                    from '../../../lib/activity'
@@ -117,13 +118,15 @@ type LikeButtonProps = ActivityProps & {
 class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   render(): React.Element {
     var activity     = this.props.activity
-    var alreadyLiked = likes(activity).some(l => l.uri === mailtoUri(this.props.useremail))
+    var me           = mailtoUri(this.props.useremail)
+    var alreadyLiked = likes(activity).some(l => l.uri === me)
+    var myContent    = actor(activity).uri === me
     return (
       <FlatButton
         style={this.props.style || {}}
         label={`+${likeCount(activity)}`}
         onTouchTap={this.like.bind(this)}
-        disabled={alreadyLiked || this.props.loading}
+        disabled={myContent || alreadyLiked || this.props.loading}
         />
     )
   }
