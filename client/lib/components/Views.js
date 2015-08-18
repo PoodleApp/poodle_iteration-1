@@ -1,41 +1,29 @@
 /* @flow */
 
-import * as Sunshine                 from 'sunshine/react'
-import React                         from 'react'
-import { get, lookup }               from 'lens'
-import { activityId }                from '../../../lib/activity'
-import { allNames }                  from '../../../lib/conversation'
-import * as State                    from '../state'
-import * as Ev                       from '../event'
-import { ActivityView }              from './activities'
-import { ComposeReply, ComposeView } from '../../../lib/components/compose'
-import Settings                      from '../../../lib/components/Settings'
+import * as Sunshine                       from 'sunshine/react'
+import React                               from 'react'
+import { get, lookup }                     from 'lens'
+import * as State                          from '../state'
+import * as Ev                             from '../event'
+import { ComposeView }                     from '../../../lib/components/compose'
+import Settings                            from '../../../lib/components/Settings'
+import { Conversations, ConversationView } from '../../../lib/components/conversation'
 import { AppBar
        , AppCanvas
-       , Avatar
-       , Card
-       , CardHeader
        , Dialog
        , FlatButton
        , IconButton
        , IconMenu
        , LeftNav
-       , Paper
        , RefreshIndicator
        , Snackbar
        , Styles
-       , TextField
-       , Toolbar
-       , ToolbarGroup
-       , ToolbarTitle
        } from 'material-ui'
 import MenuItem      from 'material-ui/lib/menus/menu-item'
 import ContentCreate from 'material-ui/lib/svg-icons/content/create'
 
-import type { List }          from 'immutable'
-import type { Activity, URI } from '../../../lib/activity'
-import type { Conversation }  from '../../../lib/conversation'
-import type { AppState }      from '../state'
+import type { Conversation } from '../../../lib/conversation'
+import type { AppState }     from '../state'
 
 var { Spacing } = Styles
 
@@ -148,6 +136,9 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
         </div>
         {this.state.error ? this.showError(this.state.error) : ''}
         {this.state.notification ? this.showNotification(this.state.notification) : ''}
+        {this.state.loading ?
+          <RefreshIndicator size={40} left={400} top={100} status="loading" /> : ''
+        }
       </AppCanvas>
     )
   }
@@ -203,106 +194,3 @@ App.contextTypes = {
   muiTheme:     React.PropTypes.object,
 }
 
-type ConversationMeta = {
-  id: string,
-  subject: string,
-  participants: string[],
-  lastActive: string,
-}
-
-type ConversationsState = {
-  conversations: List<ConversationMeta>,
-  loading: boolean,
-}
-
-export class Conversations extends Sunshine.Component<{},{},ConversationsState> {
-  getState(state: AppState): ConversationsState {
-    return {
-      conversations: get(State.conversations, state).map(conv => ({
-        id:           conv.id,
-        subject:      conv.subject,
-        participants: allNames(conv),
-        lastActive:   State.lastActive(conv),
-      })),
-      loading: get(State.isLoading, state),
-    }
-  }
-
-  render(): React.Element {
-    var conversations = this.state.conversations.map(conv => (
-      <ConversationHeader conv={conv} key={conv.id} />
-    ))
-    return (
-      <div>
-        <Toolbar>
-          <ToolbarGroup key={0} float='left'>
-            <form onSubmit={this.onSearch.bind(this)}>
-              <label>
-              <ToolbarTitle text='Enter notmuch query'/>
-              <TextField
-                hintText='date:1week..'
-                defaultValue='date:1week..'
-                ref='query'
-                />
-              </label>
-              &nbsp;
-              <FlatButton label='Search' disabled={this.state.loading} onTouchTap={this.onSearch.bind(this)} />
-            </form>
-          </ToolbarGroup>
-        </Toolbar>
-        <section>{conversations}</section>
-        {this.state.loading ?
-          <RefreshIndicator size={40} left={400} top={100} status="loading" /> : ''
-        }
-      </div>
-    )
-  }
-
-  onSearch(event: Event) {
-    event.preventDefault()
-    this.emit(new Ev.QueryConversations(this.refs.query.getValue()))
-  }
-}
-
-class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta },{}> {
-  render(): React.Element {
-    var { id, subject, participants, lastActive } = this.props.conv
-    var partStr = participants.join(', ')
-    return (
-      <div>
-        <br/>
-        <a href={`#/conversations/${id}`}>
-        <Card>
-          <CardHeader
-            title={subject}
-            subtitle={partStr}
-            avatar={<Avatar>{partStr[0]}</Avatar>}
-            />
-        </Card>
-        </a>
-      </div>
-    )
-  }
-}
-
-class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversation },{}> {
-  render(): React.Element {
-    var conversation = this.props.conversation
-    if (!conversation) {
-      return <p>not found</p>
-    }
-
-    var { subject } = conversation
-    var activities = conversation.activities.map(act => (
-      <ActivityView activity={act} {...this.props} key={activityId(act)} />
-    ))
-
-    return (
-      <div>
-        <br/>
-        {activities}
-        <ComposeReply inReplyTo={conversation} />
-      </div>
-    )
-  }
-}

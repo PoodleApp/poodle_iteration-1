@@ -1,14 +1,14 @@
 /* @flow */
 
-import * as Sunshine          from 'sunshine/react'
-import React                  from 'react'
-import { fromJS }             from 'immutable'
-import makeRouter             from 'hash-brown-router'
-import { Styles }             from 'material-ui'
-import { initialState }       from './lib/state'
-import * as Event             from './lib/event'
-import { App, Conversations } from './lib/components/Views'
-import {}                     from './polyfills'
+import * as Sunshine    from 'sunshine/react'
+import React            from 'react'
+import * as immutable   from 'immutable'
+import makeRouter       from 'hash-brown-router'
+import { Styles }       from 'material-ui'
+import { initialState } from './lib/state'
+import * as Event       from './lib/event'
+import { App }          from './lib/components/Views'
+import {}               from './polyfills'
 
 var router = makeRouter()
 
@@ -23,7 +23,7 @@ router.add('/', () => {
 })
 
 router.add('/compose/:activityType', params => {
-  app.emit(new Event.ViewCompose(fromJS(params)))
+  app.emit(new Event.ViewCompose(immutable.fromJS(params)))
 })
 
 router.add('/conversations/:id', params => {
