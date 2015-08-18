@@ -3,6 +3,7 @@
 import { List, Map, Record }          from 'immutable'
 import { compose, filtering, getter } from 'lens'
 import { field, index }               from 'lens/immutable'
+import * as CS                        from '../../lib/composer/state'
 import { parseMidUri, published }     from '../../lib/activity'
 import { map
        , pipe
@@ -24,6 +25,7 @@ export type AppState = Record<{
   genericError:  ?Object,
   config?:       Config,
   notification?: string,
+  composerState: CS.ComposerState,
 }>
 
 export type View = 'root' | 'compose' | 'conversation' | 'settings'
@@ -36,9 +38,12 @@ var AppStateRecord = Record({
   genericError:  null,
   config:        null,
   notification:  null,
+  composerState: CS.initialState,
 })
 
 var initialState: AppState = new AppStateRecord()
+
+var composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
 
 var conversations: Lens_<AppState,List<Conversation>> = field('conversations')
 var loading: Lens_<AppState,number> = field('loading')
@@ -90,6 +95,7 @@ function currentConversation(state: AppState): ?Conversation {
 // }
 
 export {
+  composerState,
   config,
   conversation,
   conversations,
