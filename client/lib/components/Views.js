@@ -67,7 +67,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       content: {
         boxSizing: 'border-box',
         padding: Spacing.desktopGutter + 'px',
-        maxWidth: (Spacing.desktopKeylineIncrement * 14) + 'px',
+        // maxWidth: (Spacing.desktopKeylineIncrement * 14) + 'px',
         minHeight: '800px',
       }
     }
