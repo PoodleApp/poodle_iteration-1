@@ -7,6 +7,7 @@ import repa          from 'repa'
 import { mailtoUri } from '../../../lib/activity'
 import * as Ev       from '../event'
 import * as State    from '../state'
+import * as CE       from '../../../lib/composer/event'
 import { activityId
        , actor
        , likes
@@ -21,6 +22,8 @@ import { AppBar
        , Card
        , CardHeader
        , FlatButton
+       , IconButton
+       , IconMenu
        , LeftNav
        , Paper
        , RefreshIndicator
@@ -30,17 +33,22 @@ import { AppBar
        , ToolbarGroup
        , ToolbarTitle
        } from 'material-ui'
+import MenuItem     from 'material-ui/lib/menus/menu-item'
+import MoreVertIcon from 'material-ui/lib/svg-icons/navigation/more-vert'
 
 import type { DerivedActivity } from '../../../lib/derivedActivity'
 import type { Conversation }    from '../../../lib/conversation'
 
-type ActivityProps = {
+export type ActivityProps = {
   activity:     DerivedActivity,
   conversation: Conversation,
+  editing:      ?DerivedActivity,
   loading:      boolean,
   username:     string,
   useremail:    string,
 }
+
+var { Colors } = Styles
 
 var styles = {
   body: {
@@ -76,9 +84,10 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var activity = this.props.activity
-    var fromStr  = actor(activity).displayName || '[unknown sender]'
-    var dateStr  = published(activity).fromNow()
+    var { activity, useremail } = this.props
+    var fromStr = actor(activity).displayName || '[unknown sender]'
+    var dateStr = published(activity).fromNow()
+    var mine    = myContent(activity, useremail)
     return (
       <Paper>
         <CardHeader
@@ -87,6 +96,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           >
           <LikeButton style={{ float:'right' }} {...this.props} />
+          {mine ? <MyContentOptsMenu {...this.props} /> : ''}
         </CardHeader>
         {displayContent(activity)}
       </Paper>
@@ -118,22 +128,57 @@ type LikeButtonProps = ActivityProps & {
 
 class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   render(): React.Element {
-    var activity     = this.props.activity
-    var me           = mailtoUri(this.props.useremail)
+    var { activity, loading, useremail, style } = this.props
+    var me           = mailtoUri(useremail)
     var alreadyLiked = likes(activity).some(l => l.uri === me)
-    var myContent    = actor(activity).uri === me
+    var mine         = myContent(activity, useremail)
     return (
       <FlatButton
-        style={this.props.style || {}}
+        style={style || {}}
         label={`+${likeCount(activity)+1}`}
         onTouchTap={this.like.bind(this)}
-        disabled={myContent || alreadyLiked || this.props.loading}
+        disabled={mine || alreadyLiked || loading}
         />
     )
   }
 
   like() {
     this.emit(new Ev.Like(this.props.activity, this.props.conversation))
+  }
+}
+
+export class MyContentOptsMenu extends Sunshine.Component<{},ActivityProps,{}> {
+  render() {
+    return (
+      <IconMenu
+        iconButtonElement={
+          <IconButton>
+            <MoreVertIcon color={Colors.grey400} />
+          </IconButton>
+        }
+        onItemTouchTap={this.onMenuAction.bind(this)}
+        {...this.props}
+        >
+        <MenuItem
+          value='edit'
+          primaryText='Edit'
+          checked={this.props.Edit}
+          style={{ boxSizing: 'content-box' }}
+          />
+      </IconMenu>
+    )
+  }
+
+  onMenuAction(event: Event, item: React.Element) {
+    var { activity, editing } = this.props
+    if (item.props.value === 'edit') {
+      if (editing && activityId(editing) === activityId(activity)) {
+        this.emit(new CE.Reset())
+      }
+      else {
+        this.emit(new CE.Edit(activity))
+      }
+    }
   }
 }
 
@@ -174,4 +219,9 @@ function displayHtml(content: Buffer): React.Element {
 
 function displayUnknown(): React.Element {
   return <p style={styles.body}><em>unknown activity type</em></p>
+}
+
+function myContent(activity: DerivedActivity, email: string): boolean {
+  var me = mailtoUri(email)
+  return actor(activity).uri === me
 }
