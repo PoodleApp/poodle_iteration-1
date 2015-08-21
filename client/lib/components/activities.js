@@ -75,11 +75,20 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 }
 
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
+  getStyles(): Object {
+    return {
+      menu: {
+        float: 'right',
+      },
+    }
+  }
+
   render(): React.Element {
     var { activity, useremail } = this.props
     var fromStr = actor(activity).displayName || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     var mine    = myContent(activity, useremail)
+    var styles  = this.getStyles()
     return (
       <Paper>
         <CardHeader
@@ -87,8 +96,8 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           subtitle={dateStr}
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           >
-          {mine ? <MyContentOptsMenu {...this.props} /> : ''}
           <LikeButton style={{ float:'right' }} {...this.props} />
+          {mine ? <MyContentOptsMenu style={styles.menu} {...this.props} /> : ''}
         </CardHeader>
         {displayContent(activity)}
       </Paper>
