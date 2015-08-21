@@ -236,7 +236,7 @@ function displayHtml(content: Buffer): React.Element {
 }
 
 function displayUnknown(): React.Element {
-  return <p style={styles.body}><em>unknown activity type</em></p>
+  return <p style={styles.body}><em>[no content]</em></p>
 }
 
 function myContent(activity: DerivedActivity, email: string): boolean {
