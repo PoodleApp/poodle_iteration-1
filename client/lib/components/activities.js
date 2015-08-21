@@ -16,6 +16,7 @@ import { activityId
        , objectContent
        , objectType
        , published
+       , verb
        } from '../../../lib/derivedActivity'
 import { Avatar
        , Card
@@ -36,19 +37,25 @@ export type ActivityProps = {
   useremail:    string,
 }
 
-
 var styles = {
   body: {
     padding: '16px',
     paddingTop: 0,
     whiteSpace: 'pre-wrap',
+  },
+  conflictNotice: {
+    padding: '16px',
+    paddingBottom: 0,
   }
 }
 
 export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var activity = this.props.activity
-    if (objectType(activity) === 'note') {
+    if (verb(activity) === 'conflict') {
+      return <ConflictView {...this.props} />
+    }
+    else if (objectType(activity) === 'note') {
       return this.editingThis() ?
         <EditNote {...this.props} /> :
         <NoteView {...this.props} />
@@ -99,6 +106,22 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           <LikeButton style={{ float:'right' }} {...this.props} />
           {mine ? <MyContentOptsMenu style={styles.menu} {...this.props} /> : ''}
         </CardHeader>
+        {displayContent(activity)}
+      </Paper>
+    )
+  }
+}
+
+class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
+  render(): React.Element {
+    var { activity, useremail } = this.props
+    var fromStr = actor(activity).displayName || '[unknown sender]'
+    var dateStr = published(activity).fromNow()
+    return (
+      <Paper>
+        <p style={styles.conflictNotice}>
+          <strong>Edit failed due to a conflict with another edit.</strong>
+        </p>
         {displayContent(activity)}
       </Paper>
     )
