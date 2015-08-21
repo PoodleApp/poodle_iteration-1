@@ -62,8 +62,12 @@ var styles = {
 export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var activity = this.props.activity
-    if (verb(activity) === 'conflict') {
+    var v = verb(activity)
+    if (v === 'conflict') {
       return <ConflictView {...this.props} />
+    }
+    else if (v === 'join') {
+      return <JoinView {...this.props} />
     }
     else if (objectType(activity) === 'note') {
       return this.editingThis() ?
@@ -129,6 +133,26 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
         </p>
         {displayContent(activity)}
       </Paper>
+    )
+  }
+}
+
+class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
+  render(): React.Element {
+    var { activity } = this.props
+    var fromStr = actor(activity).displayName
+    return (
+      <div>
+      <Paper>
+        <CardHeader
+          title={fromStr}
+          subtitle='joined the discussion'
+          avatar={<Avatar>{fromStr[0]}</Avatar>}
+          >
+        </CardHeader>
+      </Paper>
+      <br/>
+      </div>
     )
   }
 }
