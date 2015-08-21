@@ -2,8 +2,9 @@
 
 import * as Sunshine                       from 'sunshine/react'
 import React                               from 'react'
-import { get, lookup }                     from 'lens'
+import { compose, get, lookup }            from 'lens'
 import * as State                          from '../state'
+import * as CS                             from '../../../lib/composer/state'
 import * as Ev                             from '../event'
 import { ComposeView }                     from '../../../lib/components/compose'
 import Settings                            from '../../../lib/components/Settings'
@@ -22,6 +23,7 @@ import { AppBar
 import MenuItem      from 'material-ui/lib/menus/menu-item'
 import ContentCreate from 'material-ui/lib/svg-icons/content/create'
 
+import type { DerivedActivity } from '../../../lib/derivedActivity'
 import type { Conversation } from '../../../lib/conversation'
 import type { AppState }     from '../state'
 
@@ -39,6 +41,7 @@ type AppComponentState = {
   view:         State.View,
   loading:      boolean,
   conversation: ?Conversation,
+  editing:      ?DerivedActivity,
   error:        ?Object,
   notification: ?string,
   username:     ?string,
@@ -51,6 +54,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       view:         get(State.view, state),
       loading:      get(State.isLoading, state),
       conversation: State.currentConversation(state),
+      editing:      get(compose(State.composerState, CS.editing), state),
       error:        get(State.genericError, state),
       notification: get(State.notification, state),
       username:     lookup(State.username, state),
@@ -74,7 +78,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   render(): React.Element {
-    var { view, conversation, loading, username, useremail } = this.state
+    var { view, conversation, editing, loading, username, useremail } = this.state
     var content, selected
     var title = 'Activity Stream'
 
@@ -89,6 +93,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     else if (view === 'conversation') {
       content = <ConversationView
                   conversation={conversation}
+                  editing={editing}
                   username={username}
                   useremail={useremail}
                   loading={loading}

@@ -7,7 +7,8 @@ import repa          from 'repa'
 import { mailtoUri } from '../../../lib/activity'
 import * as Ev       from '../event'
 import * as State    from '../state'
-import * as CE       from '../../../lib/composer/event'
+import { EditNote }  from '../../../lib/components/compose'
+import { MyContentOptsMenu } from '../../../lib/components/activityMenu'
 import { activityId
        , actor
        , likes
@@ -16,25 +17,12 @@ import { activityId
        , objectType
        , published
        } from '../../../lib/derivedActivity'
-import { AppBar
-       , AppCanvas
-       , Avatar
+import { Avatar
        , Card
        , CardHeader
        , FlatButton
-       , IconButton
-       , IconMenu
-       , LeftNav
        , Paper
-       , RefreshIndicator
-       , Styles
-       , TextField
-       , Toolbar
-       , ToolbarGroup
-       , ToolbarTitle
        } from 'material-ui'
-import MenuItem     from 'material-ui/lib/menus/menu-item'
-import MoreVertIcon from 'material-ui/lib/svg-icons/navigation/more-vert'
 
 import type { DerivedActivity } from '../../../lib/derivedActivity'
 import type { Conversation }    from '../../../lib/conversation'
@@ -48,7 +36,6 @@ export type ActivityProps = {
   useremail:    string,
 }
 
-var { Colors } = Styles
 
 var styles = {
   body: {
@@ -62,9 +49,9 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var activity = this.props.activity
     if (objectType(activity) === 'note') {
-      return (
+      return this.editingThis() ?
+        <EditNote {...this.props} /> :
         <NoteView {...this.props} />
-      )
     }
     else {
       return (
@@ -79,6 +66,11 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
         {displayUnknown()}
       </Paper>
     )
+  }
+
+  editingThis(): boolean {
+    var { activity, editing } = this.props
+    return editing && activityId(editing) === activityId(activity)
   }
 }
 
@@ -95,8 +87,8 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           subtitle={dateStr}
           avatar={<Avatar>{fromStr[0]}</Avatar>}
           >
-          <LikeButton style={{ float:'right' }} {...this.props} />
           {mine ? <MyContentOptsMenu {...this.props} /> : ''}
+          <LikeButton style={{ float:'right' }} {...this.props} />
         </CardHeader>
         {displayContent(activity)}
       </Paper>
@@ -144,41 +136,6 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
 
   like() {
     this.emit(new Ev.Like(this.props.activity, this.props.conversation))
-  }
-}
-
-export class MyContentOptsMenu extends Sunshine.Component<{},ActivityProps,{}> {
-  render() {
-    return (
-      <IconMenu
-        iconButtonElement={
-          <IconButton>
-            <MoreVertIcon color={Colors.grey400} />
-          </IconButton>
-        }
-        onItemTouchTap={this.onMenuAction.bind(this)}
-        {...this.props}
-        >
-        <MenuItem
-          value='edit'
-          primaryText='Edit'
-          checked={this.props.Edit}
-          style={{ boxSizing: 'content-box' }}
-          />
-      </IconMenu>
-    )
-  }
-
-  onMenuAction(event: Event, item: React.Element) {
-    var { activity, editing } = this.props
-    if (item.props.value === 'edit') {
-      if (editing && activityId(editing) === activityId(activity)) {
-        this.emit(new CE.Reset())
-      }
-      else {
-        this.emit(new CE.Edit(activity))
-      }
-    }
   }
 }
 
