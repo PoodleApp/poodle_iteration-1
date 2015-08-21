@@ -11,6 +11,8 @@ import { EditNote }  from '../../../lib/components/compose'
 import { MyContentOptsMenu } from '../../../lib/components/activityMenu'
 import { activityId
        , actor
+       , edited
+       , lastEdited
        , likes
        , likeCount
        , objectContent
@@ -43,10 +45,18 @@ var styles = {
     paddingTop: 0,
     whiteSpace: 'pre-wrap',
   },
-  conflictNotice: {
+  inlineNotice: {
     padding: '16px',
     paddingBottom: 0,
-  }
+  },
+  inlineNoticeUnderHeader: {
+    padding: '16px',
+    paddingBottom: 0,
+    paddingTop: 0,
+  },
+  menu: {
+    float: 'right',
+  },
 }
 
 export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
@@ -82,20 +92,11 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 }
 
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
-  getStyles(): Object {
-    return {
-      menu: {
-        float: 'right',
-      },
-    }
-  }
-
   render(): React.Element {
     var { activity, useremail } = this.props
     var fromStr = actor(activity).displayName || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     var mine    = myContent(activity, useremail)
-    var styles  = this.getStyles()
     return (
       <Paper>
         <CardHeader
@@ -106,6 +107,10 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           <LikeButton style={{ float:'right' }} {...this.props} />
           {mine ? <MyContentOptsMenu style={styles.menu} {...this.props} /> : ''}
         </CardHeader>
+        {edited(activity) ?
+          <p style={styles.inlineNoticeUnderHeader}>
+            <em>Last edited {lastEdited(activity).fromNow()}</em>
+          </p> : ''}
         {displayContent(activity)}
       </Paper>
     )
@@ -119,7 +124,7 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     var dateStr = published(activity).fromNow()
     return (
       <Paper>
-        <p style={styles.conflictNotice}>
+        <p style={styles.inlineNotice}>
           <strong>Edit failed due to a conflict with another edit.</strong>
         </p>
         {displayContent(activity)}
