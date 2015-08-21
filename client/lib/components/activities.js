@@ -9,6 +9,7 @@ import * as Ev       from '../event'
 import * as State    from '../state'
 import { EditNote }  from '../../../lib/components/compose'
 import { MyContentOptsMenu } from '../../../lib/components/activityMenu'
+import { actorAvatar } from '../../../lib/components/avatar'
 import { activityId
        , actor
        , edited
@@ -20,8 +21,7 @@ import { activityId
        , published
        , verb
        } from '../../../lib/derivedActivity'
-import { Avatar
-       , Card
+import { Card
        , CardHeader
        , FlatButton
        , Paper
@@ -106,7 +106,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
         <CardHeader
           title={fromStr}
           subtitle={dateStr}
-          avatar={<Avatar>{fromStr[0]}</Avatar>}
+          avatar={actorAvatar(actor(activity))}
           >
           <LikeButton style={{ float:'right' }} {...this.props} />
           {mine ? <MyContentOptsMenu style={styles.menu} {...this.props} /> : ''}
@@ -147,7 +147,7 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
         <CardHeader
           title={fromStr}
           subtitle='joined the discussion'
-          avatar={<Avatar>{fromStr[0]}</Avatar>}
+          avatar={actorAvatar(actor(activity))}
           >
         </CardHeader>
       </Paper>
@@ -167,7 +167,7 @@ class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
         <CardHeader
           title={fromStr}
           subtitle={dateStr}
-          avatar={<Avatar>{fromStr[0]}</Avatar>}
+          avatar={actorAvatar(actor(activity))}
           />
         {displayContent(activity)}
       </Paper>
