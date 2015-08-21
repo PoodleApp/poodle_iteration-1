@@ -57,6 +57,7 @@ var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
 var username: Traversal_<AppState,string> = compose(config_, field('name'))
 var useremail: Traversal_<AppState,string> = compose(config_, field('email'))
 var likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
+var notmuchCmd: Traversal_<AppState,string> = compose(config_, field('notmuchCmd'))
 
 function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))
@@ -99,6 +100,7 @@ export {
   loading,
   // lookupUri,
   notification,
+  notmuchCmd,
   routeParam,
   routeParams,
   username,

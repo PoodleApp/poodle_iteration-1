@@ -100,9 +100,11 @@ class Like {
 }
 
 function init(app: Sunshine.App<AppState>) {
+
   app.on(QueryConversations, (state, { query }) => {
+    var cmd = lookup(State.notmuchCmd, state) || 'notmuch'
     indicateLoading('conversations',
-      queryConversations(query).then(
+      queryConversations(cmd, query).then(
         convs => app.emit(new Conversations(convs)),
         err   => app.emit(new GenericError(err))
       )
