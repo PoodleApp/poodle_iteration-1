@@ -40,6 +40,7 @@
     "react": "^0.13.3",
     "react-tap-event-plugin": "^0.1.7",
     "repa": "^1.0.0",
+    "string-hash": "^1.1.0",
     "sunshine": "hallettj/sunshine#579c93704a3efba77c8cfffa5817ad49c3830279"
   }
 }
