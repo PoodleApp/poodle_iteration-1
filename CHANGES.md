@@ -9,3 +9,4 @@
 ## 2015-08-21
 
 - Color for avatars, based on non-cryptographic hashes of email addresses
+- Render text content as Markdown

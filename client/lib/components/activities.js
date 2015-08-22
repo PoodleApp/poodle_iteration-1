@@ -4,6 +4,7 @@ import * as Sunshine from 'sunshine/react'
 import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'
+import marked        from 'marked'
 import { mailtoUri } from '../../../lib/activity'
 import * as Ev       from '../event'
 import * as State    from '../state'
@@ -43,7 +44,6 @@ var styles = {
   body: {
     padding: '16px',
     paddingTop: 0,
-    whiteSpace: 'pre-wrap',
   },
   inlineNotice: {
     padding: '16px',
@@ -228,7 +228,14 @@ function displayContent(activity: DerivedActivity): React.Element {
 }
 
 function displayText(content: Buffer): React.Element {
-  return <p style={styles.body}>{repa(content.toString('utf8'))}</p>
+  var content = repa(content.toString('utf8'))
+  var out = {
+    __html: marked(content, { sanitized: true })
+  }
+  return <div
+    style={styles.body}
+    className='markdown-content'
+    dangerouslySetInnerHTML={out} />
 }
 
 function displayHtml(content: Buffer): React.Element {
