@@ -244,11 +244,15 @@ function displayText(content: Buffer): React.Element {
 }
 
 function displayHtml(content: Buffer): React.Element {
-  return <p style={styles.body}>TODO: display HTML</p>
+  return (
+    <div style={styles.body}>
+      <p>TODO: display HTML</p>
+    </div>
+  )
 }
 
 function displayUnknown(): React.Element {
-  return <p style={styles.body}><em>[no content]</em></p>
+  return <div style={styles.body}><p><em>[no content]</em></p></div>
 }
 
 function myContent(activity: DerivedActivity, email: string): boolean {
