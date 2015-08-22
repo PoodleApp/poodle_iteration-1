@@ -33,6 +33,14 @@ router.add('/conversations/:id', params => {
   app.emit(new Event.ViewConversation(params.id))
 })
 
+router.add('/conversations/:id', params => {
+  app.emit(new Event.ViewConversation(params.id))
+})
+
+router.add('/activities/:uri', params => {
+  app.emit(new Event.ViewActivity(params.uri))
+})
+
 router.add('/settings', () => {
   app.emit(new Event.ViewSettings())
 })

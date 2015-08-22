@@ -5,6 +5,7 @@ import { compose, filtering, getter } from 'lens'
 import { field, index }               from 'lens/immutable'
 import * as CS                        from '../../lib/composer/state'
 import { parseMidUri, published }     from '../../lib/activity'
+import * as Act                       from '../../lib/derivedActivity'
 import { map
        , pipe
        , sortBy
@@ -74,6 +75,14 @@ function conversation(id: ThreadId, state: AppState): ?Conversation {
 function currentConversation(state: AppState): ?Conversation {
   var id = state.routeParams.get('conversationId')
   if (id) { return conversation(id, state) }
+}
+
+function currentActivity(state: AppState): ?Conversation {
+  var conv = currentConversation(state)
+  var uri = state.routeParams.get('activityUri')
+  if (conv && uri) {
+    return conv.activities.find(a => Act.activityId(a) === uri)
+  }
 }
 
 // TODO: lookup by Activity URI

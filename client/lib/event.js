@@ -8,12 +8,14 @@ import * as State                           from './state'
 import * as Create                          from '../../lib/activityTypes'
 import { activityId }                       from '../../lib/derivedActivity'
 import * as Act                             from '../../lib/derivedActivity'
+import { parseMidUri }                      from '../../lib/activity'
 import { participants, queryConversations } from '../../lib/conversation'
 import { loadConfig, saveConfig }           from '../../lib/config'
 import { assemble }                         from '../../lib/compose'
 import { msmtp }                            from '../../lib/msmtp'
 
 import type { List }             from 'immutable'
+import type { URI }              from '../../lib/activity'
 import type { DerivedActivity }  from '../../lib/derivedActivity'
 import type { Conversation }     from '../../lib/conversation'
 import type { Address, Message } from '../../lib/notmuch'
@@ -39,9 +41,17 @@ class ViewCompose {
   params: Map<string,string>;
   constructor(params: Map<string,string>) { this.params = params }
 }
+class ViewActivity {
+  uri: URI;
+  constructor(uri: URI) { this.uri = uri }
+}
 class ViewConversation {
   id: string;
-  constructor(id: string) { this.id = id }
+  activityUri: ?URI;
+  constructor(id: string, activityUri?: URI) {
+    this.id = id
+    this.activityUri = activityUri
+  }
 }
 class ViewSettings {}
 
@@ -140,9 +150,32 @@ function init(app: Sunshine.App<AppState>) {
            state))
   })
 
-  app.on(ViewConversation, (state, { id }) => {
+  app.on(ViewActivity, (state, { uri }) => {
+    var parsed = parseMidUri(uri)
+    if (!parsed) {
+      app.emit(new GenericError('Unable to parse activity URI'))
+      return
+    }
+    var { messageId } = parsed
+    var cmd = lookup(State.notmuchCmd, state) || 'notmuch'
+
+    indicateLoading('activityByUri',
+      queryConversations(cmd, `id:${messageId}`).then(convs => {
+        if (convs.length > 0) {
+          app.emit(new Conversations(convs))
+          app.emit(new ViewConversation(convs[0].id, uri))
+        }
+        else {
+          return Promise.reject('Could not find activity for given URI')
+        }
+      })
+      .catch(err => app.emit(new GenericError(err)))
+    )
+  })
+
+  app.on(ViewConversation, (state, { id, activityUri }) => {
     var state_ = set(State.view, 'conversation',
-                 set(State.routeParams, fromJS({ conversationId: id }),
+                 set(State.routeParams, fromJS({ conversationId: id, activityUri }),
                  state))
     var conv = State.currentConversation(state_)
     if (!conv) {
@@ -291,6 +324,7 @@ export {
   Send,
   SendReply,
   ShowLink,
+  ViewActivity,
   ViewCompose,
   ViewConversation,
   ViewRoot,
