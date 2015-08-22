@@ -45,6 +45,9 @@ var styles = {
     padding: '16px',
     paddingTop: 0,
   },
+  activityCard: {
+    paddingTop: '0.6em'
+  },
   inlineNotice: {
     padding: '16px',
     paddingBottom: 0,
@@ -101,7 +104,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
     var fromStr = actor(activity).displayName || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
-      <div>
+      <div style={styles.activityCard}>
       <Paper>
         <CardHeader
           title={fromStr}
@@ -117,7 +120,6 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           </p> : ''}
         {displayContent(activity)}
       </Paper>
-      <br/>
       </div>
     )
   }
@@ -129,12 +131,14 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     var fromStr = actor(activity).displayName || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
+      <div style={styles.activityCard}>
       <Paper>
         <p style={styles.inlineNotice}>
           <strong>Edit failed due to a conflict with another edit.</strong>
         </p>
         {displayContent(activity)}
       </Paper>
+      </div>
     )
   }
 }
@@ -144,7 +148,7 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
     var { activity } = this.props
     var fromStr = actor(activity).displayName
     return (
-      <div>
+      <div style={styles.activityCard}>
       <Paper>
         <CardHeader
           title={fromStr}
@@ -153,7 +157,6 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
           >
         </CardHeader>
       </Paper>
-      <br/>
       </div>
     )
   }
