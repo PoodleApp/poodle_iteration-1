@@ -85,21 +85,6 @@ function currentActivity(state: AppState): ?Conversation {
   }
 }
 
-// TODO: lookup by Activity URI
-// function lookupUri(uri: URI, state: AppState): ?{ conv: Conversation, msg: ?Message, part: ?Attachment } {
-//   var parsed = parseMidUri(uri)
-//   if (!parsed || !parsed.messageId) { return }
-//   var { messageId, partId } = parsed
-//   var conv = state.conversations.find(
-//     c => c.messages.some(m => m.id === msgId)
-//   )
-//   var msg = conv ? conv.messages.find(m => m.id === msgId) : null
-//   var part = msg ? msg.attachments.find(p => p.contentId === partId) : null
-//   if (conv) {
-//     return { conv, msg, part }
-//   }
-// }
-
 export {
   composerState,
   config,
