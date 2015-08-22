@@ -153,7 +153,7 @@ function init(app: Sunshine.App<AppState>) {
   app.on(ViewActivity, (state, { uri }) => {
     var parsed = parseMidUri(uri)
     if (!parsed) {
-      app.emit(new GenericError('Unable to parse activity URI'))
+      app.emit(new GenericError(`Unable to parse activity URI: ${uri}`))
       return
     }
     var { messageId } = parsed
@@ -161,12 +161,12 @@ function init(app: Sunshine.App<AppState>) {
 
     indicateLoading('activityByUri',
       queryConversations(cmd, `id:${messageId}`).then(convs => {
-        if (convs.length > 0) {
+        if (convs.size > 0) {
           app.emit(new Conversations(convs))
-          app.emit(new ViewConversation(convs[0].id, uri))
+          app.emit(new ViewConversation(convs.get(0).id, uri))
         }
         else {
-          return Promise.reject('Could not find activity for given URI')
+          return Promise.reject(`Could not find activity for given URI: ${uri}`)
         }
       })
       .catch(err => app.emit(new GenericError(err)))

@@ -38,7 +38,7 @@ router.add('/conversations/:id', params => {
 })
 
 router.add('/activities/:uri', params => {
-  app.emit(new Event.ViewActivity(params.uri))
+  app.emit(new Event.ViewActivity(decodeURIComponent(params.uri)))
 })
 
 router.add('/settings', () => {

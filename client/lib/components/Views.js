@@ -3,6 +3,7 @@
 import * as Sunshine                       from 'sunshine/react'
 import React                               from 'react'
 import { compose, get, lookup }            from 'lens'
+import { parseMidUri }                     from '../../../lib/activity'
 import * as Act                            from '../../../lib/derivedActivity'
 import * as State                          from '../state'
 import * as CS                             from '../../../lib/composer/state'
@@ -138,7 +139,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
             { route: '#/',         text: 'Activity Stream' },
             { route: '#/settings', text: 'Settings' },
           ]} />
-        <div style={styles.root}>
+        <div style={styles.root} onClick={interceptMidUris}>
           <div style={styles.content}>
             {content}
           </div>
@@ -227,3 +228,11 @@ App.contextTypes = {
   muiTheme:     React.PropTypes.object,
 }
 
+function interceptMidUris(event: Event) {
+  var href = (event.target:any).href
+  var parsed = href && parseMidUri(href)
+  if (parsed) {
+    event.preventDefault()
+    window.location = `#/activities/${encodeURIComponent(href)}`
+  }
+}
