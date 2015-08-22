@@ -12,6 +12,7 @@ import { map
 
 import type { Getter, Lens_, Traversal_ } from 'lens'
 import type { URI }                       from '../../lib/activity'
+import type { DerivedActivity }           from '../../lib/derivedActivity'
 import type { Conversation }              from '../../lib/conversation'
 import type { ThreadId }                  from '../../lib/notmuch'
 import type { Config }                    from '../../lib/config'
@@ -25,6 +26,7 @@ export type AppState = Record<{
   config?:       Config,
   notification?: string,
   composerState: CS.ComposerState,
+  showLink:      ?DerivedActivity,
 }>
 
 export type View = 'root' | 'compose' | 'conversation' | 'settings'
@@ -38,6 +40,7 @@ var AppStateRecord = Record({
   config:        null,
   notification:  null,
   composerState: CS.initialState,
+  showLink:      null,
 })
 
 var initialState: AppState = new AppStateRecord()
@@ -51,6 +54,7 @@ var view: Lens_<AppState,View> = field('view')
 var routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
 var genericError: Lens_<AppState,?Object> = field('genericError')
 var notification = field('notification')
+var showLink = field('showLink')
 
 var config: Lens_<AppState,?Config> = field('config')
 var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
@@ -103,6 +107,7 @@ export {
   notmuchCmd,
   routeParam,
   routeParams,
+  showLink,
   username,
   useremail,
   view,

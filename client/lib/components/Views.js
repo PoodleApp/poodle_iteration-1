@@ -3,6 +3,7 @@
 import * as Sunshine                       from 'sunshine/react'
 import React                               from 'react'
 import { compose, get, lookup }            from 'lens'
+import * as Act                            from '../../../lib/derivedActivity'
 import * as State                          from '../state'
 import * as CS                             from '../../../lib/composer/state'
 import * as Ev                             from '../event'
@@ -19,6 +20,7 @@ import { AppBar
        , RefreshIndicator
        , Snackbar
        , Styles
+       , TextField
        } from 'material-ui'
 import MenuItem      from 'material-ui/lib/menus/menu-item'
 import ContentCreate from 'material-ui/lib/svg-icons/content/create'
@@ -44,6 +46,7 @@ type AppComponentState = {
   editing:      ?DerivedActivity,
   error:        ?Object,
   notification: ?string,
+  showLink:     ?DerivedActivity,
   username:     ?string,
   useremail:    ?string,
 }
@@ -57,6 +60,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       editing:      get(compose(State.composerState, CS.editing), state),
       error:        get(State.genericError, state),
       notification: get(State.notification, state),
+      showLink:     get(State.showLink, state),
       username:     lookup(State.username, state),
       useremail:    lookup(State.useremail, state),
     }
@@ -144,6 +148,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
         {this.state.loading ?
           <RefreshIndicator size={40} left={400} top={100} status="loading" /> : ''
         }
+        {this.state.showLink ? this.showLink(this.state.showLink) : '' }
       </AppCanvas>
     )
   }
@@ -171,6 +176,29 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
         openOnMount={true}
         onDismiss={() => this.emit(new Ev.DismissNotify())}
         />
+    )
+  }
+
+  showLink(activity: DerivedActivity): React.Element {
+    var actions = [
+      { text: 'Ok', onTouchTap: () => this.emit(new Ev.ShowLink(null)), ref: 'ok' }
+    ]
+    var uri = Act.activityId(activity)
+    var title = Act.title(activity)
+    return (
+      <Dialog
+        title='Link to activity'
+        actions={actions}
+        actionFocus='ok'
+        openImmediately={true}
+        >
+        <div style={styles.body}>
+          <p>Use URI below to link to this activity.</p>
+          <TextField defaultValue={uri} fullWidth={true} />
+          <p>To insert a link in another message, copy & paste the snippet below.</p>
+          <TextField defaultValue={`[${title}](${uri})`} fullWidth={true} />
+        </div>
+      </Dialog>
     )
   }
 

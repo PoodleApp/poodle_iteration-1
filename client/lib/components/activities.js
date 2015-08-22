@@ -9,7 +9,7 @@ import { mailtoUri } from '../../../lib/activity'
 import * as Ev       from '../event'
 import * as State    from '../state'
 import { EditNote }  from '../../../lib/components/compose'
-import { MyContentOptsMenu } from '../../../lib/components/activityMenu'
+import { ActivityOptsMenu } from '../../../lib/components/activityMenu'
 import { actorAvatar } from '../../../lib/components/avatar'
 import { activityId
        , actor
@@ -100,7 +100,6 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
     var { activity, useremail } = this.props
     var fromStr = actor(activity).displayName || '[unknown sender]'
     var dateStr = published(activity).fromNow()
-    var mine    = myContent(activity, useremail)
     return (
       <Paper>
         <CardHeader
@@ -109,7 +108,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           avatar={actorAvatar(actor(activity))}
           >
           <LikeButton style={{ float:'right' }} {...this.props} />
-          {mine ? <MyContentOptsMenu style={styles.menu} {...this.props} /> : ''}
+          <ActivityOptsMenu style={styles.menu} {...this.props} />
         </CardHeader>
         {edited(activity) ?
           <p style={styles.inlineNoticeUnderHeader}>

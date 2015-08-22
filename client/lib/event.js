@@ -99,6 +99,11 @@ class Like {
   }
 }
 
+class ShowLink {
+  activity: ?DerivedActivity;
+  constructor(activity: ?DerivedActivity) { this.activity = activity }
+}
+
 function init(app: Sunshine.App<AppState>) {
 
   app.on(QueryConversations, (state, { query }) => {
@@ -208,6 +213,10 @@ function init(app: Sunshine.App<AppState>) {
     sendReply(new SendReply({ reply: like, message, conversation }), state)
   })
 
+  app.on(ShowLink, (state, { activity }) => (
+    set(State.showLink, activity, state)
+  ))
+
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
     app.emit(new Loading())
     p.then(
@@ -281,6 +290,7 @@ export {
   QueryConversations,
   Send,
   SendReply,
+  ShowLink,
   ViewCompose,
   ViewConversation,
   ViewRoot,
