@@ -101,6 +101,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
     var fromStr = actor(activity).displayName || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
+      <div>
       <Paper>
         <CardHeader
           title={fromStr}
@@ -116,6 +117,8 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           </p> : ''}
         {displayContent(activity)}
       </Paper>
+      <br/>
+      </div>
     )
   }
 }
