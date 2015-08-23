@@ -133,9 +133,9 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     return (
       <div style={styles.activityCard}>
       <Paper>
-        <p style={styles.inlineNotice}>
+        <div style={styles.inlineNotice}>
           <strong>Edit failed due to a conflict with another edit.</strong>
-        </p>
+        </div>
         {displayContent(activity)}
       </Paper>
       </div>
