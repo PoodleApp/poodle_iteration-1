@@ -6,6 +6,8 @@ import moment        from 'moment'
 import repa          from 'repa'
 import marked        from 'marked'
 import { mailtoUri } from '../../../lib/activity'
+import { flatParticipants } from '../../../lib/conversation'
+import { displayName } from '../../../lib/notmuch'
 import * as Ev       from '../event'
 import * as State    from '../state'
 import { EditNote }  from '../../../lib/components/compose'
@@ -26,6 +28,7 @@ import { Card
        , CardHeader
        , FlatButton
        , Paper
+       , Styles
        } from 'material-ui'
 
 import type { DerivedActivity } from '../../../lib/derivedActivity'
@@ -38,7 +41,10 @@ export type ActivityProps = {
   loading:      boolean,
   username:     string,
   useremail:    string,
+  nestLevel:    ?number,
 }
+
+var { Colors } = Styles
 
 var styles = {
   body: {
@@ -47,6 +53,10 @@ var styles = {
   },
   activityCard: {
     paddingTop: '0.6em'
+  },
+  asideContainer: {
+    padding: '1em',
+    paddingTop: 0,
   },
   inlineNotice: {
     padding: '16px',
@@ -72,6 +82,9 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
     else if (v === 'join') {
       return <JoinView {...this.props} />
     }
+    else if (v === 'aside') {
+      return <AsideView {...this.props} />
+    }
     else if (objectType(activity) === 'note') {
       return this.editingThis() ?
         <EditNote {...this.props} /> :
@@ -86,15 +99,27 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 
   unknown(): React.Element {
     return (
-      <Paper>
+      <ActivityCard nestLevel={this.props.nestLevel}>
         {displayUnknown()}
-      </Paper>
+      </ActivityCard>
     )
   }
 
   editingThis(): boolean {
     var { activity, editing } = this.props
     return editing && activityId(editing) === activityId(activity)
+  }
+}
+
+class ActivityCard extends Sunshine.Component<{},{ nestLevel: ?number, children: React.Element },{}> {
+  render(): React.Element {
+    return (
+      <div style={styles.activityCard}>
+        <Paper {...this.props} zDpeth={this.props.nestLevel || 1}>
+          {this.props.children}
+        </Paper>
+      </div>
+    )
   }
 }
 
@@ -105,8 +130,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
     var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
-      <div style={styles.activityCard}>
-      <Paper>
+      <ActivityCard nestLevel={this.props.nestLevel}>
         <CardHeader
           title={fromStr}
           subtitle={dateStr}
@@ -120,8 +144,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
             <em>Last edited {lastEdited(activity).fromNow()}</em>
           </p> : ''}
         {displayContent(activity)}
-      </Paper>
-      </div>
+      </ActivityCard>
     )
   }
 }
@@ -133,14 +156,12 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
-      <div style={styles.activityCard}>
-      <Paper>
+      <ActivityCard nestLevel={this.props.nestLevel}>
         <div style={styles.inlineNotice}>
           <strong>Edit failed due to a conflict with another edit.</strong>
         </div>
         {displayContent(activity)}
-      </Paper>
-      </div>
+      </ActivityCard>
     )
   }
 }
@@ -151,16 +172,41 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
     var from    = actor(activity)
     var fromStr = (from && from.displayName) || '[unknown sender]'
     return (
-      <div style={styles.activityCard}>
-      <Paper>
+      <ActivityCard nestLevel={this.props.nestLevel}>
         <CardHeader
           title={fromStr}
           subtitle='joined the discussion'
           avatar={from && actorAvatar(from)}
           >
         </CardHeader>
-      </Paper>
-      </div>
+      </ActivityCard>
+    )
+  }
+}
+
+class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
+  render(): React.Element {
+    var nestLevel = this.props.nestLevel || 1
+    var { activity } = this.props
+
+    var activities = (activity.aside || List()).map(act => (
+      <ActivityView {...this.props} activity={act} key={activityId(act)} nestLevel={nestLevel+1} />
+    ))
+
+    var ppl = flatParticipants(activity).map(p => displayName(p)).join(', ')
+
+    return (
+      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.red200}}>
+        <CardHeader
+          title='private aside'
+          subtitle={ppl}
+          avatar={<span></span>}
+          >
+        </CardHeader>
+        <div style={styles.asideContainer}>
+          {activities}
+        </div>
+      </ActivityCard>
     )
   }
 }
@@ -172,14 +218,14 @@ class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
     var fromStr  = (from && from.displayName) || '[unknown sender]'
     var dateStr  = published(activity).fromNow()
     return (
-      <Paper>
+      <ActivityCard nestLevel={this.props.nestLevel}>
         <CardHeader
           title={fromStr}
           subtitle={dateStr}
           avatar={from && actorAvatar(from)}
           />
         {displayContent(activity)}
-      </Paper>
+      </ActivityCard>
     )
   }
 }

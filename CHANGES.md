@@ -1,10 +1,9 @@
 # prerelease
 
-## 2015-08-20
+## 2015-08-23
 
-- Added feature to edit notes that you have sent
-- Shows activity cards when people are added to discussions
-- Adds configuration option to set notmuch command
+- Big refactor of activity calculation
+- Private asides are highlighted in conversation view
 
 ## 2015-08-21
 
@@ -12,3 +11,9 @@
 - Render text content as Markdown
 - 'Permalink' option in activity options menus
 - Clicking links to `mid:` URIs navigates to corresponding conversation
+
+## 2015-08-20
+
+- Added feature to edit notes that you have sent
+- Shows activity cards when people are added to discussions
+- Adds configuration option to set notmuch command
