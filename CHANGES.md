@@ -4,6 +4,7 @@
 
 - Big refactor of activity calculation
 - Private asides are highlighted in conversation view
+- Include JSON part as attachment instead of alternative so that it gets a Content-Id
 
 ## 2015-08-21
 
