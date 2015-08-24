@@ -191,7 +191,13 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
     var { activity } = this.props
 
     var activities = (activity.aside || List()).map(act => (
-      <ActivityView {...this.props} activity={act} key={activityId(act)} nestLevel={nestLevel+1} />
+      <ActivityView
+        {...this.props}
+        activity={act}
+        conversation={asideToConversation(activity)}
+        key={activityId(act)}
+        nestLevel={nestLevel+1}
+        />
     ))
 
     var ppl = flatParticipants(activity).map(p => displayName(p)).join(', ')
