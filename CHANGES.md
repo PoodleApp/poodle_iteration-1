@@ -5,6 +5,7 @@
 - Big refactor of activity calculation
 - Private asides are highlighted in conversation view
 - Include JSON part as attachment instead of alternative so that it gets a Content-Id
+- Fixed bug that added quotes around recipient names after sending reply
 
 ## 2015-08-21
 
