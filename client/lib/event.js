@@ -273,7 +273,7 @@ function init(app: Sunshine.App<AppState>) {
     }
 
     var { to, from, cc } = participants(conversation)
-    var subject          = `Re: ${message.subject}`
+    var subject          = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`
     var author           = { name: username, address: useremail }
 
     var recipients    = to.concat(from).concat(addPeople)
