@@ -190,17 +190,18 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
     var nestLevel = this.props.nestLevel || 1
     var { activity } = this.props
 
+    var conv = asideToConversation(activity)
+    var ppl = flatParticipants(conv).map(p => displayName(p)).join(', ')
+
     var activities = (activity.aside || List()).map(act => (
       <ActivityView
         {...this.props}
         activity={act}
-        conversation={asideToConversation(activity)}
+        conversation={conv}
         key={activityId(act)}
         nestLevel={nestLevel+1}
         />
     ))
-
-    var ppl = flatParticipants(activity).map(p => displayName(p)).join(', ')
 
     return (
       <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.deepOrange200}}>
@@ -213,7 +214,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         <div style={styles.asideContainer}>
           {activities}
           <ComposeReply
-            inReplyTo={asideToConversation(activity)}
+            inReplyTo={conv}
             hintText='Compose private reply'
             />
         </div>
