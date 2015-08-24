@@ -196,7 +196,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
     var ppl = flatParticipants(activity).map(p => displayName(p)).join(', ')
 
     return (
-      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.red200}}>
+      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.deepOrange200}}>
         <CardHeader
           title='private aside'
           subtitle={ppl}
