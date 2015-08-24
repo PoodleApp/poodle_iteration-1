@@ -1,16 +1,17 @@
 /* @flow */
 
+import { List }      from 'immutable'
 import * as Sunshine from 'sunshine/react'
 import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'
 import marked        from 'marked'
 import { mailtoUri } from '../../../lib/activity'
-import { flatParticipants } from '../../../lib/conversation'
+import { asideToConversation, flatParticipants } from '../../../lib/conversation'
 import { displayName } from '../../../lib/notmuch'
 import * as Ev       from '../event'
 import * as State    from '../state'
-import { EditNote }  from '../../../lib/components/compose'
+import { ComposeReply, EditNote }  from '../../../lib/components/compose'
 import { ActivityOptsMenu } from '../../../lib/components/activityMenu'
 import { actorAvatar } from '../../../lib/components/avatar'
 import { activityId
@@ -205,6 +206,10 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         </CardHeader>
         <div style={styles.asideContainer}>
           {activities}
+          <ComposeReply
+            inReplyTo={asideToConversation(activity)}
+            hintText='Compose private reply'
+            />
         </div>
       </ActivityCard>
     )
