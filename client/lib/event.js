@@ -290,11 +290,9 @@ function init(app: Sunshine.App<AppState>) {
       references: (message.references || []).concat(message.messageId),
     }
 
-    if (reply[0].verb === 'like') {
-      var fallback = lookup(State.likeMessage, state)
-      if (fallback) {
-        draft.fallback = fallback
-      }
+    if (reply[1].verb === 'like') {
+      var fallback = lookup(State.likeMessage, state) || '+1'
+      draft.fallback = fallback
     }
 
     send(draft)
