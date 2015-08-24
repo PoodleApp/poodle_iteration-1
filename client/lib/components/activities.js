@@ -101,7 +101,8 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var { activity, useremail } = this.props
-    var fromStr = actor(activity).displayName || '[unknown sender]'
+    var from    = actor(activity)
+    var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
       <div style={styles.activityCard}>
@@ -109,7 +110,7 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
         <CardHeader
           title={fromStr}
           subtitle={dateStr}
-          avatar={actorAvatar(actor(activity))}
+          avatar={from && actorAvatar(from)}
           >
           <LikeButton style={{ float:'right' }} {...this.props} />
           <ActivityOptsMenu style={styles.menu} {...this.props} />
@@ -128,7 +129,8 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
 class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var { activity, useremail } = this.props
-    var fromStr = actor(activity).displayName || '[unknown sender]'
+    var from    = actor(activity)
+    var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
     return (
       <div style={styles.activityCard}>
@@ -146,14 +148,15 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
 class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var { activity } = this.props
-    var fromStr = actor(activity).displayName
+    var from    = actor(activity)
+    var fromStr = (from && from.displayName) || '[unknown sender]'
     return (
       <div style={styles.activityCard}>
       <Paper>
         <CardHeader
           title={fromStr}
           subtitle='joined the discussion'
-          avatar={actorAvatar(actor(activity))}
+          avatar={from && actorAvatar(from)}
           >
         </CardHeader>
       </Paper>
@@ -165,14 +168,15 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
 class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var activity = this.props.activity
-    var fromStr  = actor(activity).displayName || '[unknown sender]'
+    var from     = actor(activity)
+    var fromStr  = (from && from.displayName) || '[unknown sender]'
     var dateStr  = published(activity).fromNow()
     return (
       <Paper>
         <CardHeader
           title={fromStr}
           subtitle={dateStr}
-          avatar={actorAvatar(actor(activity))}
+          avatar={from && actorAvatar(from)}
           />
         {displayContent(activity)}
       </Paper>
@@ -256,6 +260,7 @@ function displayUnknown(): React.Element {
 }
 
 function myContent(activity: DerivedActivity, email: string): boolean {
-  var me = mailtoUri(email)
-  return actor(activity).uri === me
+  var me   = mailtoUri(email)
+  var them = actor(activity)
+  return !!them && (them.uri === me)
 }

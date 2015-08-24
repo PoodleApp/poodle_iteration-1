@@ -242,8 +242,13 @@ function init(app: Sunshine.App<AppState>) {
       objectType: 'activity',
       uri: activityId(activity),
     })
-    var message = Act.message(activity)
-    sendReply(new SendReply({ reply: like, message, conversation }), state)
+    var message = Act.getMessage(activity)
+    if (message) {
+      sendReply(new SendReply({ reply: like, message, conversation }), state)
+    }
+    else {
+      app.emit(new GenericError('Cannot +1 synthetic activity.'))
+    }
   })
 
   app.on(ShowLink, (state, { activity }) => (
