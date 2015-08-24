@@ -1,6 +1,6 @@
 /* @flow */
 
-import { List }      from 'immutable'
+import { List, is }  from 'immutable'
 import * as Sunshine from 'sunshine/react'
 import React         from 'react'
 import moment        from 'moment'
@@ -188,10 +188,15 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
 class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var nestLevel = this.props.nestLevel || 1
-    var { activity } = this.props
+    var { activity, conversation } = this.props
 
     var conv = asideToConversation(activity)
     var ppl = flatParticipants(conv).map(p => displayName(p)).join(', ')
+
+    // TODO: a bit hackish
+    var showReplyForm = is(activity, conversation.activities.findLast(act => (
+      act.verb === 'aside' && is(act.allActivities, activity.allActivities)
+    )))
 
     var activities = (activity.aside || List()).map(act => (
       <ActivityView
@@ -213,10 +218,11 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         </CardHeader>
         <div style={styles.asideContainer}>
           {activities}
-          <ComposeReply
-            inReplyTo={conv}
-            hintText='Compose private reply'
-            />
+          {showReplyForm ?
+            <ComposeReply
+              inReplyTo={conv}
+              hintText='Compose private reply'
+              /> : ''}
         </div>
       </ActivityCard>
     )
