@@ -301,7 +301,10 @@ function init(app: Sunshine.App<AppState>) {
   function send(draft: Draft) {
     var msg = assemble(draft)
     indicateLoading('send',
-      msmtp(msg).catch(err => app.emit(new GenericError(err)))
+      msmtp(msg).then(
+        _ => app.emit(new Notify('Message sent')),
+        err => app.emit(new GenericError(err))
+      )
     )
   }
 }
