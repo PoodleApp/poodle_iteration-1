@@ -25,6 +25,7 @@ import { AppBar
        } from 'material-ui'
 import MenuItem      from 'material-ui/lib/menus/menu-item'
 import ContentCreate from 'material-ui/lib/svg-icons/content/create'
+import ArrowBack     from 'material-ui/lib/svg-icons/navigation/arrow-back'
 
 import type { DerivedActivity } from '../../../lib/derivedActivity'
 import type { Conversation } from '../../../lib/conversation'
@@ -85,11 +86,13 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   render(): React.Element {
     var { view, conversation, editing, loading, username, useremail } = this.state
     var content, selected
+    var iconLeft = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
     var title = 'Activity Stream'
 
     if (view === 'root') {
       content  = <Conversations/>
       selected = 0
+      iconLeft = undefined
     }
     else if (view === 'compose') {
       content = <ComposeView />
@@ -117,6 +120,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       <AppCanvas>
         <AppBar
           title={title}
+          iconElementLeft={iconLeft}
           onLeftIconButtonTouchTap={() => this.refs.leftNav.toggle()}
           iconElementRight={
             <IconMenu
