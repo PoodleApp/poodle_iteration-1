@@ -36,7 +36,10 @@ class Conversations {
 class Loading {}
 class DoneLoading {}
 
-class ViewRoot {}
+class ViewRoot {
+  searchQuery: ?string;
+  constructor(query: ?string) { this.searchQuery = query }
+}
 class ViewCompose {
   params: Map<string,string>;
   constructor(params: Map<string,string>) { this.params = params }
@@ -138,9 +141,12 @@ function init(app: Sunshine.App<AppState>) {
     return over(State.loading, n => Math.max(0, n - 1), state)
   })
 
-  app.on(ViewRoot, (state, _) => {
+  app.on(ViewRoot, (state, { searchQuery }) => {
+    if (searchQuery) {
+      app.emit(new QueryConversations(searchQuery))
+    }
     return set(State.view, 'root',
-           set(State.routeParams, Map(),
+           set(State.routeParams, Map({ q: searchQuery }),
            state))
   })
 
