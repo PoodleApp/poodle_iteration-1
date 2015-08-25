@@ -209,7 +209,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
     ))
 
     return (
-      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.deepOrange200}}>
+      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.deepOrange100}}>
         <CardHeader
           title='private aside'
           subtitle={ppl}
