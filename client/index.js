@@ -46,7 +46,8 @@ router.add('/settings', () => {
 })
 
 var ThemeManager = new Styles.ThemeManager()
-ThemeManager.setTheme(ThemeManager.types.LIGHT)
+import { PoodleTheme } from '../lib/themes'
+ThemeManager.setTheme(PoodleTheme)
 
 class ContextWrapper extends React.Component<{},{},{}> {
   getChildContext(): Object {

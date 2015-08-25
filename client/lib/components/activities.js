@@ -208,8 +208,10 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         />
     ))
 
+    var { palette } = this.context.muiTheme
+
     return (
-      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: Colors.deepOrange100}}>
+      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: palette.primary3Color}}>
         <CardHeader
           title='private aside'
           subtitle={ppl}
@@ -227,6 +229,11 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
       </ActivityCard>
     )
   }
+}
+
+AsideView.contextTypes = {
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+  muiTheme: React.PropTypes.object.isRequired,
 }
 
 class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
