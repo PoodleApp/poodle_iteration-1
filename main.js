@@ -24,4 +24,11 @@ app.on('ready', function() {
   mainWindow.on('closed', function() {
     mainWindow = null
   })
+
+  var ipc = require('electron-safe-ipc/host')
+  var account = require('./lib/account')
+
+  ipc.respond('google-account', function() {
+    return account.setupGoogle()
+  })
 })
