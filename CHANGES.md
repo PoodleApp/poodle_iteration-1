@@ -1,5 +1,14 @@
 # prerelease
 
+## 2015-08-24
+
+- New color scheme
+- Added back button (replaces menu button in some views)
+- Activity Stream search form remembers the last search query that you used
+- Activity Stream automatically refreshes when navigated to
+- Notifications in snackbar when messages are successfully sent
+- UI tweaks
+
 ## 2015-08-23
 
 - Big refactor of activity calculation
