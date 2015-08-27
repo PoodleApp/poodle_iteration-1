@@ -4,7 +4,7 @@ import * as Sunshine                        from 'sunshine'
 import { Map, fromJS }                      from 'immutable'
 import { compose, get, lookup, over, set }  from 'lens'
 import { field }                            from 'lens/immutable'
-import { PassThrough }                      from 'stream'
+import * as stream                          from 'stream'
 import * as State                           from './state'
 import * as Create                          from '../../lib/activityTypes'
 import { activityId }                       from '../../lib/derivedActivity'
@@ -321,7 +321,7 @@ function init(app: Sunshine.App<AppState>) {
     var msg     = assemble(draft)
     var sentDir = lookup(compose(State.config_, field('sentDir')), state)
     var cmd     = lookup(State.notmuchCmd, state)
-    var msg_    = new PassThrough()
+    var msg_    = new (stream:any).PassThrough()
     msg.pipe(msg_)  // Grabs a duplicate of the msg stream
     indicateLoading('send',
       msmtp(msg)
