@@ -172,8 +172,9 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
     var { activity } = this.props
     var from    = actor(activity)
     var fromStr = (from && from.displayName) || '[unknown sender]'
+    var { palette } = this.context.muiTheme
     return (
-      <ActivityCard nestLevel={this.props.nestLevel}>
+      <ActivityCard nestLevel={this.props.nestLevel} style={{backgroundColor: palette.borderColor}}>
         <CardHeader
           title={fromStr}
           subtitle='joined the discussion'
@@ -183,6 +184,11 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
       </ActivityCard>
     )
   }
+}
+
+JoinView.contextTypes = {
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+  muiTheme: React.PropTypes.object.isRequired,
 }
 
 class AsideView extends Sunshine.Component<{},ActivityProps,{}> {

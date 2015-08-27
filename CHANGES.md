@@ -1,5 +1,9 @@
 # prerelease
 
+## 2015-08-27
+
+- Light gray color for join notifications
+
 ## 2015-08-26
 
 - Prompt feedback when interacting with a conversation
