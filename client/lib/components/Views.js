@@ -72,6 +72,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     return {
       root: {
         paddingTop: Spacing.desktopKeylineIncrement + 'px',
+        paddingBottom: '25em',
         position: 'relative',
       },
       content: {
