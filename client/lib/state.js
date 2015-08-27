@@ -28,6 +28,7 @@ export type AppState = Record<{
   notification?: string,
   composerState: CS.ComposerState,
   showLink:      ?DerivedActivity,
+  searchQuery:   ?string,
 }>
 
 export type View = 'root' | 'compose' | 'conversation' | 'settings'
@@ -42,6 +43,7 @@ var AppStateRecord = Record({
   notification:  null,
   composerState: CS.initialState,
   showLink:      null,
+  searchQuery:   null,
 })
 
 var initialState: AppState = new AppStateRecord()
@@ -56,6 +58,7 @@ var routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
 var genericError: Lens_<AppState,?Object> = field('genericError')
 var notification = field('notification')
 var showLink = field('showLink')
+var searchQuery = field('searchQuery')
 
 var config: Lens_<AppState,?Config> = field('config')
 var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
@@ -102,6 +105,7 @@ export {
   notmuchCmd,
   routeParam,
   routeParams,
+  searchQuery,
   showLink,
   username,
   useremail,

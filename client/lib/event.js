@@ -2,9 +2,9 @@
 
 import * as Sunshine                        from 'sunshine'
 import { Map, fromJS }                      from 'immutable'
-import { compose, lookup, over, set }       from 'lens'
+import { compose, get, lookup, over, set }  from 'lens'
 import { field }                            from 'lens/immutable'
-import fs                                   from 'fs'
+import { PassThrough }                      from 'stream'
 import * as State                           from './state'
 import * as Create                          from '../../lib/activityTypes'
 import { activityId }                       from '../../lib/derivedActivity'
@@ -15,6 +15,7 @@ import { loadConfig, saveConfig }           from '../../lib/config'
 import { assemble }                         from '../../lib/compose'
 import { msmtp }                            from '../../lib/msmtp'
 import * as Mail                            from '../../lib/maildir'
+import { notmuch }                          from '../../lib/notmuch'
 
 import type { List }             from 'immutable'
 import type { URI }              from '../../lib/activity'
@@ -119,6 +120,8 @@ class ShowLink {
   constructor(activity: ?DerivedActivity) { this.activity = activity }
 }
 
+class Reload {}
+
 function init(app: Sunshine.App<AppState>) {
 
   app.on(QueryConversations, (state, { query }) => {
@@ -129,6 +132,14 @@ function init(app: Sunshine.App<AppState>) {
         err   => app.emit(new GenericError(err))
       )
     )
+    return set(State.searchQuery, query, state)
+  })
+
+  app.on(Reload, (state, _) => {
+    var query = get(State.searchQuery, state)
+    if (query) {
+      app.emit(new QueryConversations(query))
+    }
   })
 
   app.on(Conversations, (state, { convs }) => {
@@ -237,8 +248,8 @@ function init(app: Sunshine.App<AppState>) {
     return set(State.notification, null, state)
   })
 
-  app.on(Send, (_, { draft }) => {
-    send(draft)
+  app.on(Send, (state, { draft }) => {
+    send(draft, state)
   })
 
   app.on(SendReply, (state, event) => {
@@ -303,21 +314,30 @@ function init(app: Sunshine.App<AppState>) {
       draft.fallback = fallback
     }
 
-    send(draft)
+    send(draft, state)
   }
 
   function send(draft: Draft, state: AppState) {
-    var msg = assemble(draft)
+    var msg     = assemble(draft)
+    var sentDir = lookup(compose(State.config_, field('sentDir')), state)
+    var cmd     = lookup(State.notmuchCmd, state)
+    var msg_    = new PassThrough()
+    msg.pipe(msg_)  // Grabs a duplicate of the msg stream
     indicateLoading('send',
-      msmtp(msg).then(
-        _ => app.emit(new Notify('Message sent')),
-        err => app.emit(new GenericError(err))
-      )
+      msmtp(msg).then(_ => app.emit(new Notify('Message sent')))
       .then(() => {
-        var sentDir = lookup(compose(State.config_, field('sentDir')), state)
         if (sentDir) {
-          return Mail.record(msg, sentDir)
+          return Mail.record(msg_, sentDir).then(() => {
+            if (cmd) {
+              return notmuch(cmd, 'new').then(() => {
+                app.emit(new Reload())
+              })
+            }
+          })
         }
+      })
+      .catch(err => {
+        app.emit(new GenericError(err))
       })
     )
   }
