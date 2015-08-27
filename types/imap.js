@@ -46,6 +46,28 @@ type imap$Boxes = { [key:string]: {
   parent:    ?Object,
 } }
 
+type imap$MessagePart = imap$MessagePart[] | {
+  partID:       string,
+  type:         string,  // eg, 'text'
+  subtype?:     string,  // eg, 'plain'
+  params:       { [key:string]: string },  // eg, charset
+  encoding?:    string,
+  id?:          ?string,
+  description?: ?string,
+  disposition?: ?string,
+  language?:    ?string,
+  location?:    ?string,
+  md5?:         ?string,
+  size?:        number,
+  lines?:       number,
+}
+
+type imap$Flag = '\\Seen'
+               | '\\Answered'
+               | '\\Flagged'
+               | '\\Deleted'
+               | '\\Draft'
+
 declare module "imap" {
   declare class Imap extends events$EventEmitter {
     state:     string;  // eg. 'disconnected', 'connected', 'authenticated'
@@ -65,7 +87,7 @@ declare module "imap" {
     closeBox(autoExpunge?: boolean, cb: (err: Error) => void): void;
     addBox(mailboxName: string, cb: (err: Error) => void): void;
     delBox(mailboxName: string, cb: (err: Error) => void): void;
-    renameBox(oldName: string, newName: string, cb: (err: Error, box: Box) => void): void;
+    renameBox(oldName: string, newName: string, cb: (err: Error, box: imap$Box) => void): void;
     subscribeBox(mailboxName: string, cb: (err: Error) => void): void;
     unsubscribeBox(mailboxName: string, cb: (err: Error) => void): void;
     status(mailboxName: string, cb: (err: Error, box: imap$Box) => void): void;

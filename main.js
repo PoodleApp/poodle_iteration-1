@@ -31,4 +31,8 @@ app.on('ready', function() {
   ipc.respond('google-account', function() {
     return account.setupGoogle()
   })
+
+  ipc.respond('google-credentials', function(email) {
+    return account.getGoogleCredentials(email)
+  })
 })
