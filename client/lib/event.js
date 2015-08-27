@@ -2,7 +2,8 @@
 
 import * as Sunshine                        from 'sunshine'
 import { Map, fromJS }                      from 'immutable'
-import { lookup, over, set }                from 'lens'
+import { compose, lookup, over, set }       from 'lens'
+import { field }                            from 'lens/immutable'
 import fs                                   from 'fs'
 import * as State                           from './state'
 import * as Create                          from '../../lib/activityTypes'
@@ -13,6 +14,7 @@ import { participants, queryConversations } from '../../lib/conversation'
 import { loadConfig, saveConfig }           from '../../lib/config'
 import { assemble }                         from '../../lib/compose'
 import { msmtp }                            from '../../lib/msmtp'
+import * as Mail                            from '../../lib/maildir'
 
 import type { List }             from 'immutable'
 import type { URI }              from '../../lib/activity'
@@ -304,13 +306,19 @@ function init(app: Sunshine.App<AppState>) {
     send(draft)
   }
 
-  function send(draft: Draft) {
+  function send(draft: Draft, state: AppState) {
     var msg = assemble(draft)
     indicateLoading('send',
       msmtp(msg).then(
         _ => app.emit(new Notify('Message sent')),
         err => app.emit(new GenericError(err))
       )
+      .then(() => {
+        var sentDir = lookup(compose(State.config_, field('sentDir')), state)
+        if (sentDir) {
+          return Mail.record(msg, sentDir)
+        }
+      })
     )
   }
 }

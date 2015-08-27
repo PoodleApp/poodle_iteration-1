@@ -88,6 +88,7 @@ function currentActivity(state: AppState): ?Conversation {
 export {
   composerState,
   config,
+  config_,
   conversation,
   conversations,
   currentConversation,
