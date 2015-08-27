@@ -7,12 +7,18 @@ html {
 }
 
 a {
-  color: #7c4dff; //deepPurpleA200
+  color: #0091ea; // lightBlueA700
+  color: #7c4dff;
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
+}
+
+::selection {
+  color: #ffffff;
+  background-color: #40c4ff; // lightBlueA200
 }
 
 html {
