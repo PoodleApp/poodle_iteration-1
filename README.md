@@ -54,6 +54,21 @@ From the project directory, run:
     $ npm install && npm start
 
 
+Configuring
+-----------
+
+In addition to configuring the external utilities,
+you will need to enter some details in the Settings view
+(accessed via the menu button in the upper-left of the Activity Stream view).
+The somewhat complicated detail here is that you need to specify a directory
+for sent mail that is an existing directory in your maildir.
+That is, it needs to match up with an existing IMAP folder.
+
+The sent mail directory setting is not required.
+But if you do not set it, when you send messages you will not see updates in
+the UI until you do a mail fetch and reload the UI.
+
+
 License
 -------
 
