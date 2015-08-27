@@ -143,7 +143,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
             { route: '#/',         text: 'Activity Stream' },
             { route: '#/settings', text: 'Settings' },
           ]} />
-        <div style={styles.root} onClick={interceptMidUris}>
+        <div style={styles.root} onClick={interceptMidUris} className={loading ? 'wait' : ''}>
           <div style={styles.content}>
             {content}
           </div>

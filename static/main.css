@@ -31,3 +31,7 @@ body {
 .markdown-content p {
   white-space: pre-wrap;
 }
+
+.wait, .wait * {
+  cursor: wait;
+}
