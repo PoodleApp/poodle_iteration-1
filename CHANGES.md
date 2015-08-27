@@ -1,5 +1,9 @@
 # prerelease
 
+## 2015-08-26
+
+- Prompt feedback when interacting with a conversation
+
 ## 2015-08-24
 
 - New color scheme
