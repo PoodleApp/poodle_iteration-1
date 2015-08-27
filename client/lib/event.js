@@ -324,7 +324,7 @@ function init(app: Sunshine.App<AppState>) {
     var msg_    = new PassThrough()
     msg.pipe(msg_)  // Grabs a duplicate of the msg stream
     indicateLoading('send',
-      msmtp(msg).then(_ => app.emit(new Notify('Message sent')))
+      msmtp(msg)
       .then(() => {
         if (sentDir) {
           return Mail.record(msg_, sentDir).then(() => {
@@ -334,8 +334,13 @@ function init(app: Sunshine.App<AppState>) {
               })
             }
           })
+          .catch(err => {
+            // An error here should not prevent the snackbar notification
+            app.emit(new GenericError('Your message was sent. However: '+err))
+          })
         }
       })
+      .then(_ => app.emit(new Notify('Message sent')))
       .catch(err => {
         app.emit(new GenericError(err))
       })
