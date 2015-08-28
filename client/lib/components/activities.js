@@ -73,6 +73,11 @@ var styles = {
   },
 }
 
+var contextTypes = {
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+  muiTheme: React.PropTypes.object.isRequired,
+}
+
 export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
     var activity = this.props.activity
@@ -156,8 +161,9 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     var from    = actor(activity)
     var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
+    var { palette } = this.context.muiTheme
     return (
-      <ActivityCard nestLevel={this.props.nestLevel}>
+      <ActivityCard nestLevel={this.props.nestLevel} style={{backgroundColor: palette.borderColor}}>
         <div style={styles.inlineNotice}>
           <strong>Edit failed due to a conflict with another edit.</strong>
         </div>
@@ -166,6 +172,8 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     )
   }
 }
+
+ConflictView.contextTypes = contextTypes
 
 class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
@@ -186,10 +194,7 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
   }
 }
 
-JoinView.contextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
-  muiTheme: React.PropTypes.object.isRequired,
-}
+JoinView.contextTypes = contextTypes
 
 class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
@@ -237,10 +242,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
   }
 }
 
-AsideView.contextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
-  muiTheme: React.PropTypes.object.isRequired,
-}
+AsideView.contextTypes = contextTypes
 
 class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
