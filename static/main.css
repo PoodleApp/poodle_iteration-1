@@ -17,7 +17,6 @@ a:hover {
 }
 
 ::selection {
-  color: #ffffff;
   background-color: #40c4ff; // lightBlueA200
 }
 
