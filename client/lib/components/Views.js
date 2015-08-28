@@ -132,7 +132,8 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
               }
               onItemTouchTap={this.onCompose.bind(this)}
               >
-              <MenuItem value='note' primaryText='Note' />
+              <MenuItem value='note'     primaryText='Discussion' />
+              <MenuItem value='document' primaryText='Document' />
             </IconMenu>
           }
           />

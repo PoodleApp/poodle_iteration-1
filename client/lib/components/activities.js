@@ -14,6 +14,7 @@ import * as State    from '../state'
 import { ComposeReply, EditNote }  from '../../../lib/components/compose'
 import { ActivityOptsMenu } from '../../../lib/components/activityMenu'
 import { actorAvatar } from '../../../lib/components/avatar'
+import * as Act from '../../../lib/derivedActivity'
 import { activityId
        , actor
        , edited
@@ -51,6 +52,9 @@ var styles = {
   body: {
     padding: '16px',
     paddingTop: 0,
+  },
+  documentBody: {
+    paddingBottom: '2em',
   },
   activityCard: {
     paddingTop: '0.6em'
@@ -96,6 +100,12 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
         <EditNote {...this.props} /> :
         <NoteView {...this.props} />
     }
+    else if (objectType(activity) === 'document') {
+      // TODO: special edit view for document
+      return this.editingThis() ?
+        <EditNote {...this.props} /> :
+        <DocumentView {...this.props} />
+    }
     else {
       return (
         <UnknownView {...this.props} />
@@ -131,7 +141,7 @@ class ActivityCard extends Sunshine.Component<{},{ nestLevel: ?number, children:
 
 class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var { activity, useremail } = this.props
+    var { activity } = this.props
     var from    = actor(activity)
     var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
@@ -151,6 +161,30 @@ class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
           </p> : ''}
         {displayContent(activity)}
       </ActivityCard>
+    )
+  }
+}
+
+class DocumentView extends Sunshine.Component<{},ActivityProps,{}> {
+  render(): React.Element {
+    var { activity, conversation } = this.props
+    var from    = actor(activity)
+    var fromStr = (from && from.displayName) || '[unknown author]'
+    var editor  = actor(Act.latestRevision(activity))
+    var editStr = (from && from.displayName) || '[unknown author]'
+    var dateStr = published(activity).fromNow()
+    return (
+      <div>
+        <h2>{conversation.subject}</h2>
+        {edited(activity) ?
+          <p>
+            <em>Last edited {lastEdited(activity).fromNow()} by {editStr}</em>
+          </p> :
+          <p>
+            <em>Posted {Act.published(activity).fromNow()} by {fromStr}</em>
+          </p>}
+        {displayContent(activity, styles.documentBody)}
+      </div>
     )
   }
 }
@@ -288,7 +322,7 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   }
 }
 
-function displayContent(activity: DerivedActivity): React.Element {
+function displayContent(activity: DerivedActivity, style?: Object): React.Element {
   var content = objectContent(activity)
   .sort((a,b) => {
     // prefer text/plain
@@ -305,37 +339,37 @@ function displayContent(activity: DerivedActivity): React.Element {
   .filter(({ contentType }) => contentType === 'text/plain' || contentType === 'text/html')  // TODO: support other content types
   [0]
   if (content && content.contentType === 'text/plain') {
-    return displayText(content.content)
+    return displayText(content.content, style)
   }
   else if (content && content.contentType === 'text/html') {
-    return displayHtml(content.content)
+    return displayHtml(content.content, style)
   }
   else {
-    return displayUnknown()
+    return displayUnknown(style)
   }
 }
 
-function displayText(content: Buffer): React.Element {
+function displayText(content: Buffer, style?: Object): React.Element {
   var content = repa(content.toString('utf8'))
   var out = {
     __html: marked(content, { sanitized: true })
   }
   return <div
-    style={styles.body}
+    style={style || styles.body}
     className='markdown-content'
     dangerouslySetInnerHTML={out} />
 }
 
-function displayHtml(content: Buffer): React.Element {
+function displayHtml(content: Buffer, style?: Object): React.Element {
   return (
-    <div style={styles.body}>
+    <div style={style || styles.body}>
       <p>TODO: display HTML</p>
     </div>
   )
 }
 
-function displayUnknown(): React.Element {
-  return <div style={styles.body}><p><em>[no content]</em></p></div>
+function displayUnknown(style?: Object): React.Element {
+  return <div style={style || styles.body}><p><em>[no content]</em></p></div>
 }
 
 function myContent(activity: DerivedActivity, email: string): boolean {
