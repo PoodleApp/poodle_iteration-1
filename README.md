@@ -164,6 +164,23 @@ But if you do not set it, when you send messages you will not see updates in
 the UI until you do a mail fetch and reload the UI.
 
 
+Heads-up for Gmail users
+------------------------
+
+If you are not using 2-factor authentication with your Google account,
+it is likely that Google will block offlineimap from accessing your mail.
+If this happens, you will get an email from Google warning you that a "less
+secure app" attempted to access your account.
+This is because Google would prefer that people use OAuth to authenticate with
+IMAP instead of a username and password.
+
+Poodle will switch to OAuth eventually.
+But at this early stage Poodle requires username & password authentication.
+
+To turn on access for less secure apps, follow these instructions:
+https://support.google.com/accounts/answer/6010255?hl=en
+
+
 License
 -------
 
