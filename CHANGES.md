@@ -3,6 +3,7 @@
 ## 2015-08-27
 
 - Light gray color for join notifications
+- Fixes issue where messages sent from Poodle always appear at end of discussion
 
 ## 2015-08-26
 
