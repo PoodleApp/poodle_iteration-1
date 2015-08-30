@@ -1,8 +1,8 @@
 /* @flow */
 
-import * as Sunshine    from 'sunshine/react'
+import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
-import { get, lookup }  from 'lens'
+import { get, lookup }  from 'safety-lens'
 import { mailtoUri }    from '../activity'
 import * as Act         from '../derivedActivity'
 import { allNames, flatAsides, flatParticipants, lastActive } from '../conversation'

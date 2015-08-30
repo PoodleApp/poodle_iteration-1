@@ -1,9 +1,9 @@
 /* @flow */
 
-import * as Sunshine                        from 'sunshine'
+import * as Sunshine                        from 'sunshine-framework'
 import { Map, fromJS }                      from 'immutable'
-import { compose, get, lookup, over, set }  from 'lens'
-import { field }                            from 'lens/immutable'
+import { compose, get, lookup, over, set }  from 'safety-lens'
+import { field }                            from 'safety-lens/immutable'
 import * as stream                          from 'stream'
 import * as State                           from './state'
 import * as Create                          from './activityTypes'

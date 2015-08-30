@@ -1,10 +1,10 @@
 /* @flow */
 
-import * as Sunshine  from 'sunshine/react'
+import * as Sunshine  from 'sunshine-framework/react'
 import React          from 'react'
 import * as immutable from 'immutable'
 import makeRouter     from 'hash-brown-router'
-import { set }        from 'lens'
+import { set }        from 'safety-lens'
 import { Styles }     from 'material-ui'
 import * as State     from '../state'
 import * as Event     from '../event'

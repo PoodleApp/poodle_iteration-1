@@ -1,6 +1,6 @@
 /* @flow */
 
-import * as Sunshine   from 'sunshine/react'
+import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import { List }        from 'immutable'
 import { uniqBy }      from 'ramda'

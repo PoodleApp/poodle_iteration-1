@@ -1,10 +1,11 @@
 import { Styles }       from 'material-ui'
 import ColorManipulator from 'material-ui/lib/utils/color-manipulator'
 import Light            from 'material-ui/lib/styles/themes/light-theme'
+import objectAssign     from 'object-assign'
 
 var { Colors } = Styles
 
-var PoodleTheme = Object.assign({}, Light, {
+var PoodleTheme = objectAssign({}, Light, {
   getPalette() {
     return {
       primary1Color: Colors.brown500,

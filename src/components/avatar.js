@@ -1,6 +1,6 @@
 /* @flow */
 
-import * as Sunshine   from 'sunshine/react'
+import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import stringHash      from 'string-hash'
 import { displayName } from '../notmuch'

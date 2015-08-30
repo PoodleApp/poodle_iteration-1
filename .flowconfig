@@ -2,12 +2,14 @@
 .*/flow-bin/.*
 .*/es6-promise/.*
 .*/webpack/.*
+.*/sunshine-framework/examples/.*
 static/.*
 
 [include]
 
 [libs]
 ./types/
-./node_modules/sunshine/lib/
+./node_modules/sunshine-framework/types/
+./node_modules/safety-lens/types/
 
 [options]

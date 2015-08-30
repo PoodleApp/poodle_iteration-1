@@ -1,8 +1,8 @@
 /* @flow */
 
-import * as Sunshine                       from 'sunshine/react'
+import * as Sunshine                       from 'sunshine-framework/react'
 import React                               from 'react'
-import { compose, get, lookup }            from 'lens'
+import { compose, get, lookup }            from 'safety-lens'
 import { parseMidUri }                     from '../activity'
 import * as Act                            from '../derivedActivity'
 import * as State                          from '../state'

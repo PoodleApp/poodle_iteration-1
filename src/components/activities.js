@@ -1,7 +1,7 @@
 /* @flow */
 
 import { List, is }  from 'immutable'
-import * as Sunshine from 'sunshine/react'
+import * as Sunshine from 'sunshine-framework/react'
 import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'

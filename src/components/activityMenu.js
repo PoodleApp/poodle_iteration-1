@@ -1,6 +1,6 @@
 /* @flow */
 
-import * as Sunshine  from 'sunshine/react'
+import * as Sunshine  from 'sunshine-framework/react'
 import React          from 'react'
 import { mailtoUri }  from '../activity'
 import * as Act       from '../derivedActivity'

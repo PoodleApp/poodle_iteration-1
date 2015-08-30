@@ -1,7 +1,7 @@
 /* @flow */
 
-import * as Sunshine          from 'sunshine'
-import { compose, over, set } from 'lens'
+import * as Sunshine          from 'sunshine-framework'
+import { compose, over, set } from 'safety-lens'
 import * as State             from '../state'
 import * as CS                from './state'
 

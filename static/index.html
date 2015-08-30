@@ -6,14 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,500' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="main.css">
+    <script>
+      require('babel-core/external-helpers');
+      require('../lib/client/index');
+    </script>
   </head>
   <body>
     <section id="app"></section>
-    <script>
-      require('babel/register')({
-        ignore: /babel|immutable\/|mailparser|ramda|react\/|kefir|moment|material-ui|mailcomposer/
-      });
-      require('../lib/client/index');
-    </script>
   </body>
 </html>

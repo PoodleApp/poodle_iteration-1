@@ -1,8 +1,8 @@
 /* @flow */
 
 import { List, Map, Record }          from 'immutable'
-import { compose, filtering, getter } from 'lens'
-import { field, index }               from 'lens/immutable'
+import { compose, filtering, getter } from 'safety-lens'
+import { field, index }               from 'safety-lens/immutable'
 import * as CS                        from './composer/state'
 import { parseMidUri, published }     from './activity'
 import * as Act                       from './derivedActivity'
@@ -11,7 +11,7 @@ import { map
        , sortBy
        } from 'ramda'
 
-import type { Getter, Lens_, Traversal_ } from 'lens'
+import type { Getter, Lens_, Traversal_ } from 'safety-lens'
 import type { URI }                       from './activity'
 import type { DerivedActivity }           from './derivedActivity'
 import type { Conversation }              from './conversation'
