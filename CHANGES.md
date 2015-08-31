@@ -1,5 +1,9 @@
 # prerelease
 
+## 2015-08-31
+
+- Implements strict content security policy
+
 ## 2015-08-30
 
 - Implements separate build step, replacing `babel/register` on-the-fly transpiling

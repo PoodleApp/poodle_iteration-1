@@ -12,6 +12,10 @@ import * as CE        from '../composer/event'
 import { App }        from '../components/Views'
 import {}             from './polyfills'
 
+export {
+  run,
+}
+
 var router = makeRouter()
 
 var q = (window.location.href.match(/[?&]q=(.*?)&?$/) || [])[1]
@@ -75,7 +79,7 @@ ContextWrapper.childContextTypes = {
   muiTheme: React.PropTypes.object.isRequired,
 }
 
-export default function run(domElement: Element) {
+function run(domElement: Element) {
   React.render(
     <ContextWrapper />,
     domElement
