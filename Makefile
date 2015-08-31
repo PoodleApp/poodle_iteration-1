@@ -9,6 +9,12 @@ build: node_modules $(SRC)
 		--out-dir lib \
 		--source-maps
 
+watch:
+	node_modules/.bin/babel src \
+		--out-dir lib \
+		--source-maps \
+		--watch
+
 clean:
 	rm -rf lib
 
