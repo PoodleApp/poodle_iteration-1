@@ -75,7 +75,9 @@ ContextWrapper.childContextTypes = {
   muiTheme: React.PropTypes.object.isRequired,
 }
 
-React.render(
-  <ContextWrapper />,
-  document.body
-)
+export default function run(domElement: Element) {
+  React.render(
+    <ContextWrapper />,
+    domElement
+  )
+}

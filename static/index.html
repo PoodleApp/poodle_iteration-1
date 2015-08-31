@@ -8,7 +8,10 @@
     <link rel="stylesheet" type="text/css" href="main.css">
     <script>
       require('babel-core/external-helpers');
-      require('../lib/client/index');
+      var run = require('../lib/client/index');
+      document.addEventListener('DOMContentLoaded', function() {
+        run(document.body);
+      });
     </script>
   </head>
   <body>
