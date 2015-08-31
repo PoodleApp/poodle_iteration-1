@@ -1,5 +1,11 @@
 # prerelease
 
+## 2015-08-30
+
+- Implements separate build step, replacing `babel/register` on-the-fly transpiling
+- See notes in README.md on developing under the new build system
+- Gets sunshine and lens from npm
+
 ## 2015-08-27
 
 - Light gray color for join notifications
