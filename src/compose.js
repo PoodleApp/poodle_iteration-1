@@ -5,6 +5,7 @@ import { chain }                      from 'ramda'
 import randomstring                   from 'randomstring'
 import uuid                           from 'uuid'
 import moment                         from 'moment'
+import objectAssign                   from 'object-assign'
 import { objectContent, parseMidUri } from './activity'
 
 import type { ReadStream }                  from 'fs'
@@ -92,5 +93,5 @@ function withFooter(body: string): string {
 // It seems that the MailComposer#convertAddress method mutates the input
 // object. This wrapper produces a defensive copy.
 function convertAddress(comp: MailComposer, addr: Address): string {
-  return comp.convertAddress(Object.assign({}, addr))
+  return comp.convertAddress(objectAssign({}, addr))
 }
