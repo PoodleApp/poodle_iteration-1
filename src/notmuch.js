@@ -22,7 +22,7 @@ export type Message = {
   messageId:     MessageId,
   headers:       Headers,
   from:          Address[],
-  to:            Address[],
+  to?:           Address[],
   cc?:           Address[],
   bcc?:          Address[],
   subject:       string,
