@@ -30,7 +30,7 @@
     "email-addresses": "^2.0.1",
     "hash-brown-router": "^1.5.0",
     "immutable": "^3.7.4",
-    "mailcomposer": "^0.2.12",
+    "mailcomposer": "hallettj/mailcomposer#patched",
     "mailparser": "andris9/mailparser#7ce164ef0c5d3a608dd168bbf0529f65a781b93d",
     "marked": "^0.3.5",
     "material-ui": "^0.11.0",

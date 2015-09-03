@@ -72,7 +72,7 @@ function content(objectType: string, { verb, author, subject, body, target }: Co
   var object: ComposerAttachment = {
     cid:                randomstring.generate(),
     contents:           body,
-    contentDisposition: 'attachment',
+    contentDisposition: 'inline',
     contentEncoding:    'quoted-printable',
     contentType:        'text/plain',
   }

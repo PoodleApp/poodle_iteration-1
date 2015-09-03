@@ -1,5 +1,6 @@
 /* @flow */
 
+import { List }                       from 'immutable'
 import { MailComposer }               from 'mailcomposer'
 import { chain }                      from 'ramda'
 import randomstring                   from 'randomstring'
@@ -43,7 +44,6 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   comp.setMessageOption({
     from: convertAddress(comp, from),
     to:   to.map(convertAddress.bind(null, comp)).join(', '),
-    body: withFooter(fallback || fallbackContent(activities)),
   })
   if (subject) {
     comp.setMessageOption({ subject })
@@ -61,17 +61,43 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   comp.addHeader('Message-ID', `<${uuid.v4()}@${from.address.split('@')[1]}>`)
   comp.addHeader('Date', moment().format('dd, D MMM YYYY HH:mm:ss ZZ'))
 
-  activities.forEach(([activityId, activity, attachments]) => {
+  var textPart = {
+    contentType: 'text/plain',
+    contentEncoding: 'quoted-printable',
+    contents: withFooter(fallback || fallbackContent(activities)),
+  }
+
+  var jsonAndAttachments = activities.map(([activityId, activity, attachments]) => {
     var parsed = parseMidUri(activityId)
     if (!parsed || !parsed.partId) { throw "No part Id for activity" }
     var { partId } = parsed
-    comp.addAttachment({
+    var jsonPart = {
       cid: partId,
       contents: JSON.stringify(activity),
       contentEncoding: 'quoted-printable',
       contentType: 'application/activity+json',
-    })
-    attachments.forEach(a => comp.addAttachment(a))
+      contentDisposition: 'inline',
+      fileName: 'activity.json',
+    }
+    return [jsonPart, attachments]
+  })
+
+  var jsonParts = jsonAndAttachments.map(([json, _]) => json)
+  var attachments = List(jsonAndAttachments).flatMap(([_, as]) => as).toArray()
+
+  var combinedJsonParts = jsonParts.length > 0 ?
+    { multipart: 'mixed', childNodes: jsonParts } : jsonParts[0]
+
+  var activitiesPart = attachments.length > 0 ?
+    { multipart: 'related', childNodes: [combinedJsonParts].concat(attachments) } :
+    combinedJsonParts
+
+  comp.setBodyStructure({
+    multipart: 'alternative',
+    childNodes: [
+      textPart,
+      activitiesPart,
+    ]
   })
 
   comp.streamMessage()
