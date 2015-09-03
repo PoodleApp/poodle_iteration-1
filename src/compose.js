@@ -64,7 +64,7 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   var textPart = {
     contentType: 'text/plain',
     contentEncoding: 'quoted-printable',
-    contents: withFooter(fallback || fallbackContent(activities)),
+    contents: fallback || fallbackContent(activities),
   }
 
   var jsonAndAttachments = activities.map(([activityId, activity, attachments]) => {
