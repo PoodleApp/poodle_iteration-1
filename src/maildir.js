@@ -17,18 +17,18 @@ var host = (execSync('hostname', { encoding: 'utf8' }): any)
 
 function record(msg: ReadStream, sentDir: string): Promise<void> {
   var tmp = path.join(sentDir, 'tmp')
-  var cur = path.join(sentDir, 'cur')
+  var new_ = path.join(sentDir, 'new')
 
   var file = uniqName()
 
-  return Promise.all([isDirectory(tmp), isDirectory(cur)]).catch(() => (
+  return Promise.all([isDirectory(tmp), isDirectory(new_)]).catch(() => (
     Promise.reject(new Error(`${sentDir} does not appear to be a maildir directory`))
   ))
   .then(() => (
     streamToFile(path.join(tmp, file), msg, { mode: 0o600 })
   ))
   .then(() => (new Promise((resolve, reject) => {
-    fs.rename(path.join(tmp, file), path.join(cur, file+infoString()), err => {
+    fs.rename(path.join(tmp, file), path.join(new_, file+infoString()), err => {
       if (err) { reject(err) } else { resolve() }
     })
   })))
