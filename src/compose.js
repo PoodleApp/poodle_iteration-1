@@ -59,7 +59,7 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   }
 
   comp.addHeader('Message-ID', `<${uuid.v4()}@${from.address.split('@')[1]}>`)
-  comp.addHeader('Date', moment().format('dd, D MMM YYYY HH:mm:ss ZZ'))
+  comp.addHeader('Date', moment().format('ddd, DD MMM YYYY HH:mm:ss ZZ'))
 
   var textPart = {
     contentType: 'text/plain',

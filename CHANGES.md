@@ -4,6 +4,7 @@
 
 - Customizes MIME tree structure in outgoing messages
 - Removes viral footer -- for now
+- Fixes formatting of 'Date:' header in outgoing messages
 
 ## 2015-08-31
 
