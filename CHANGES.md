@@ -1,5 +1,10 @@
 # prerelease
 
+## 2015-09-02
+
+- Customizes MIME tree structure in outgoing messages
+- Removes viral footer -- for now
+
 ## 2015-08-31
 
 - Implements strict content security policy
