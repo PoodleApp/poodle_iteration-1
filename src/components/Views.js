@@ -122,6 +122,16 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     var styles = this.getStyles()
     var { muiTheme } = (this.context:any)
 
+    var menuItems = !!this.state.useremail ?
+      [
+        { route: '#/',            text: 'Activity Stream' },
+        { route: '#/settings',    text: 'Settings' },
+      ] :
+      [
+        { route: '#/',            text: 'Activity Stream' },
+        { route: '#/add_account', text: 'Set up account' },
+      ];
+
     return (
       <AppCanvas>
         <AppBar
@@ -146,10 +156,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
           ref='leftNav'
           docked={false}
           onChange={this.navChange.bind(this)}
-          selectedIndex={selected} menuItems={[
-            { route: '#/',         text: 'Activity Stream' },
-            { route: '#/settings', text: 'Settings' },
-          ]} />
+          selectedIndex={selected} menuItems={menuItems} />
         <div style={styles.root} onClick={interceptMidUris} className={loading ? 'wait' : ''}>
           <div style={styles.content}>
             {content}

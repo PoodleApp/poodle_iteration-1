@@ -17,7 +17,7 @@ import type { URI }                       from './activity'
 import type { DerivedActivity }           from './derivedActivity'
 import type { Conversation }              from './conversation'
 import type { ThreadId }                  from './notmuch'
-import type { Config }                    from './config'
+import type { Config, Account }           from './config'
 
 export type AppState = Record<{
   conversations: List<Conversation>,
@@ -66,8 +66,17 @@ var searchQuery = field('searchQuery')
 
 var config: Lens_<AppState,?Config> = field('config')
 var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
+
 var username: Traversal_<AppState,string> = compose(config_, field('name'))
 var useremail: Traversal_<AppState,string> = compose(config_, field('email'))
+
+var useraccount: Traversal_<AppState,Account> =
+  compose(compose(config_, field('accounts')), index(0))
+var username: Traversal_<AppState,string> =
+  compose(useraccount, field('displayName'))
+var useremail: Traversal_<AppState,string> =
+  compose(useraccount, field('email'))
+
 var likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
 var notmuchCmd: Traversal_<AppState,string> = compose(config_, field('notmuchCmd'))
 
