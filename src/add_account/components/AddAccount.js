@@ -13,8 +13,9 @@ import { FlatButton
        } from 'material-ui'
 
 type AddAccountState = {
-  email: ?string,
-  loading: boolean;
+  loading:   boolean,
+  username:  ?string,
+  useremail: ?string,
 }
 
 var styles = {
@@ -28,14 +29,18 @@ var styles = {
 export default class AddAccount extends Sunshine.Component<{},{},AddAccountState> {
   getState(state: State.AppState): AddAccountState {
     return {
-      email:   get(compose(State.addAccountState, AS.email), state),
-      loading: get(State.isLoading, state),
+      loading:   get(State.isLoading, state),
+      username:  lookup(State.username, state),
+      useremail: lookup(State.useremail, state),
     }
   }
 
   render(): React.Element {
-    if (!this.state.email) {
+    if (!this.state.useremail) {
       return <GetEmail loading={this.state.loading} />
+    }
+    else {
+      return <AllDone {...this.state} />
     }
   }
 }
@@ -70,3 +75,27 @@ class GetEmail extends Sunshine.Component<{},{ loading: boolean },{}> {
   }
 }
 
+class AllDone extends Sunshine.Component<{},AddAccountState,{}> {
+  render(): React.Element {
+    var { loading, username, useremail } = this.props
+    return (
+      <Paper>
+        <div style={styles.body}>
+          <p>All done!</p>
+          <p>Your account is: {username} &lt;{useremail}&gt;</p>
+          <p>
+            <FlatButton
+              label='Continue to activity stream'
+              disabled={loading}
+              onTouchTap={this.onContinue.bind(this)}
+              />
+          </p>
+        </div>
+      </Paper>
+    )
+  }
+
+  onContinue() {
+    window.location = '#/'
+  }
+}
