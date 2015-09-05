@@ -1,6 +1,6 @@
 
 declare module "browser-window" {
-
+  declare class BrowserWindow {}
 }
 
 declare module "ipc" {

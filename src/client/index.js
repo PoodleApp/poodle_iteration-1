@@ -59,7 +59,7 @@ router.add('/settings', () => {
 })
 
 router.add('/add_account', params => {
-  app.emit(new AE.NewAccount(decodeURIComponent(params.email)))
+  app.emit(new Event.ViewAccountSetup(decodeURIComponent(params.email)))
 })
 
 var ThemeManager = new Styles.ThemeManager()

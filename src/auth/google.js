@@ -1,8 +1,14 @@
-/* @flow */
+/**
+ * Code here is adapted from electron-google-oauth
+ * https://github.com/parro-it/electron-google-oauth/tree/master/es6
+ *
+ * @flow
+ */
 
-import electronGoogleOauth from 'electron-google-oauth'
-import BrowserWindow       from 'browser-window'
-import google              from 'googleapis'
+import BrowserWindow from 'browser-window'
+import google        from 'googleapis'
+import { stringify } from 'querystring';
+import fetch         from 'node-fetch'
 
 export {
   getAccessToken,
@@ -17,22 +23,86 @@ export type OauthCredentials = {
   refresh_token: string,
 }
 
-var scopes = [
-  'email',  // get user's email address
-  'https://mail.google.com/',  // IMAP and SMTP access
-  'https://www.googleapis.com/auth/contacts.readonly',  // contacts, read-only
-]
-var clientId = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
-var clientSecret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
-
-function getAccessToken(): Promise<OauthCredentials> {
-  var googleOauth = electronGoogleOauth(BrowserWindow)
-  return googleOauth.getAccessToken(scopes, clientId, clientSecret)
+type AccessTokenOpts = {
+  scopes:                  string[],
+  client_id:               string,
+  client_secret:           string,
+  login_hint?:             string,
+  include_granted_scopes?: boolean,
 }
 
-function oauthClient(creds: OauthCredentials): Object {
+function getAccessToken(opts: AccessTokenOpts): Promise<OauthCredentials> {
+  var { client_id, client_secret } = opts
+  return getAuthorizationCode(opts).then(authorizationCode => {
+    var data = stringify({
+      code: authorizationCode,
+      client_id,
+      client_secret,
+      grant_type: 'authorization_code',
+      redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+    })
+    return fetch('https://accounts.google.com/o/oauth2/token', {
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: data,
+    })
+  })
+  .then(res => res.json())
+}
+
+function getAuthorizationCode({
+  scopes,
+  client_id,
+  client_secret,
+  login_hint,
+  include_granted_scopes,
+}: AccessTokenOpts): Promise<string> {
+  var params: Object = {
+    access_type: 'offline',
+    scope:       scopes,
+  }
+  if (login_hint) { params.login_hint = login_hint }
+  if (typeof include_granted_scopes === 'boolean') {
+    params.include_granted_scopes = include_granted_scopes
+  }
+  var url = oauthClient(client_id, client_secret).generateAuthUrl(params)
+  return authorizeApp(url)
+}
+
+function oauthClient(client_id: string, client_secret: string): Object {
   var OAuth2 = google.auth.OAuth2
-  var oauth2Client = new OAuth2(clientId, clientSecret, 'urn:ietf:wg:oauth:2.0:oob')
-  oauth2Client.setCredentials(creds)
-  return oauth2Client
+  return new OAuth2(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob')
+}
+
+function authorizeApp(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    var win = new (BrowserWindow:any)({
+      'use-content-size': true
+    })
+
+    win.loadUrl(url)
+
+    win.on('closed', () => {
+      reject(new Error('User closed the window'))
+    })
+
+    win.on('page-title-updated', () => {
+      setImmediate(() => {
+        var title = win.getTitle()
+        if (title.startsWith('Denied')) {
+          reject(new Error(title.split(/[ =]/)[2]))
+          win.removeAllListeners('closed')
+          win.close()
+        }
+        else if (title.startsWith('Success')) {
+          resolve(title.split(/[ =]/)[2])
+          win.removeAllListeners('closed')
+          win.close()
+        }
+      })
+    })
+  })
 }

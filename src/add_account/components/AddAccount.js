@@ -42,23 +42,25 @@ export default class AddAccount extends Sunshine.Component<{},{},AddAccountState
 
 class GetEmail extends Sunshine.Component<{},{ loading: boolean },{}> {
   render(): React.Element {
-    <Paper>
-      <form style={styles.body} onSubmit={this.onEmail.bind(this)}>
-        <label>
-          Enter your email address:&nbsp;
-          <TextField
-            hintText='hubert@planetexpress.com'
-            name='email'
-            ref='email'
+    return (
+      <Paper>
+        <form style={styles.body} onSubmit={this.onEmail.bind(this)}>
+          <label>
+            Enter your email address:&nbsp;
+            <TextField
+              hintText='hubert@planetexpress.com'
+              name='email'
+              ref='email'
+              />
+          </label>
+          <FlatButton
+            label='Continue'
+            disabled={this.props.loading}
+            onTouchTap={this.onEmail.bind(this)}
             />
-        </label>
-        <FlatButton
-          label='Continue'
-          disabled={this.props.loading}
-          onTouchTap={this.onEmail.bind(this)}
-          />
-      </form>
-    </Paper>
+        </form>
+      </Paper>
+    )
   }
 
   onEmail(event: Event) {

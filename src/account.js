@@ -41,10 +41,21 @@ export type Profile = {
 type Email = string
 type URL   = string
 
-function setupGoogle(): Promise<Config.Account> {
-  return getAccessToken().then(creds => {
+var scopes = [
+  'email',  // get user's email address
+  'https://mail.google.com/',  // IMAP and SMTP access
+  'https://www.googleapis.com/auth/contacts.readonly',  // contacts, read-only
+]
+var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
+var client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
+
+function setupGoogle(email: string): Promise<Config.Account> {
+  return getAccessToken({
+    client_id, client_secret, scopes, login_hint: email
+  }).then(creds => {
     var plus = google.plus('v1')
-    var oauth = oauthClient(creds)
+    var oauth = oauthClient(client_id, client_secret)
+    oauth.setCredentials(creds)
     return new Promise((resolve, reject) => {
       plus.people.get({ userId: 'me', auth: oauth }, (err, resp) => {
         if (err) { reject(err) } else { resolve(resp) }

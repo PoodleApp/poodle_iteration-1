@@ -16,7 +16,6 @@ import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
 import * as Mail                            from './maildir'
 import { notmuch }                          from './notmuch'
-import * as AE                              from './add_account/event'
 
 import type { List }             from 'immutable'
 import type { URI }              from './activity'
@@ -61,6 +60,7 @@ class ViewConversation {
   }
 }
 class ViewSettings {}
+class ViewAccountSetup {}
 
 class DismissError {}
 class GenericError {
@@ -208,7 +208,7 @@ function init(app: Sunshine.App<AppState>) {
     return set(State.view, 'settings', state)
   })
 
-  app.on(AE.NewAccount, (state, _) => {
+  app.on(ViewAccountSetup, (state, _) => {
     return set(State.view, 'add_account', state)
   })
 
@@ -368,12 +368,15 @@ export {
   Like,
   LoadConfig,
   SaveConfig,
+  Loading,
+  DoneLoading,
   Notify,
   DismissNotify,
   QueryConversations,
   Send,
   SendReply,
   ShowLink,
+  ViewAccountSetup,
   ViewActivity,
   ViewCompose,
   ViewConversation,
