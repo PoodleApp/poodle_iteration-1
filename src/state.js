@@ -4,6 +4,7 @@ import { List, Map, Record }          from 'immutable'
 import { compose, filtering, getter } from 'safety-lens'
 import { field, index }               from 'safety-lens/immutable'
 import * as CS                        from './composer/state'
+import * as AS                        from './add_account/state'
 import { parseMidUri, published }     from './activity'
 import * as Act                       from './derivedActivity'
 import { map
@@ -27,11 +28,12 @@ export type AppState = Record<{
   config?:       Config,
   notification?: string,
   composerState: CS.ComposerState,
+  addAccountState: AS.AddAccountState,
   showLink:      ?DerivedActivity,
   searchQuery:   ?string,
 }>
 
-export type View = 'root' | 'compose' | 'conversation' | 'settings'
+export type View = 'root' | 'compose' | 'conversation' | 'settings' | 'add_account'
 
 var AppStateRecord = Record({
   conversations: List(),
@@ -42,6 +44,7 @@ var AppStateRecord = Record({
   config:        null,
   notification:  null,
   composerState: CS.initialState,
+  addAccountState: AS.initialState,
   showLink:      null,
   searchQuery:   null,
 })
@@ -49,6 +52,7 @@ var AppStateRecord = Record({
 var initialState: AppState = new AppStateRecord()
 
 var composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
+var addAccountState: Lens_<AppState,AS.AddAccountState> = field('addAccountState')
 
 var conversations: Lens_<AppState,List<Conversation>> = field('conversations')
 var loading: Lens_<AppState,number> = field('loading')
@@ -89,6 +93,7 @@ function currentActivity(state: AppState): ?Conversation {
 }
 
 export {
+  addAccountState,
   composerState,
   config,
   config_,

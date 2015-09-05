@@ -9,6 +9,7 @@ import { Styles }     from 'material-ui'
 import * as State     from '../state'
 import * as Event     from '../event'
 import * as CE        from '../composer/event'
+import * as AE        from '../add_account/event'
 import { App }        from '../components/Views'
 import {}             from './polyfills'
 
@@ -31,6 +32,7 @@ var app = new Sunshine.App(initialState, () => {
 
 Event.init(app, router)
 CE.init(app)
+AE.init(app)
 
 router.add('/', params => {
   app.emit(new Event.ViewRoot(params.q))
@@ -54,6 +56,10 @@ router.add('/activities/:uri', params => {
 
 router.add('/settings', () => {
   app.emit(new Event.ViewSettings())
+})
+
+router.add('/add_account', params => {
+  app.emit(new AE.NewAccount(decodeURIComponent(params.email)))
 })
 
 var ThemeManager = new Styles.ThemeManager()

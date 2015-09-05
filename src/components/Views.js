@@ -11,6 +11,7 @@ import * as Ev                             from '../event'
 import { ComposeView }                     from './compose'
 import Settings                            from './Settings'
 import { Conversations, ConversationView } from './conversation'
+import AddAccount                          from '../add_account/components/AddAccount'
 import { AppBar
        , AppCanvas
        , Dialog
@@ -112,6 +113,10 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     else if (view === 'settings') {
       content = <Settings />
       title = 'Settings'
+    }
+    else if (view === 'add_account') {
+      content = <AddAccount />
+      title = 'Set up new account'
     }
 
     var styles = this.getStyles()

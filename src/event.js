@@ -16,6 +16,7 @@ import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
 import * as Mail                            from './maildir'
 import { notmuch }                          from './notmuch'
+import * as AE                              from './add_account/event'
 
 import type { List }             from 'immutable'
 import type { URI }              from './activity'
@@ -205,6 +206,10 @@ function init(app: Sunshine.App<AppState>) {
 
   app.on(ViewSettings, (state, _) => {
     return set(State.view, 'settings', state)
+  })
+
+  app.on(AE.NewAccount, (state, _) => {
+    return set(State.view, 'add_account', state)
   })
 
   app.on(GenericError, (state, { err }) => {
