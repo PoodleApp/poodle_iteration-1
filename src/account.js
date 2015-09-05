@@ -64,7 +64,7 @@ function setupGoogle(email: string): Promise<Config.Account> {
     .then(profile => {
       var json = JSON.stringify(creds)
       accountEmails(profile.emails).forEach(e => {
-        keytar.addPassword('Poodle', e.value, json)
+        keytar.addPassword('Poodle', e, json)
       })
       return profile
     })
@@ -73,7 +73,7 @@ function setupGoogle(email: string): Promise<Config.Account> {
     var email = accountEmails(emails)[0]
     return Config.loadConfig().then(config => {
       var account = new Config.AccountRecord({ displayName, email })
-      var config_ = config.set('accounts', List.of())
+      var config_ = config.set('accounts', List.of(account))
       return Config.saveConfig(config_).then(() => account)
     })
   })
@@ -85,5 +85,5 @@ function getGoogleCredentials(email: Email): ?OauthCredentials {
 }
 
 function accountEmails(emails) {
-  return emails.filter(e => e.type === 'account')
+  return emails.filter(e => e.type === 'account').map(e => e.value)
 }

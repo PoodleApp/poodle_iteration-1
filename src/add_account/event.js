@@ -15,7 +15,14 @@ class NewAccount {
 
 function init(app: Sunshine.App<State.AppState>) {
   app.on(NewAccount, (state, { email }) => {
-    indicateLoading('Authorizing with Google', ipc.request('google-account', email))
+    indicateLoading(
+      'Authorizing with Google',
+      ipc.request('google-account', email)
+      .then(
+        () => app.emit(new Ev.LoadConfig()),
+        err => app.enit(new Ev.GenericError(err))
+      )
+    )
   })
 
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {

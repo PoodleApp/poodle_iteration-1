@@ -49,7 +49,9 @@ function loadConfig(): Promise<Config> {
             reject(err)
           }
           else {
-            resolve(new ConfigRecord(JSON.parse(data)))
+            var data = JSON.parse(data)
+            if (data.accounts) { data.accounts = List(data.accounts.map(a => new AccountRecord(a))) }
+            resolve(new ConfigRecord(data))
           }
         })
       })
