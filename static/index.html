@@ -7,7 +7,7 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self';
-        connect-src 'self';
+        connect-src 'self' electron-safe-ipc:;
         script-src 'sha256-ZoEk0-2pNg966I1YM-AliK4EHChBbfECcpfdV76TmJI=';
         style-src 'self' 'unsafe-inline' http://fonts.googleapis.com;
         img-src 'self' data:;

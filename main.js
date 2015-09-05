@@ -28,8 +28,8 @@ app.on('ready', function() {
   var ipc = require('electron-safe-ipc/host')
   var account = require('./lib/account')
 
-  ipc.respond('google-account', function() {
-    return account.setupGoogle()
+  ipc.respond('google-account', function(email) {
+    return account.setupGoogle(email)
   })
 
   ipc.respond('google-credentials', function(email) {

@@ -1,10 +1,10 @@
 /* @flow */
 
 import * as Sunshine from 'sunshine-framework'
+import ipc           from 'electron-safe-ipc/guest'
 import * as State    from '../state'
 import * as Ev       from '../event'
 import * as AS       from './state'
-import { setupGoogle } from '../account'
 
 class NewAccount {
   email: ?string;
@@ -15,7 +15,7 @@ class NewAccount {
 
 function init(app: Sunshine.App<State.AppState>) {
   app.on(NewAccount, (state, { email }) => {
-    indicateLoading('Authorizing with Google', setupGoogle(email))
+    indicateLoading('Authorizing with Google', ipc.request('google-account', email))
   })
 
   function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
