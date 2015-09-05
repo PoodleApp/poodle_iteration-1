@@ -7,12 +7,17 @@ html {
 }
 
 a {
-  color: #7c4dff; //deepPurpleA200
+  color: #0091ea; // lightBlueA700
+  color: #7c4dff;
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
+}
+
+::selection {
+  background-color: #40c4ff; // lightBlueA200
 }
 
 html {
@@ -30,4 +35,8 @@ body {
 
 .markdown-content p {
   white-space: pre-wrap;
+}
+
+.wait, .wait * {
+  cursor: wait;
 }

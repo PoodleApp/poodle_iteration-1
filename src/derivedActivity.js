@@ -75,7 +75,7 @@ function collapseEdits(
   var [revisions, conflicts] = context.reduce((accum, other) => {
     var [rs, cs] = accum
     var uri      = targetUri(other)
-    if (verb(other) === 'edit' && uri && sameActor(activity, other)) {
+    if (verb(other) === 'edit' && uri && canEdit(activity, other)) {
       var i = rs.findIndex(a => activityId(a) === uri)
       if (i === 0) {
         return [rs.unshift(other), cs]
@@ -125,6 +125,10 @@ function insertJoins(
     .set('id', syntheticId())
   ))
   return List(addedActs).push(activity)
+}
+
+function canEdit(x: DerivedActivity, y: DerivedActivity): boolean {
+  return objectType(x) === 'document' || sameActor(x, y)
 }
 
 function sameActor(x: DerivedActivity, y: DerivedActivity): boolean {

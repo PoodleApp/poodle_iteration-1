@@ -26,7 +26,7 @@ export type Profile = {
   tagline: string,
   url: URL,
   image: { url: URL, isDefault: boolean },
-  organizations: { name: string, title: string, type: string, startDate: string, endDate: string: primary: boolean }[],
+  organizations: { name: string, title: string, type: string, startDate: string, endDate: string, primary: boolean }[],
   placesLived: { value: string, primary?: boolean }[],
   isPlusUser: boolean,
   circledByCount: number,
@@ -58,12 +58,12 @@ function setupGoogle(): Promise<Config.Account> {
       return profile
     })
   })
-  .then({ displayName, emails }=> {
+  .then(({ displayName, emails }) => {
     var email = accountEmails(emails)[0]
-    Config.loadConfig().then(config => {
+    return Config.loadConfig().then(config => {
       var account = new Config.AccountRecord({ displayName, email })
       var config_ = config.set('accounts', List.of())
-      Config.saveConfig(config_).then(() => account)
+      return Config.saveConfig(config_).then(() => account)
     })
   })
 }

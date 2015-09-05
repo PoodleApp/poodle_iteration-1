@@ -1,8 +1,8 @@
 /* @flow */
 
-import * as Sunshine          from 'sunshine'
-import { compose, over, set } from 'lens'
-import * as State             from '../../client/lib/state'
+import * as Sunshine          from 'sunshine-framework'
+import { compose, over, set } from 'safety-lens'
+import * as State             from '../state'
 import * as CS                from './state'
 
 import type { DerivedActivity } from '../derivedActivity'

@@ -1,6 +1,6 @@
 /* @flow */
 
-import * as Sunshine   from 'sunshine/react'
+import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import stringHash      from 'string-hash'
 import { displayName } from '../notmuch'
@@ -18,7 +18,8 @@ export {
 
 var { Colors } = Styles
 
-function actorAvatar(p: ActivityObject): React.Element {
+function actorAvatar(p: ?ActivityObject): React.Element {
+  p = p || {}
   var str = (p.displayName || '?')[0].toUpperCase()
   var addr = (p.uri || 'mailto:?').slice(7)
   var [color, backgroundColor] = getColors(addr)

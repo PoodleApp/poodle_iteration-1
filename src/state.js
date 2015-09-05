@@ -1,22 +1,22 @@
 /* @flow */
 
 import { List, Map, Record }          from 'immutable'
-import { compose, filtering, getter } from 'lens'
-import { field, index }               from 'lens/immutable'
-import * as CS                        from '../../lib/composer/state'
-import { parseMidUri, published }     from '../../lib/activity'
-import * as Act                       from '../../lib/derivedActivity'
+import { compose, filtering, getter } from 'safety-lens'
+import { field, index }               from 'safety-lens/immutable'
+import * as CS                        from './composer/state'
+import { parseMidUri, published }     from './activity'
+import * as Act                       from './derivedActivity'
 import { map
        , pipe
        , sortBy
        } from 'ramda'
 
-import type { Getter, Lens_, Traversal_ } from 'lens'
-import type { URI }                       from '../../lib/activity'
-import type { DerivedActivity }           from '../../lib/derivedActivity'
-import type { Conversation }              from '../../lib/conversation'
-import type { ThreadId }                  from '../../lib/notmuch'
-import type { Config }                    from '../../lib/config'
+import type { Getter, Lens_, Traversal_ } from 'safety-lens'
+import type { URI }                       from './activity'
+import type { DerivedActivity }           from './derivedActivity'
+import type { Conversation }              from './conversation'
+import type { ThreadId }                  from './notmuch'
+import type { Config }                    from './config'
 
 export type AppState = Record<{
   conversations: List<Conversation>,
@@ -28,6 +28,7 @@ export type AppState = Record<{
   notification?: string,
   composerState: CS.ComposerState,
   showLink:      ?DerivedActivity,
+  searchQuery:   ?string,
 }>
 
 export type View = 'root' | 'compose' | 'conversation' | 'settings'
@@ -42,6 +43,7 @@ var AppStateRecord = Record({
   notification:  null,
   composerState: CS.initialState,
   showLink:      null,
+  searchQuery:   null,
 })
 
 var initialState: AppState = new AppStateRecord()
@@ -56,6 +58,7 @@ var routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
 var genericError: Lens_<AppState,?Object> = field('genericError')
 var notification = field('notification')
 var showLink = field('showLink')
+var searchQuery = field('searchQuery')
 
 var config: Lens_<AppState,?Config> = field('config')
 var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
@@ -88,6 +91,7 @@ function currentActivity(state: AppState): ?Conversation {
 export {
   composerState,
   config,
+  config_,
   conversation,
   conversations,
   currentConversation,
@@ -101,6 +105,7 @@ export {
   notmuchCmd,
   routeParam,
   routeParams,
+  searchQuery,
   showLink,
   username,
   useremail,

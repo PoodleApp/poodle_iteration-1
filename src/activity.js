@@ -115,8 +115,8 @@ function mailtoUri(email: Email): URI {
 
 function participants(messages: List<Message>): { to: Address[], from: Address[], cc: Address[] } {
   var { to, from, cc } = messages.reduce((ls, message) => ({
-    to:   ls.to.concat(message.to.filter(addr => !!addr)),
-    from: ls.from.concat(message.from.filter(addr => !!addr)),
+    to:   ls.to.concat((message.to || []).filter(addr => !!addr)),
+    from: ls.from.concat((message.from || []).filter(addr => !!addr)),
     cc:   ls.cc.concat((message.cc || []).filter(addr => !!addr)),
   }), { to: [], from: [], cc: [] })
   return {
@@ -135,7 +135,8 @@ function flatParticipants(messages: List<Message>): Address[] {
 }
 
 function published([_, msg]: Zack): Moment {
-  return moment(msg.date || msg.receivedDate)
+  var d = msg.date || msg.receivedDate
+  return moment(d || new Date(0))
 }
 
 function title([act, msg]: Zack): string {

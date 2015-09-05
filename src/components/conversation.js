@@ -1,16 +1,20 @@
 /* @flow */
 
-import * as Sunshine    from 'sunshine/react'
+import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
-import { get, lookup }  from 'lens'
-import { activityId }   from '../derivedActivity'
+import { get, lookup }  from 'safety-lens'
+import { mailtoUri }    from '../activity'
+import * as Act         from '../derivedActivity'
 import { allNames, flatAsides, flatParticipants, lastActive } from '../conversation'
-import { displayName }  from '../notmuch'
-import * as State       from '../../client/lib/state'
-import * as Ev          from '../../client/lib/event'
-import { ActivityView } from '../../client/lib/components/activities'
-import { ComposeReply } from './compose'
-import { addressAvatar } from './avatar'
+import { displayName }     from '../notmuch'
+import * as State          from '../state'
+import * as Ev             from '../event'
+import { activityStream }  from '../stream'
+import { ActivityView }    from './activities'
+import { ActivityHeader }  from './activityHeaders'
+import { ComposeReply }    from './compose'
+import { addressAvatar }   from './avatar'
+import { ActivityActions } from './activityMenu'
 import { Card
        , CardHeader
        , RaisedButton
@@ -25,22 +29,18 @@ import { Card
        , ToolbarTitle
        } from 'material-ui'
 
-import type { List }          from 'immutable'
-import type { Address }       from '../notmuch'
-import type { Activity, URI } from '../activity'
-import type { Conversation }  from '../conversation'
-
-type ConversationMeta = {
-  id: string,
-  subject: string,
-  participants: Address[],
-  lastActive: string,
-}
+import type { List }            from 'immutable'
+import type { Address }         from '../notmuch'
+import type { Activity, URI }   from '../activity'
+import type { Conversation }    from '../conversation'
+import type { DerivedActivity } from '../derivedActivity'
 
 type ConversationsState = {
-  conversations: List<ConversationMeta>,
+  conversations: List<Conversation>,
   loading: boolean,
   searchQuery: ?string,
+  username: ?string,
+  useremail: ?string,
 }
 
 var { Colors, Spacing } = Styles
@@ -48,22 +48,22 @@ var { Colors, Spacing } = Styles
 export class Conversations extends Sunshine.Component<{},{},ConversationsState> {
   getState(state: State.AppState): ConversationsState {
     return {
-      conversations: get(State.conversations, state).map(conv => ({
-        id:           conv.id,
-        subject:      conv.subject,
-        participants: flatParticipants(conv),
-        lastActive:   lastActive(conv),
-      })),
+      conversations: get(State.conversations, state),
       loading: get(State.isLoading, state),
       searchQuery:  lookup(State.routeParam('q'), state),
+      username:     lookup(State.username, state),
+      useremail:    lookup(State.useremail, state),
     }
   }
 
   render(): React.Element {
-    var conversations = this.state.conversations.map((conv, i) => (
-      <div key={conv.id}>
-        <ConversationHeader conv={conv} />
-        {i < this.state.conversations.size - 1 ?
+    var { conversations, useremail } = this.state
+    var user = useremail ? mailtoUri(useremail) : null
+    var activities = activityStream(user, conversations)
+    var headers = activities.map(([acts, conv], i) => (
+      <div key={acts.map(Act.activityId).join(';')}>
+        <ActivityHeader activities={acts} conversation={conv} user={user} />
+        {i < activities.size - 1 ?
           <ListDivider inset={true} /> : ''}
       </div>
     ))
@@ -85,7 +85,7 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
             </form>
           </ToolbarGroup>
         </Toolbar>
-        <ListWidget>{conversations}</ListWidget>
+        <ListWidget>{headers}</ListWidget>
       </div>
     )
   }
@@ -93,22 +93,6 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
   onSearch(event: Event) {
     event.preventDefault()
     window.location = `#/?q=${encodeURIComponent(this.refs.query.getValue())}`
-  }
-}
-
-class ConversationHeader extends Sunshine.Component<{},{ conv: ConversationMeta },{}> {
-  render(): React.Element {
-    var { id, subject, participants, lastActive } = this.props.conv
-    var partStr = participants.map(p => displayName(p)).join(', ')
-    var first = participants[0]
-    return (
-      <ListItem
-        leftAvatar={addressAvatar(first)}
-        primaryText={subject}
-        secondaryText={<p>{partStr}</p>}
-        onTouchTap={() => window.location = `#/conversations/${id}`}
-        />
-    )
   }
 }
 
@@ -146,7 +130,7 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
     var { subject } = conversation
 
     var activities = conversation.activities.map(act => (
-      <ActivityView activity={act} {...this.props} key={activityId(act)} />
+      <ActivityView activity={act} {...this.props} key={Act.activityId(act)} />
     ))
 
     var people = flatParticipants(conversation).map(addr => {
@@ -162,6 +146,8 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
       )
     })
 
+    var doc = getDocument(conversation)
+
     return (
       <div>
         <div style={styles.mainSection}>
@@ -170,6 +156,7 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
           <ComposeReply inReplyTo={conversation} />
         </div>
         <div style={styles.participantList}>
+          {doc ? <ActivityActions activity={doc} {...this.props} /> : ''}
           <ListWidget subheader='Who can see this discussion'>
             {people}
           </ListWidget>
@@ -182,4 +169,9 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
 ConversationView.contextTypes = {
   _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
   muiTheme: React.PropTypes.object.isRequired,
+}
+
+function getDocument(conv: Conversation): ?DerivedActivity {
+  var act = conv.activities.first()
+  if (Act.objectType(act) === 'document') { return act }
 }

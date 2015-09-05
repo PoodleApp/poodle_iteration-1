@@ -1,14 +1,16 @@
 /* @flow */
 
-import * as Sunshine  from 'sunshine/react'
+import * as Sunshine  from 'sunshine-framework/react'
 import React          from 'react'
 import { mailtoUri }  from '../activity'
 import * as Act       from '../derivedActivity'
-import * as Ev        from '../../client/lib/event'
+import * as Ev        from '../event'
 import * as CE        from '../composer/event'
 import { AppBar
        , IconButton
        , IconMenu
+       , List as ListWidget
+       , ListItem
        , Styles
        } from 'material-ui'
 import MenuItem     from 'material-ui/lib/menus/menu-item'
@@ -78,6 +80,47 @@ export class ActivityOptsMenu extends Sunshine.Component<{},ActivityProps,{}> {
     else if (value === 'link') {
       this.emit(new Ev.ShowLink(activity))
     }
+  }
+
+  editingThis(): boolean {
+    var { activity, editing } = this.props
+    return editing && Act.activityId(editing) === Act.activityId(activity)
+  }
+}
+
+export class ActivityActions extends Sunshine.Component<{},ActivityProps,{}> {
+  render() {
+    var { activity, useremail } = this.props
+    return (
+      <ListWidget subheader='Actions'>
+        <ListItem
+          primaryText='Edit'
+          onTouchTap={this.onEdit.bind(this)}
+          />
+        <ListItem
+          primaryText='Permalink'
+          onTouchTap={this.onShowLink.bind(this)}
+          />
+        <ListItem
+          primaryText='View revisions'
+          />
+      </ListWidget>
+    )
+  }
+
+  onEdit() {
+    var { activity } = this.props
+    if (this.editingThis()) {
+      this.emit(new CE.Reset())
+    }
+    else {
+      this.emit(new CE.Edit(activity))
+    }
+  }
+
+  onShowLink() {
+    var { activity } = this.props
+    this.emit(new Ev.ShowLink(activity))
   }
 
   editingThis(): boolean {

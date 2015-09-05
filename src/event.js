@@ -1,26 +1,29 @@
 /* @flow */
 
-import * as Sunshine                        from 'sunshine'
+import * as Sunshine                        from 'sunshine-framework'
 import { Map, fromJS }                      from 'immutable'
-import { lookup, over, set }                from 'lens'
-import fs                                   from 'fs'
+import { compose, get, lookup, over, set }  from 'safety-lens'
+import { field }                            from 'safety-lens/immutable'
+import * as stream                          from 'stream'
 import * as State                           from './state'
-import * as Create                          from '../../lib/activityTypes'
-import { activityId }                       from '../../lib/derivedActivity'
-import * as Act                             from '../../lib/derivedActivity'
-import { parseMidUri }                      from '../../lib/activity'
-import { participants, queryConversations } from '../../lib/conversation'
-import { loadConfig, saveConfig }           from '../../lib/config'
-import { assemble }                         from '../../lib/compose'
-import { msmtp }                            from '../../lib/msmtp'
+import * as Create                          from './activityTypes'
+import { activityId }                       from './derivedActivity'
+import * as Act                             from './derivedActivity'
+import { parseMidUri }                      from './activity'
+import { participants, queryConversations } from './conversation'
+import { loadConfig, saveConfig }           from './config'
+import { assemble }                         from './compose'
+import { msmtp }                            from './msmtp'
+import * as Mail                            from './maildir'
+import { notmuch }                          from './notmuch'
 
 import type { List }             from 'immutable'
-import type { URI }              from '../../lib/activity'
-import type { DerivedActivity }  from '../../lib/derivedActivity'
-import type { Conversation }     from '../../lib/conversation'
-import type { Address, Message } from '../../lib/notmuch'
-import type { Config }           from '../../lib/config'
-import type { Burger, Draft }    from '../../lib/compose'
+import type { URI }              from './activity'
+import type { DerivedActivity }  from './derivedActivity'
+import type { Conversation }     from './conversation'
+import type { Address, Message } from './notmuch'
+import type { Config }           from './config'
+import type { Burger, Draft }    from './compose'
 import type { AppState }         from './state'
 
 class QueryConversations {
@@ -117,6 +120,8 @@ class ShowLink {
   constructor(activity: ?DerivedActivity) { this.activity = activity }
 }
 
+class Reload {}
+
 function init(app: Sunshine.App<AppState>) {
 
   app.on(QueryConversations, (state, { query }) => {
@@ -127,6 +132,14 @@ function init(app: Sunshine.App<AppState>) {
         err   => app.emit(new GenericError(err))
       )
     )
+    return set(State.searchQuery, query, state)
+  })
+
+  app.on(Reload, (state, _) => {
+    var query = get(State.searchQuery, state)
+    if (query) {
+      app.emit(new QueryConversations(query))
+    }
   })
 
   app.on(Conversations, (state, { convs }) => {
@@ -235,8 +248,8 @@ function init(app: Sunshine.App<AppState>) {
     return set(State.notification, null, state)
   })
 
-  app.on(Send, (_, { draft }) => {
-    send(draft)
+  app.on(Send, (state, { draft }) => {
+    send(draft, state)
   })
 
   app.on(SendReply, (state, event) => {
@@ -301,16 +314,36 @@ function init(app: Sunshine.App<AppState>) {
       draft.fallback = fallback
     }
 
-    send(draft)
+    send(draft, state)
   }
 
-  function send(draft: Draft) {
-    var msg = assemble(draft)
+  function send(draft: Draft, state: AppState) {
+    var msg     = assemble(draft)
+    var sentDir = lookup(compose(State.config_, field('sentDir')), state)
+    var cmd     = lookup(State.notmuchCmd, state)
+    var msg_    = new (stream:any).PassThrough()
+    msg.pipe(msg_)  // Grabs a duplicate of the msg stream
     indicateLoading('send',
-      msmtp(msg).then(
-        _ => app.emit(new Notify('Message sent')),
-        err => app.emit(new GenericError(err))
-      )
+      msmtp(msg)
+      .then(() => {
+        if (sentDir) {
+          return Mail.record(msg_, sentDir).then(() => {
+            if (cmd) {
+              return notmuch(cmd, 'new').then(() => {
+                app.emit(new Reload())
+              })
+            }
+          })
+          .catch(err => {
+            // An error here should not prevent the snackbar notification
+            app.emit(new GenericError('Your message was sent. However: '+err))
+          })
+        }
+      })
+      .then(_ => app.emit(new Notify('Message sent')))
+      .catch(err => {
+        app.emit(new GenericError(err))
+      })
     )
   }
 }

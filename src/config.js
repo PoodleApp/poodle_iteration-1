@@ -9,6 +9,7 @@ export type Config = Record & {
   accounts: List<Account>,
   likeMessage: string,
   notmuchCmd: string,
+  sentDir: string,
 }
 
 export type Account = Record & {
@@ -20,6 +21,7 @@ var ConfigRecord = Record({
   accounts: List(),
   likeMessage: '+1',
   notmuchCmd: 'notmuch',
+  sentDir: '',
 })
 
 var AccountRecord = Record({

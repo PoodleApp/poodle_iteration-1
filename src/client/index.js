@@ -1,16 +1,20 @@
 /* @flow */
 
-import * as Sunshine  from 'sunshine/react'
+import * as Sunshine  from 'sunshine-framework/react'
 import React          from 'react'
 import * as immutable from 'immutable'
 import makeRouter     from 'hash-brown-router'
-import { set }        from 'lens'
+import { set }        from 'safety-lens'
 import { Styles }     from 'material-ui'
-import * as State     from './lib/state'
-import * as Event     from './lib/event'
-import * as CE        from '../lib/composer/event'
-import { App }        from './lib/components/Views'
+import * as State     from '../state'
+import * as Event     from '../event'
+import * as CE        from '../composer/event'
+import { App }        from '../components/Views'
 import {}             from './polyfills'
+
+export {
+  run,
+}
 
 var router = makeRouter()
 
@@ -53,7 +57,7 @@ router.add('/settings', () => {
 })
 
 var ThemeManager = new Styles.ThemeManager()
-import { PoodleTheme } from '../lib/themes'
+import { PoodleTheme } from '../themes'
 ThemeManager.setTheme(PoodleTheme)
 
 class ContextWrapper extends React.Component<{},{},{}> {
@@ -75,7 +79,9 @@ ContextWrapper.childContextTypes = {
   muiTheme: React.PropTypes.object.isRequired,
 }
 
-React.render(
-  <ContextWrapper />,
-  document.body
-)
+function run(domElement: Element) {
+  React.render(
+    <ContextWrapper />,
+    domElement
+  )
+}

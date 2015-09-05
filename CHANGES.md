@@ -1,5 +1,42 @@
 # prerelease
 
+## 2015-09-02
+
+- Customizes MIME tree structure in outgoing messages
+- Removes viral footer -- for now
+- Fixes formatting of 'Date:' header in outgoing messages
+
+## 2015-08-31
+
+- Implements strict content security policy
+
+## 2015-08-30
+
+- Implements separate build step, replacing `babel/register` on-the-fly transpiling
+- See notes in README.md on developing under the new build system
+- Gets sunshine and lens from npm
+
+## 2015-08-27
+
+- Light gray color for join notifications
+- Fixes issue where messages sent from Poodle always appear at end of discussion
+- Changes accent color to light blue
+- Proper activity stream: indicates who did what, and at what time
+- Adds 'Document' object type: can be edited by anyone
+
+## 2015-08-26
+
+- Prompt feedback when interacting with a conversation
+
+## 2015-08-24
+
+- New color scheme
+- Added back button (replaces menu button in some views)
+- Activity Stream search form remembers the last search query that you used
+- Activity Stream automatically refreshes when navigated to
+- Notifications in snackbar when messages are successfully sent
+- UI tweaks
+
 ## 2015-08-23
 
 - Big refactor of activity calculation

@@ -3,17 +3,30 @@
   <head>
     <meta charset="utf-8">
     <title>Poodle</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        connect-src 'self';
+        script-src 'sha256-ZoEk0-2pNg966I1YM-AliK4EHChBbfECcpfdV76TmJI=';
+        style-src 'self' 'unsafe-inline' http://fonts.googleapis.com;
+        img-src 'self' data:;
+        child-src 'self' data:;
+        font-src 'self' http://fonts.gstatic.com;
+        media-src *;
+        form-action 'none';
+        " />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,500' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="main.css">
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        require('babel-core/external-helpers');
+        require('../lib/client/index').run(document.body);
+      });
+    </script>
   </head>
   <body>
     <section id="app"></section>
-    <script>
-      require('babel/register')({
-        ignore: /babel|immutable\/|mailparser|ramda|react\/|kefir|moment|material-ui|mailcomposer/
-      });
-      require('../client/index');
-    </script>
   </body>
 </html>

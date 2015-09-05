@@ -1,10 +1,11 @@
 /* @flow */
 
-import * as Sunshine    from 'sunshine/react'
+import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
-import { get, lookup }  from 'lens'
-import * as Ev          from '../../client/lib/event'
-import * as State       from '../../client/lib/state'
+import { compose, get, lookup }  from 'safety-lens'
+import { field }        from 'safety-lens/immutable'
+import * as Ev          from '../event'
+import * as State       from '../state'
 import { ConfigRecord } from '../config'
 import { FlatButton
        , Paper
@@ -15,6 +16,7 @@ type SettingsState = {
   loading:     boolean,
   likeMessage: ?string,
   notmuchCmd:  ?string,
+  sentDir:     ?string,
   username:    ?string,
   useremail:   ?string,
 }
@@ -33,13 +35,14 @@ export default class Settings extends Sunshine.Component<{},{},SettingsState> {
       loading:     get(State.isLoading, state),
       likeMessage: lookup(State.likeMessage, state),
       notmuchCmd:  lookup(State.notmuchCmd, state),
+      sentDir:     lookup(compose(State.config_, field('sentDir')), state),
       username:    lookup(State.username, state),
       useremail:   lookup(State.useremail, state),
     }
   }
 
   render(): React.Element {
-    var { loading, likeMessage, notmuchCmd, username, useremail } = this.state
+    var { loading, likeMessage, notmuchCmd, sentDir, username, useremail } = this.state
     return (
       <Paper>
         <form style={styles.body} onSubmit={this.saveSettings.bind(this)}>
@@ -84,6 +87,17 @@ export default class Settings extends Sunshine.Component<{},{},SettingsState> {
               />
           </label>
           <br/>
+          <label>
+            where to save sent messages:&nbsp;
+            <TextField
+              hintText={`/home/${process.env.USER}/mail/[Gmail]/Sent Mail`}
+              defaultValue={sentDir}
+              name='sentDir'
+              ref='sentDir'
+              style={{fontFamily: "'Roboto Mono', monospace"}}
+              />
+          </label>
+          <br/>
           <FlatButton
             label='Save changes'
             disabled={loading}
@@ -100,8 +114,9 @@ export default class Settings extends Sunshine.Component<{},{},SettingsState> {
     var email = this.refs.email.getValue()
     var likeMessage = this.refs.likeMessage.getValue()
     var notmuchCmd = this.refs.notmuchCmd.getValue()
+    var sentDir = this.refs.sentDir.getValue()
     var config = new ConfigRecord({
-      name, email, likeMessage, notmuchCmd
+      name, email, likeMessage, notmuchCmd, sentDir
     })
     this.emit(new Ev.SaveConfig(config))
   }

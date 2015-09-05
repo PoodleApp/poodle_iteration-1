@@ -1,16 +1,16 @@
 /* @flow */
 
-import * as Sunshine                       from 'sunshine/react'
+import * as Sunshine                       from 'sunshine-framework/react'
 import React                               from 'react'
-import { compose, get, lookup }            from 'lens'
-import { parseMidUri }                     from '../../../lib/activity'
-import * as Act                            from '../../../lib/derivedActivity'
+import { compose, get, lookup }            from 'safety-lens'
+import { parseMidUri }                     from '../activity'
+import * as Act                            from '../derivedActivity'
 import * as State                          from '../state'
-import * as CS                             from '../../../lib/composer/state'
+import * as CS                             from '../composer/state'
 import * as Ev                             from '../event'
-import { ComposeView }                     from '../../../lib/components/compose'
-import Settings                            from '../../../lib/components/Settings'
-import { Conversations, ConversationView } from '../../../lib/components/conversation'
+import { ComposeView }                     from './compose'
+import Settings                            from './Settings'
+import { Conversations, ConversationView } from './conversation'
 import { AppBar
        , AppCanvas
        , Dialog
@@ -27,9 +27,9 @@ import MenuItem      from 'material-ui/lib/menus/menu-item'
 import ContentCreate from 'material-ui/lib/svg-icons/content/create'
 import ArrowBack     from 'material-ui/lib/svg-icons/navigation/arrow-back'
 
-import type { DerivedActivity } from '../../../lib/derivedActivity'
-import type { Conversation } from '../../../lib/conversation'
-import type { AppState }     from '../state'
+import type { DerivedActivity } from '../derivedActivity'
+import type { Conversation }    from '../conversation'
+import type { AppState }        from '../state'
 
 var { Spacing } = Styles
 
@@ -72,6 +72,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     return {
       root: {
         paddingTop: Spacing.desktopKeylineIncrement + 'px',
+        paddingBottom: '25em',
         position: 'relative',
       },
       content: {
@@ -131,7 +132,8 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
               }
               onItemTouchTap={this.onCompose.bind(this)}
               >
-              <MenuItem value='note' primaryText='Note' />
+              <MenuItem value='note'     primaryText='Discussion' />
+              <MenuItem value='document' primaryText='Document' />
             </IconMenu>
           }
           />
@@ -143,7 +145,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
             { route: '#/',         text: 'Activity Stream' },
             { route: '#/settings', text: 'Settings' },
           ]} />
-        <div style={styles.root} onClick={interceptMidUris}>
+        <div style={styles.root} onClick={interceptMidUris} className={loading ? 'wait' : ''}>
           <div style={styles.content}>
             {content}
           </div>

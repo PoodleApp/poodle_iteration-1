@@ -1,14 +1,14 @@
 /* @flow */
 
-import * as Sunshine       from 'sunshine/react'
+import * as Sunshine       from 'sunshine-framework/react'
 import React               from 'react'
-import { compose, get, lookup } from 'lens'
+import { compose, get, lookup } from 'safety-lens'
 import { parseAddressList} from 'email-addresses'
 import * as Act            from '../derivedActivity'
 import { participants }    from '../conversation'
-import * as State          from '../../client/lib/state'
+import * as State          from '../state'
 import * as CS             from '../composer/state'
-import * as Ev             from '../../client/lib/event'
+import * as Ev             from '../event'
 import * as CE             from '../composer/event'
 import * as Create         from '../activityTypes'
 import { ActivityOptsMenu } from './activityMenu'
@@ -26,7 +26,7 @@ import type { DerivedActivity } from '../derivedActivity'
 import type { Conversation }    from '../conversation'
 import type { Address }         from '../notmuch'
 import type { Draft }           from '../compose'
-import type { ActivityProps }   from '../../client/lib/components/activities'
+import type { ActivityProps }   from './activities'
 
 type ComposeState = {
   activityType: ?string,
@@ -59,6 +59,9 @@ export class ComposeView extends Sunshine.Component<{},{},ComposeState> {
   render(): React.Element {
     var { activityType } = this.state
     if (activityType === 'note') {
+      return <ComposeNote {...this.state} />
+    }
+    else if (activityType === 'document') {
       return <ComposeNote {...this.state} />
     }
 
@@ -133,17 +136,19 @@ class ComposeNote extends Sunshine.Component<{},ComposeState,{}> {
   // TODO: validate required inputs
   onSend(event: Event) {
     event.preventDefault()
-    var { username, useremail } = this.props
+    var { activityType, username, useremail } = this.props
 
     var to      = this.refs.to.getValue()
     var subject = this.refs.subject.getValue()
     var body    = this.refs.body.getValue()
 
     var author = { name: username, address: useremail }
-    var note = Create.note({ verb: 'post', author, subject, body })
+    var activity = activityType === 'document' ?
+      Create.document({ verb: 'post', author, subject, body }) :
+      Create.note({ verb: 'post', author, subject, body })
 
     var draft: Draft = {
-      activities: [note],
+      activities: [activity],
       from:       author,
       to:         parseAddressList(to),
       subject:    subject,
@@ -339,7 +344,8 @@ export class EditNote extends Sunshine.Component<{},ActivityProps,EditNoteState>
       return
     }
 
-    var amended = Create.note({
+    var constructor = Act.objectType(activity) === 'document' ? Create.document : Create.note
+    var amended = constructor({
       verb,
       author:  (Act.object(activity): any).author,
       subject: Act.title(activity) || '[no subject]',
