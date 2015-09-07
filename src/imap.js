@@ -1,10 +1,10 @@
 /* @flow */
 
-import { Map }     from 'immutable'
-import * as Imap   from 'imap'
-import xoauth2     from 'xoauth2'
-import { inspect } from 'util'
-import * as Config from './config'
+import { List, Map } from 'immutable'
+import * as Imap     from 'imap'
+import xoauth2       from 'xoauth2'
+import { inspect }   from 'util'
+import * as Config   from './config'
 
 import type { Box, ImapOpts }    from 'imap'
 import type { OauthCredentials } from './auth/google'
@@ -41,9 +41,7 @@ function getXOauthHeader(acct: Config.Account, creds: OauthCredentials): Promise
     refreshToken: creds.refresh_token,
     accessToken:  creds.access_token,
   })
-  return lift1(cb => tokenGen.getToken(cb)).then(token => (
-    `AUTH XOAUTH2 ${token}`
-  ))
+  return lift1(cb => tokenGen.getToken(cb))
 }
 
 function fetchMail(imap: Imap): Promise<Result> {
