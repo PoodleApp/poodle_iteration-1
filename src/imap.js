@@ -1,10 +1,10 @@
 /* @flow */
 
-import { List, Map } from 'immutable'
-import * as Imap     from 'imap'
-import xoauth2       from 'xoauth2'
-import { inspect }   from 'util'
-import * as Config   from './config'
+import { Map }     from 'immutable'
+import * as Imap   from 'imap'
+import xoauth2     from 'xoauth2'
+import { inspect } from 'util'
+import * as Config from './config'
 
 import type { Box, ImapOpts }    from 'imap'
 import type { OauthCredentials } from './auth/google'
@@ -17,7 +17,7 @@ export {
 var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
 var client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
 
-type Result = [Map<string,List<imap$Headers>>, Map<string,List<imap$MessageAttributes>>]
+type Result = [Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]
 
 var Connection: Class<Imap.Connection> = Imap.default
 
@@ -83,18 +83,14 @@ function receiveHeaders(fetch: imap$ImapFetch): Promise<Result> {
           buffer += chunk.toString('utf8')
         })
         stream.once('end', () => {
-          var hs = headers.get(seqno, List())
           try {
-            hs = hs.push(Imap.parseHeader(buffer))
-            headers = headers.set(seqno, hs)
+            headers = headers.set(seqno, Imap.parseHeader(buffer))
           }
           catch(err) { reject(err) }
         })
       })
       msg.once('attributes', attrs => {
-        var as = attributes.get(seqno, List())
-        as = as.push(attrs)
-        attributes = attributes.set(seqno, as)
+        attributes = attributes.set(seqno, attrs)
       })
     })
 
