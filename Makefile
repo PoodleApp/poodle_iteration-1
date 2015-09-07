@@ -26,4 +26,9 @@ typecheck: node_modules
 
 node_modules: package.json
 	npm install
-
+	cd node_modules/keytar; \
+		HOME=~/.electron-gyp \
+		node-gyp rebuild --target=0.29.1 --arch=x64 --dist-url=https://atom.io/download/atom-shell
+	cd node_modules/pouchdb/node_modules/leveldown; \
+		HOME=~/.electron-gyp \
+		node-gyp rebuild --target=0.29.1 --arch=x64 --dist-url=https://atom.io/download/atom-shell
