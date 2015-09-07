@@ -63,10 +63,15 @@ function setupGoogle(email: string): Promise<Config.Account> {
     })
     .then(profile => {
       var json = JSON.stringify(creds)
-      accountEmails(profile.emails).forEach(e => {
-        keytar.addPassword('Poodle', e, json)
-      })
-      return profile
+      var addedPassword = accountEmails(profile.emails).reduce((success, e) => {
+        return success && keytar.addPassword('Poodle', e, json)
+      }, true)
+      if (addedPassword) {
+        return profile
+      }
+      else {
+        return Promise.reject(new Error('Could not add your OAuth credentials to the system keychain.'))
+      }
     })
   })
   .then(({ displayName, emails }) => {
