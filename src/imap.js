@@ -1,7 +1,7 @@
 /* @flow */
 
 import { Map }     from 'immutable'
-import { Imap }    from 'imap'
+import * as Imap   from 'imap'
 import xoauth2     from 'xoauth2'
 import { inspect } from 'util'
 import * as Config from './config'
@@ -18,6 +18,8 @@ var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleuserco
 var client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
 
 type Result = [Map<string,List<imap$Headers>>, Map<string,List<imap$MessageAttributes>>]
+
+var Connection: Class<Imap.Connection> = Imap.default
 
 function fetchMailFromGoogle(acct: Config.Account, creds: OauthCredentials): Promise<Result> {
   return getXOauthHeader(acct, creds)
@@ -58,7 +60,7 @@ function fetchMail(imap: Imap): Promise<Result> {
 }
 
 function initImap(opts: ImapOpts): Promise<Imap> {
-  var imap = new Imap(opts)
+  var imap = new Connection(opts)
   var p = new Promise((resolve, reject) => {
     imap.once('ready', () => resolve(imap))
     imap.once('error', reject)

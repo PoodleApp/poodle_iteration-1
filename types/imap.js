@@ -103,12 +103,12 @@ type imap$MessageAttributes = {
   size:   number,
 }
 
-declare class imap$ImapSeq {
+declare class imap$ConnectionSeq {
   fetch(source: imap$MessageSource, opts?: imap$FetchOptions): imap$ImapFetch;
 }
 
 declare module "imap" {
-  declare class Imap extends events$EventEmitter {
+  declare class Connection extends events$EventEmitter {
     state:     string;  // eg. 'disconnected', 'connected', 'authenticated'
     delimiter: ?string; // folder hierarchy delimiter
     namespaces: {
@@ -134,8 +134,8 @@ declare module "imap" {
     getSubscribedBoxes(nsPrefix?: string, cb: (err: Error, boxes: imap$Boxes) => void): void;
 
     // All of these methods have sequence-based counterparts. Those are declared
-    // in `imap$ImapSeq`.
-    seq: imap$ImapSeq;
+    // in `imap$ConnectionSeq`.
+    seq: imap$ConnectionSeq;
     fetch(source: imap$MessageSource, opts?: imap$FetchOptions): imap$ImapFetch;
   }
   // Imap events:
