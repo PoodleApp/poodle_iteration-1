@@ -9,10 +9,17 @@ import * as Config from './config'
 import type { Box, ImapOpts }    from 'imap'
 import type { OauthCredentials } from './auth/google'
 
+export {
+  fetchMailFromGoogle,
+  fetchMail,
+}
+
 var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
 var client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
 
-function fetchMailFromGoogle(acct: Config.Account, creds: OauthCredentials): Promise<[Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]> {
+type Result = [Map<string,List<imap$Headers>>, Map<string,List<imap$MessageAttributes>>]
+
+function fetchMailFromGoogle(acct: Config.Account, creds: OauthCredentials): Promise<Result> {
   return getXOauthHeader(acct, creds)
   .then(auth => initImap({
     xoauth2: auth,
@@ -37,7 +44,7 @@ function getXOauthHeader(acct: Config.Account, creds: OauthCredentials): Promise
   ))
 }
 
-function fetchMail(imap: Imap): Promise<[Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]> {
+function fetchMail(imap: Imap): Promise<Result> {
   return openInbox(imap)
   .then(box => {
     var f = imap.seq.fetch('1:3', {
@@ -64,7 +71,7 @@ function openInbox(imap: Imap): Promise<Box> {
   return lift1(cb => imap.openBox('INBOX', true, cb))
 }
 
-function receiveHeaders(fetch: imap$ImapFetch): Promise<[Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]> {
+function receiveHeaders(fetch: imap$ImapFetch): Promise<Result> {
   return new Promise((resolve, reject) => {
     var headers = Map()
     var attributes = Map()
@@ -76,14 +83,18 @@ function receiveHeaders(fetch: imap$ImapFetch): Promise<[Map<string,imap$Headers
           buffer += chunk.toString('utf8')
         })
         stream.once('end', () => {
+          var hs = headers.get(seqno, List())
           try {
-            headers = headers.set(seqno, Imap.parseHeader(buffer))
+            hs = hs.push(Imap.parseHeader(buffer))
+            headers = headers.set(seqno, hs)
           }
           catch(err) { reject(err) }
         })
       })
       msg.once('attributes', attrs => {
-        attributes = attributes.set(seqno, attrs)
+        var as = attributes.get(seqno, List())
+        as = as.push(attrs)
+        attributes = attributes.set(seqno, as)
       })
     })
 
