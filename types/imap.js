@@ -46,8 +46,8 @@ type imap$Boxes = { [key:string]: {
   parent:    ?Object,
 } }
 
-type imap$MessagePart = imap$MessagePart[] | {
-  partID:       string,
+type imap$MessagePart = {
+  partID?:      string,
   type:         string,  // eg, 'text'
   subtype?:     string,  // eg, 'plain'
   params:       { [key:string]: string },  // eg, charset
@@ -62,11 +62,50 @@ type imap$MessagePart = imap$MessagePart[] | {
   lines?:       number,
 }
 
+// Should be: type imap$MessageTree = [imap$MessagePart, ...imap$MessageTree]
+type imap$MessageTree = imap$MessagePart | imap$MessageTree[]
+
 type imap$Flag = '\\Seen'
                | '\\Answered'
                | '\\Flagged'
                | '\\Deleted'
                | '\\Draft'
+
+type imap$FetchOptions = {
+  markSeen?:  boolean,
+  struct?:    boolean,  // fetch message structure
+  envelope?:  boolean,
+  size:       boolean,
+  modifiers?: { [key:string]: string },  // modifiers defined by IMAP extensions
+  bodies?:    string | string[],  // e.g., 'HEADER.FIELDS (FROM SUBJECT TO DATE)'
+}
+
+type imap$MessageSource = string | string[]
+
+declare class imap$ImapFetch extends events$EventEmitter {}
+// ImapFetch events:
+// - 'message' : (msg: ImapMessage, seqno: number)
+// - 'error'   : (err: Error)
+// - 'end'     : ()
+
+declare class imap$ImapMessage extends events$EventEmitter {}
+// ImapMessage events:
+// - 'body' : (stream: ReadableStream, info: { which: string, size: number })
+// - 'attributes' : (attrs: imap$MessageAttributes)
+//
+// `which` corresponds to single `bodies` element in imap$FetchOptions
+
+type imap$MessageAttributes = {
+  uid:    number,
+  flags:  imap$Flag[],
+  date:   Date,
+  struct: imap$MessageTree,
+  size:   number,
+}
+
+declare class imap$ImapSeq {
+  fetch(source: imap$MessageSource, opts?: imap$FetchOptions): imap$ImapFetch;
+}
 
 declare module "imap" {
   declare class Imap extends events$EventEmitter {
@@ -82,7 +121,7 @@ declare module "imap" {
     connect(): void;
     end(): void;
     destroy(): void;
-    openBox(mailboxName: string, openReadOnly?: boolean, modifiers: Object,
+    openBox(mailboxName: string, openReadOnly?: boolean, modifiers?: Object,
             cb: (err: Error, mailbox: imap$Box) => void): void;
     closeBox(autoExpunge?: boolean, cb: (err: Error) => void): void;
     addBox(mailboxName: string, cb: (err: Error) => void): void;
@@ -93,6 +132,11 @@ declare module "imap" {
     status(mailboxName: string, cb: (err: Error, box: imap$Box) => void): void;
     getBoxes(nsPrefix?: string, cb: (err: Error, boxes: imap$Boxes) => void): void;
     getSubscribedBoxes(nsPrefix?: string, cb: (err: Error, boxes: imap$Boxes) => void): void;
+
+    // All of these methods have sequence-based counterparts. Those are declared
+    // in `imap$ImapSeq`.
+    seq: imap$ImapSeq;
+    fetch(source: imap$MessageSource, opts?: imap$FetchOptions): imap$ImapFetch;
   }
   // Imap events:
   // - 'ready' : ()
@@ -104,4 +148,6 @@ declare module "imap" {
   // - 'error' : (err: Error & { source: string })
   // - 'close' : (hadError: boolean)
   // - 'end' : ()
+
+  declare type ImapOpts = imap$ImapOpts;
 }

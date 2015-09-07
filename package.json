@@ -50,6 +50,7 @@
     "safety-lens": "^1.0.2",
     "string-hash": "^1.1.0",
     "sunshine-framework": "^1.2.1",
-    "uuid": "^2.0.1"
+    "uuid": "^2.0.1",
+    "xoauth2": "^1.1.0"
   }
 }
