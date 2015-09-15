@@ -5,6 +5,7 @@ import { compose, filtering, getter } from 'safety-lens'
 import { field, index }               from 'safety-lens/immutable'
 import * as CS                        from './composer/state'
 import * as AS                        from './add_account/state'
+import * as AuthState                 from './auth/state'
 import { parseMidUri, published }     from './activity'
 import * as Act                       from './derivedActivity'
 import { map
@@ -29,6 +30,7 @@ export type AppState = Record<{
   notification?: string,
   composerState: CS.ComposerState,
   addAccountState: AS.AddAccountState,
+  authState:     AuthState.AuthState,
   showLink:      ?DerivedActivity,
   searchQuery:   ?string,
 }>
@@ -45,6 +47,7 @@ var AppStateRecord = Record({
   notification:  null,
   composerState: CS.initialState,
   addAccountState: AS.initialState,
+  authState:     AuthState.initialState,
   showLink:      null,
   searchQuery:   null,
 })

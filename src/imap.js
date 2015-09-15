@@ -1,17 +1,19 @@
 /* @flow */
 
-import { Map }     from 'immutable'
-import * as Imap   from 'imap'
-import xoauth2     from 'xoauth2'
-import { inspect } from 'util'
-import * as Config from './config'
+import { Map }          from 'immutable'
+import * as Imap        from 'imap'
+import { inspect }      from 'util'
+import * as Config      from './config'
+import { lift1, lift0 } from './util/promises'
 
 import type { Box, ImapOpts }    from 'imap'
 import type { OauthCredentials } from './auth/google'
+import type { XOAuth2Generator } from './auth/tokenGenerator'
 
 export {
   fetchMailFromGoogle,
   fetchMail,
+  getConnection,
 }
 
 var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
@@ -21,8 +23,18 @@ type Result = [Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]
 
 var Connection: Class<Imap.Connection> = Imap.default
 
-function fetchMailFromGoogle(acct: Config.Account, creds: OauthCredentials): Promise<Result> {
-  return getXOauthHeader(acct, creds)
+function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
+  return lift1(cb => tokenGen.getToken(cb))
+  .then(auth => initImap({
+    xoauth2: auth,
+    host: 'imap.gmail.com',
+    port: 993,
+    tls: true,
+  }))
+}
+
+function fetchMailFromGoogle(tokenGen: XOAuth2Generator): Promise<Result> {
+  return lift1(cb => tokenGen.getToken(cb))
   .then(auth => initImap({
     xoauth2: auth,
     host: 'imap.gmail.com',
@@ -32,28 +44,32 @@ function fetchMailFromGoogle(acct: Config.Account, creds: OauthCredentials): Pro
   .then(fetchMail)
 }
 
-function getXOauthHeader(acct: Config.Account, creds: OauthCredentials): Promise<string> {
-  var tokenGen = xoauth2.createXOAuth2Generator({
-    user:         acct.email,
-    accessUrl:    'https://accounts.google.com/o/oauth2/token',
-    clientId:     client_id,
-    clientSecret: client_secret,
-    refreshToken: creds.refresh_token,
-    accessToken:  creds.access_token,
-  })
-  return lift1(cb => tokenGen.getToken(cb))
+// query is a Gmail search query.
+// E.g.: newer_than:2d
+function fetchMail(query: string, imap: Imap): Promise<Result> {
+  return allMailFolder(imap).then(allMail => (
+    lift1(cb => imap.openBox(allMail, true, cb))
+  ))
+  .then(box => (
+    lift1(cb => imap.search(['X-GM-RAW', query], cb))
+  ))
+  .then(uids => (
+    console.log(uids), uids
+  ))
 }
 
-function fetchMail(imap: Imap): Promise<Result> {
-  return openInbox(imap)
-  .then(box => {
-    var f = imap.seq.fetch('1:3', {
-      bodies: 'HEADER.FIELDS (FROM SUBJECT TO DATE)',
-      struct: true,
-    })
-    var headers = receiveHeaders(f)
-    headers.then(() => imap.end())
-    return headers
+// TODO: Present boxes to user to select which to sync.
+function allMailFolder(imap: Imap): Promise<string> {
+  return lift1(cb => imap.getBoxes(cb)).then(boxes => {
+    var gmail   = boxes['[Gmail]']
+    var allmail = gmail ? gmail.children['All Mail'] : null
+    var delim   = gmail ? gmail.delimiter : null
+    if (gmail && allmail && delim) {
+      return `[Gmail]${delim}All Mail`
+    }
+    else {
+      return Promise.reject(new Error("Unable to find 'All Mail' folder"))
+    }
   })
 }
 
@@ -96,23 +112,5 @@ function receiveHeaders(fetch: imap$ImapFetch): Promise<Result> {
 
     fetch.once('end', () => resolve([headers, attributes]))
     fetch.once('error', reject)
-  })
-}
-
-function lift0<T>(fn: (cb: (err: any) => void) => any): Promise<void> {
-  return new Promise((resolve, reject) => {
-    fn((err, value) => {
-      if (err) { reject(err) }
-      else { resolve(undefined) }
-    })
-  })
-}
-
-function lift1<T>(fn: (cb: (err: any, value: T) => void) => any): Promise<T> {
-  return new Promise((resolve, reject) => {
-    fn((err, value) => {
-      if (err) { reject(err) }
-      else { resolve(value) }
-    })
   })
 }

@@ -16,6 +16,7 @@ import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
 import * as Mail                            from './maildir'
 import { notmuch }                          from './notmuch'
+import * as AuthEvent                       from './auth/event'
 
 import type { List }             from 'immutable'
 import type { URI }              from './activity'
@@ -221,6 +222,10 @@ function init(app: Sunshine.App<AppState>) {
   })
 
   app.on(GotConfig, (state, { config }) => {
+    var account = config.accounts.first()
+    if (account) {
+      app.emit(new AuthEvent.SetAccount(account))
+    }
     return set(State.config, config, state)
   })
 

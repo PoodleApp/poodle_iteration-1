@@ -34,7 +34,7 @@ type AccessTokenOpts = {
 function getAccessToken(opts: AccessTokenOpts): Promise<OauthCredentials> {
   var { client_id, client_secret } = opts
   return getAuthorizationCode(opts).then(authorizationCode => {
-    var data = stringify({
+    var body = stringify({
       code: authorizationCode,
       client_id,
       client_secret,
@@ -47,7 +47,7 @@ function getAccessToken(opts: AccessTokenOpts): Promise<OauthCredentials> {
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: data,
+      body,
     })
   })
   .then(res => res.json())

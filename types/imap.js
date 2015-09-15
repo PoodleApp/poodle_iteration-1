@@ -39,12 +39,14 @@ type imap$Headers = { [key:string]: string[] }
   }
 }
 
-type imap$Boxes = { [key:string]: {
+type imap$Box = {
   attribs:   string[],
   delimiter: string,
   children:  ?imap$Boxes,
   parent:    ?Object,
-} }
+}
+
+type imap$Boxes = { [key:string]: imap$Box }
 
 type imap$MessagePart = {
   partID?:      string,
