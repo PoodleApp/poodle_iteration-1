@@ -11,15 +11,21 @@ import type { OauthCredentials } from './auth/google'
 import type { XOAuth2Generator } from './auth/tokenGenerator'
 
 export {
-  fetchMailFromGoogle,
   fetchMail,
   getConnection,
+  openInbox,
+  openAllMail,
+  openDrafts,
+  openImportant,
+  openSent,
+  openFlagged,
+  openTrash,
+  boxByAttribute,
+  openBox,
 }
 
-var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
-var client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
-
 type Result = [Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]
+export type UID = number
 
 var Connection: Class<Imap.Connection> = Imap.default
 
@@ -33,44 +39,15 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
   }))
 }
 
-function fetchMailFromGoogle(tokenGen: XOAuth2Generator): Promise<Result> {
-  return lift1(cb => tokenGen.getToken(cb))
-  .then(auth => initImap({
-    xoauth2: auth,
-    host: 'imap.gmail.com',
-    port: 993,
-    tls: true,
-  }))
-  .then(fetchMail)
-}
-
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMail(query: string, imap: Imap): Promise<Result> {
+function fetchMail(query: string, imap: Imap): Promise<UID[]> {
   return allMailFolder(imap).then(allMail => (
     lift1(cb => imap.openBox(allMail, true, cb))
   ))
   .then(box => (
-    lift1(cb => imap.search(['X-GM-RAW', query], cb))
+    lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
-  .then(uids => (
-    console.log(uids), uids
-  ))
-}
-
-// TODO: Present boxes to user to select which to sync.
-function allMailFolder(imap: Imap): Promise<string> {
-  return lift1(cb => imap.getBoxes(cb)).then(boxes => {
-    var gmail   = boxes['[Gmail]']
-    var allmail = gmail ? gmail.children['All Mail'] : null
-    var delim   = gmail ? gmail.delimiter : null
-    if (gmail && allmail && delim) {
-      return `[Gmail]${delim}All Mail`
-    }
-    else {
-      return Promise.reject(new Error("Unable to find 'All Mail' folder"))
-    }
-  })
 }
 
 function initImap(opts: ImapOpts): Promise<Imap> {
@@ -81,10 +58,6 @@ function initImap(opts: ImapOpts): Promise<Imap> {
   })
   imap.connect()
   return p
-}
-
-function openInbox(imap: Imap): Promise<Box> {
-  return lift1(cb => imap.openBox('INBOX', true, cb))
 }
 
 function receiveHeaders(fetch: imap$ImapFetch): Promise<Result> {
@@ -113,4 +86,61 @@ function receiveHeaders(fetch: imap$ImapFetch): Promise<Result> {
     fetch.once('end', () => resolve([headers, attributes]))
     fetch.once('error', reject)
   })
+}
+
+function openInbox(readonly: boolean, imap: Imap): Promise<Box> {
+  return lift1(cb => imap.openBox('INBOX', readonly, cb))
+}
+
+function openAllMail(readonly: boolean, imap: Imap): Promise<Box> {
+  return openBox(boxByAttribute('\\All'), readonly)
+}
+
+function openDrafts(readonly: boolean, imap: Imap): Promise<Box> {
+  return openBox(boxByAttribute('\\Drafts'), readonly)
+}
+
+function openImportant(readonly: boolean, imap: Imap): Promise<Box> {
+  return openBox(boxByAttribute('\\Important'), readonly)
+}
+
+function openSent(readonly: boolean, imap: Imap): Promise<Box> {
+  return openBox(boxByAttribute('\\Sent'), readonly)
+}
+
+function openFlagged(readonly: boolean, imap: Imap): Promise<Box> {
+  return openBox(boxByAttribute('\\Flagged'), readonly)
+}
+
+function openTrash(readonly: boolean, imap: Imap): Promise<Box> {
+  return openBox(boxByAttribute('\\Trash'), readonly)
+}
+
+function boxByAttribute(attribute: string): boolean {
+  return box => box.attribs.some(a => a === attribute)
+}
+
+function openBox(p: (box: imap$Box) => boolean, readonly: boolean, imap: Imap): Promise<Box> {
+  return lift1(cb => imap.getBoxes(cb)).then(boxes => {
+    var match = findBox(p, boxes)
+    if (match) {
+      var [path, box] = match
+      return lift1(cb => imap.openBox(path, readonly, cb))
+    }
+    else {
+      return Promise.reject(new Error("Box not found"))
+    }
+  })
+}
+
+function findBox(p: (box: imap$Box) => boolean, boxes: imap$Boxes, path?: string = ''): ?[string, imap$Box] {
+  var pairs = Object.keys(boxes).map(k => [k, boxes[k]])
+  var match = pairs.find(([_,b]) => p(b))
+  if (match) {
+    var [name, box] = match
+    return [path + name, box]
+  }
+  else {
+    return pairs.find(([n, b]) => findBox(p, b.children || {}, n + b.delimiter))
+  }
 }

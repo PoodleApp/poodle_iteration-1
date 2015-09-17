@@ -43,5 +43,6 @@ function init(app: Sunshine.App<State.AppState>) {
 }
 
 export {
+  AccessToken,
   SetAccount,
 }

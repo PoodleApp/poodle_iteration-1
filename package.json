@@ -33,6 +33,7 @@
     "hash-brown-router": "^1.5.0",
     "imap": "^0.8.15",
     "immutable": "^3.7.4",
+    "kefir": "^2.8.2",
     "keytar": "^2.1.0",
     "mailcomposer": "hallettj/mailcomposer#patched",
     "mailparser": "andris9/mailparser#7ce164ef0c5d3a608dd168bbf0529f65a781b93d",

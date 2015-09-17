@@ -23,7 +23,7 @@ export type XOAuth2Generator = Generator
 function tokenGenerator(userEmail: string, creds: OauthCredentials): XOAuth2Generator {
   return xoauth2.createXOAuth2Generator({
     user:         userEmail,
-    accessUrl:    'https://accounts.google.com/oauth2/v3/token',
+    // accessUrl:    'https://accounts.google.com/oauth2/v3/token',
     clientId:     client_id,
     clientSecret: client_secret,
     refreshToken: creds.refresh_token,
