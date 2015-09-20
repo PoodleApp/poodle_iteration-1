@@ -1,6 +1,6 @@
 /* @flow */
 
-import { Map }          from 'immutable'
+import { Map, Seq }     from 'immutable'
 import * as Imap        from 'imap'
 import { inspect }      from 'util'
 import * as Config      from './config'
@@ -42,10 +42,7 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 // query is a Gmail search query.
 // E.g.: newer_than:2d
 function fetchMail(query: string, imap: Imap): Promise<UID[]> {
-  return allMailFolder(imap).then(allMail => (
-    lift1(cb => imap.openBox(allMail, true, cb))
-  ))
-  .then(box => (
+  return openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
 }
@@ -93,30 +90,30 @@ function openInbox(readonly: boolean, imap: Imap): Promise<Box> {
 }
 
 function openAllMail(readonly: boolean, imap: Imap): Promise<Box> {
-  return openBox(boxByAttribute('\\All'), readonly)
+  return openBox(boxByAttribute('\\All'), readonly, imap)
 }
 
 function openDrafts(readonly: boolean, imap: Imap): Promise<Box> {
-  return openBox(boxByAttribute('\\Drafts'), readonly)
+  return openBox(boxByAttribute('\\Drafts'), readonly, imap)
 }
 
 function openImportant(readonly: boolean, imap: Imap): Promise<Box> {
-  return openBox(boxByAttribute('\\Important'), readonly)
+  return openBox(boxByAttribute('\\Important'), readonly, imap)
 }
 
 function openSent(readonly: boolean, imap: Imap): Promise<Box> {
-  return openBox(boxByAttribute('\\Sent'), readonly)
+  return openBox(boxByAttribute('\\Sent'), readonly, imap)
 }
 
 function openFlagged(readonly: boolean, imap: Imap): Promise<Box> {
-  return openBox(boxByAttribute('\\Flagged'), readonly)
+  return openBox(boxByAttribute('\\Flagged'), readonly, imap)
 }
 
 function openTrash(readonly: boolean, imap: Imap): Promise<Box> {
-  return openBox(boxByAttribute('\\Trash'), readonly)
+  return openBox(boxByAttribute('\\Trash'), readonly, imap)
 }
 
-function boxByAttribute(attribute: string): boolean {
+function boxByAttribute(attribute: string): (box: Box) => boolean {
   return box => box.attribs.some(a => a === attribute)
 }
 
@@ -141,6 +138,10 @@ function findBox(p: (box: imap$Box) => boolean, boxes: imap$Boxes, path?: string
     return [path + name, box]
   }
   else {
-    return pairs.find(([n, b]) => findBox(p, b.children || {}, n + b.delimiter))
+    return Seq(pairs).map(([n, b]) => (
+      b.children ? findBox(p, b.children, n + b.delimiter) : null
+    ))
+    .filter(child => !!child)
+    .first()
   }
 }
