@@ -23,21 +23,21 @@ type imap$Namespace = {
 
 type imap$Headers = { [key:string]: string[] }
 
- type imap$Box = {
-  name:           string,
-  readyOnly?:     boolean,  // only available with openBox() calls
-  newKeywords:    boolean,
-  uidvalidity:    number,
-  uidnext:        number,
-  flags:          imap$Flag[],
-  permFlags:      imap$Flag[],
-  persistentUIDs: boolean,
-  messages: {
-    total:   number,
-    new:     number,
-    unseen?: number,  // only available with status() calls
-  }
-}
+// type imap$Box = {
+//   name:           string,
+//   readyOnly?:     boolean,  // only available with openBox() calls
+//   newKeywords:    boolean,
+//   uidvalidity:    number,
+//   uidnext:        number,
+//   flags:          imap$Flag[],
+//   permFlags:      imap$Flag[],
+//   persistentUIDs: boolean,
+//   messages: {
+//     total:   number,
+//     new:     number,
+//     unseen?: number,  // only available with status() calls
+//   }
+// }
 
 type imap$Box = {
   attribs:   string[],

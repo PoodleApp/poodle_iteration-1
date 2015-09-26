@@ -2,11 +2,14 @@
 
 import { Map, Seq }     from 'immutable'
 import * as Imap        from 'imap'
+import * as Kefir       from 'kefir'
 import { inspect }      from 'util'
 import * as Config      from './config'
 import { lift1, lift0 } from './util/promises'
 
 import type { Box, ImapOpts }    from 'imap'
+import type { Stream }           from 'kefir'
+import type { ReadStream }       from 'fs'
 import type { OauthCredentials } from './auth/google'
 import type { XOAuth2Generator } from './auth/tokenGenerator'
 
@@ -41,10 +44,97 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMail(query: string, imap: Imap): Promise<UID[]> {
-  return openAllMail(true, imap).then(box => (
+function fetchMail(query: string, imap: Imap): Stream<Object[]> {
+  const uidsPromise = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
+  return Kefir.fromPromise(uidsPromise).changes().flatMap(uids => fetch(uids, {
+    struct: true,
+    bodies: [''],
+  }, imap))
+}
+
+// TODO: Use 'changedsince' option defined by RFC4551
+function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<string> {
+  return Kefir.stream(emitter => {
+    var fetch = imap.fetch(source, opts)
+    fetch.on('message', (msg, seqno) => emitter.emit(msg))
+    fetch.once('error', err => emitter.error(err))
+    fetch.once('end', () => emitter.end())
+  })
+  .flatMap(messageBodyStream)
+}
+
+function messageBodyStream(msg: imap$ImapMessage): Stream<string> {
+  return Kefir.stream(emitter => {
+    msg.on('body', (stream, info) => {
+      // info example: {seqno: 12766, which: "", size: 87372}
+      collectBody(stream).then(buffer => {
+        var body = buffer.toString('utf8')
+        // emitter.emit(Imap.parseHeader(body))
+        emitter.emit(body)
+      })
+      .catch(err => emitter.error(err))
+    })
+    // TODO: Do something with msg 'attributes' event
+    // see below for example
+    //msg.on('attributes', attrs => {
+    //  console.log('attrs', inspect(attrs, false, 8))
+    //})
+    msg.once('end', () => emitter.end())
+  })
+}
+
+// attributes example:
+//
+// { struct:
+//    [ { type: 'alternative',
+//        params: { boundary: '----=_Part_437079_307021065.1442840682149' },
+//        disposition: null,
+//        language: null },
+//      [ { partID: '1',
+//          type: 'text',
+//          subtype: 'plain',
+//          params: { charset: 'UTF-8' },
+//          id: 'text-body',
+//          description: null,
+//          encoding: 'QUOTED-PRINTABLE',
+//          size: 4117,
+//          lines: 101,
+//          md5: null,
+//          disposition: null,
+//          language: null } ],
+//      [ { partID: '2',
+//          type: 'text',
+//          subtype: 'html',
+//          params: { charset: 'UTF-8' },
+//          id: 'html-body',
+//          description: null,
+//          encoding: 'QUOTED-PRINTABLE',
+//          size: 79675,
+//          lines: 1455,
+//          md5: null,
+//          disposition: null,
+//          language: null } ] ],
+//   date: Mon Sep 21 2015 06:04:59 GMT-0700 (PDT),
+//   flags: [],
+//   uid: 83528,
+//   modseq: '1347582',
+//   'x-gm-labels': [ '\\Inbox' ],
+//   'x-gm-msgid': '1512928130170660058',
+//   'x-gm-thrid': '1512928130170660058' }
+
+function collectBody(stream: ReadStream): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    var chunks = []
+    stream.on('data', chunk => {
+      chunks.push(chunk)
+    })
+    stream.once('end', () => {
+      resolve(Buffer.concat(chunks))
+    })
+    stream.once('error', reject)
+  })
 }
 
 function initImap(opts: ImapOpts): Promise<Imap> {
