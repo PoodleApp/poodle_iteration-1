@@ -27,7 +27,8 @@ export {
   openBox,
 }
 
-type Result = [Map<string,imap$Headers>, Map<string,imap$MessageAttributes>]
+export type RawMessage = string
+export type Result = [imap$Headers, RawMessage]
 export type UID = number
 
 var Connection: Class<Imap.Connection> = Imap.default
@@ -44,7 +45,7 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMail(query: string, imap: Imap): Stream<Object[]> {
+function fetchMail(query: string, imap: Imap): Stream<Result> {
   const uidsPromise = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
@@ -55,7 +56,7 @@ function fetchMail(query: string, imap: Imap): Stream<Object[]> {
 }
 
 // TODO: Use 'changedsince' option defined by RFC4551
-function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<string> {
+function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<Result> {
   return Kefir.stream(emitter => {
     var fetch = imap.fetch(source, opts)
     fetch.on('message', (msg, seqno) => emitter.emit(msg))
@@ -65,14 +66,13 @@ function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap):
   .flatMap(messageBodyStream)
 }
 
-function messageBodyStream(msg: imap$ImapMessage): Stream<string> {
+function messageBodyStream(msg: imap$ImapMessage): Stream<Result> {
   return Kefir.stream(emitter => {
     msg.on('body', (stream, info) => {
       // info example: {seqno: 12766, which: "", size: 87372}
       collectBody(stream).then(buffer => {
         var body = buffer.toString('utf8')
-        // emitter.emit(Imap.parseHeader(body))
-        emitter.emit(body)
+        emitter.emit([Imap.parseHeader(body), body])
       })
       .catch(err => emitter.error(err))
     })

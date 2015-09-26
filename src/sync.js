@@ -4,17 +4,19 @@ import * as Kefir         from 'kefir'
 import keytar             from 'keytar'
 import * as Config        from './config'
 import * as imap          from './imap'
+import * as index         from './sync/index'
 import { tokenGenerator } from './auth/tokenGenerator'
 
 import type { Stream } from 'kefir'
 import type { XOAuth2Generator } from './auth/tokenGenerator'
 
-function sync(account: Config.Account): Stream<Object[]> {
-  return Kefir.fromPromise(
+function sync(account: Config.Account): Stream<Object> {
+  var messages = Kefir.fromPromise(
     getTokenGenerator(account).then(imap.getConnection)
   )
   .changes()
   .flatMap(conn => imap.fetchMail('newer_than:2d', conn))
+  return index.record(messages)
 }
 
 function getTokenGenerator(account: Config.Account): Promise<XOAuth2Generator> {
