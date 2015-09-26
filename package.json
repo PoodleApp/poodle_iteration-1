@@ -23,7 +23,7 @@
   "devDependencies": {
     "babel": "^5.8.21",
     "electron-prebuilt": "^0.30.6",
-    "flow-bin": "^0.14.0"
+    "flow-bin": "^0.16.0"
   },
   "dependencies": {
     "babel-core": "^5.8.23",

@@ -64,10 +64,10 @@ export type Attachment = {
 
 export type MailingList = {
   id:          string,
-  archive:     ?string,
-  post:        ?string,
-  subscribe:   ?string,
-  unsubscribe: ?string,
+  archive:     ?string[],
+  post:        ?string[],
+  subscribe:   ?string[],
+  unsubscribe: ?string[],
 }
 
 export type URI = string
@@ -148,11 +148,11 @@ function parseList({ headers }: Message): ?MailingList {
   var id = headers['List-ID']
   if (id) {
     return {
-      id,
-      archive: headers['List-Archive'],
-      post: headers['List-Post'],
-      subscribe: headers['List-Subscribe'],
-      unsubscribe: headers['List-Unsubscribe'],
+      id:          first(id),
+      archive:     all(headers['List-Archive']),
+      post:        all(headers['List-Post']),
+      subscribe:   all(headers['List-Subscribe']),
+      unsubscribe: all(headers['List-Unsubscribe']),
     }
   }
 }
@@ -189,4 +189,13 @@ function displayName(addr: Address): string {
 function flatParts(msg: Message): MessagePart[] {
   var subparts = part => part.content instanceof Array ? chain(subparts, part.content) : [part]
   return chain(subparts, msg.body)
+}
+
+function first<T>(xs: T | T[]): T {
+  return xs instanceof Array ? xs[0] : xs
+}
+
+function all<T>(xs: T | T[]): T[] {
+  if (typeof xs === 'undefined') { return [] }
+  return xs instanceof Array ? xs : [xs]
 }

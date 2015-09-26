@@ -77,7 +77,7 @@ type imap$FetchOptions = {
   markSeen?:  boolean,
   struct?:    boolean,  // fetch message structure
   envelope?:  boolean,
-  size:       boolean,
+  size?:      boolean,
   modifiers?: { [key:string]: string },  // modifiers defined by IMAP extensions
   bodies?:    string | string[],  // e.g., 'HEADER.FIELDS (FROM SUBJECT TO DATE)'
 }
