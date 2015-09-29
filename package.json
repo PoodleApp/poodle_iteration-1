@@ -37,7 +37,7 @@
     "kefir": "^2.8.2",
     "keytar": "^3.0.0",
     "mailcomposer": "hallettj/mailcomposer#patched",
-    "mailparser": "andris9/mailparser#7ce164ef0c5d3a608dd168bbf0529f65a781b93d",
+    "mailparser": "hallettj/mailparser#5a63d765154da78020fbb2a5b8f399a481e82967",
     "marked": "^0.3.5",
     "material-ui": "^0.11.0",
     "mkdirp": "^0.5.1",
