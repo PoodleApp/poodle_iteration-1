@@ -10,13 +10,14 @@ import { tokenGenerator } from './auth/tokenGenerator'
 import type { Stream } from 'kefir'
 import type { XOAuth2Generator } from './auth/tokenGenerator'
 
-function sync(account: Config.Account): Stream<Object> {
-  var messages = Kefir.fromPromise(
+function sync(query: string, account: Config.Account): Stream<Object> {
+  return Kefir.fromPromise(
     getTokenGenerator(account).then(imap.getConnection)
   )
   .changes()
-  .flatMap(conn => imap.fetchMail('newer_than:2d', conn))
-  return index.record(messages)
+  .flatMap(conn => imap.fetchMail(query, conn))
+  .flatMap(index.parseMessage)
+  .flatMap(index.record)
 }
 
 function getTokenGenerator(account: Config.Account): Promise<XOAuth2Generator> {

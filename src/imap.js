@@ -28,7 +28,7 @@ export {
 }
 
 export type RawMessage = string
-export type Result = [imap$Headers, RawMessage]
+export type Result = ReadStream
 export type UID = number
 
 var Connection: Class<Imap.Connection> = Imap.default
@@ -58,7 +58,7 @@ function fetchMail(query: string, imap: Imap): Stream<Result> {
 // TODO: Use 'changedsince' option defined by RFC4551
 function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<Result> {
   return Kefir.stream(emitter => {
-    var fetch = imap.fetch(source, opts)
+    const fetch = imap.fetch(source, opts)
     fetch.on('message', (msg, seqno) => emitter.emit(msg))
     fetch.once('error', err => emitter.error(err))
     fetch.once('end', () => emitter.end())
@@ -69,12 +69,7 @@ function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap):
 function messageBodyStream(msg: imap$ImapMessage): Stream<Result> {
   return Kefir.stream(emitter => {
     msg.on('body', (stream, info) => {
-      // info example: {seqno: 12766, which: "", size: 87372}
-      collectBody(stream).then(buffer => {
-        var body = buffer.toString('utf8')
-        emitter.emit([Imap.parseHeader(body), body])
-      })
-      .catch(err => emitter.error(err))
+      emitter.emit(stream)
     })
     // TODO: Do something with msg 'attributes' event
     // see below for example
@@ -124,19 +119,6 @@ function messageBodyStream(msg: imap$ImapMessage): Stream<Result> {
 //   'x-gm-msgid': '1512928130170660058',
 //   'x-gm-thrid': '1512928130170660058' }
 
-function collectBody(stream: ReadStream): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    var chunks = []
-    stream.on('data', chunk => {
-      chunks.push(chunk)
-    })
-    stream.once('end', () => {
-      resolve(Buffer.concat(chunks))
-    })
-    stream.once('error', reject)
-  })
-}
-
 function initImap(opts: ImapOpts): Promise<Imap> {
   var imap = new Connection(opts)
   var p = new Promise((resolve, reject) => {
@@ -145,34 +127,6 @@ function initImap(opts: ImapOpts): Promise<Imap> {
   })
   imap.connect()
   return p
-}
-
-function receiveHeaders(fetch: imap$ImapFetch): Promise<Result> {
-  return new Promise((resolve, reject) => {
-    var headers = Map()
-    var attributes = Map()
-
-    fetch.on('message', (msg, seqno) => {
-      msg.on('body', (stream, info) => {
-        var buffer = ''
-        stream.on('data', chunk => {
-          buffer += chunk.toString('utf8')
-        })
-        stream.once('end', () => {
-          try {
-            headers = headers.set(seqno, Imap.parseHeader(buffer))
-          }
-          catch(err) { reject(err) }
-        })
-      })
-      msg.once('attributes', attrs => {
-        attributes = attributes.set(seqno, attrs)
-      })
-    })
-
-    fetch.once('end', () => resolve([headers, attributes]))
-    fetch.once('error', reject)
-  })
 }
 
 function openInbox(readonly: boolean, imap: Imap): Promise<Box> {
