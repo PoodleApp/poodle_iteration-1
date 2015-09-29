@@ -3,7 +3,12 @@ require('babel/register')
 var app = require('app')
 var BrowserWindow = require('browser-window')
 
-require('crash-reporter').start()
+require('crash-reporter').start({
+  productName: 'Poodle',
+  companyName: 'Jesse Hallett',
+  submitUrl:   'http://localhost:1127/post',
+  autoSubmit:  true,
+})
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is GCed.

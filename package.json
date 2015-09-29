@@ -22,19 +22,20 @@
   "homepage": "https://github.com/hallettj/poodle#readme",
   "devDependencies": {
     "babel": "^5.8.21",
-    "electron-prebuilt": "^0.30.6",
+    "electron-prebuilt": "^0.33.3",
+    "electron-rebuild": "^1.0.0",
     "flow-bin": "^0.16.0"
   },
   "dependencies": {
     "babel-core": "^5.8.23",
-    "electron-safe-ipc": "^0.5.0",
+    "electron-safe-ipc": "^0.6.1",
     "email-addresses": "^2.0.1",
     "googleapis": "^2.1.3",
     "hash-brown-router": "^1.5.0",
     "imap": "^0.8.15",
     "immutable": "^3.7.4",
     "kefir": "^2.8.2",
-    "keytar": "^2.1.0",
+    "keytar": "^3.0.0",
     "mailcomposer": "hallettj/mailcomposer#patched",
     "mailparser": "andris9/mailparser#7ce164ef0c5d3a608dd168bbf0529f65a781b93d",
     "marked": "^0.3.5",
@@ -54,5 +55,6 @@
     "sunshine-framework": "^1.2.1",
     "uuid": "^2.0.1",
     "xoauth2": "^1.1.0"
-  }
+  },
+  "engine": "node >= 4.1.1"
 }
