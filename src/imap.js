@@ -28,7 +28,8 @@ export {
 }
 
 export type RawMessage = string
-export type Result = ReadStream
+// export type Result = [imap$Headers, RawMessage]
+export type Result = ReadStream<RawMessage>
 export type UID = number
 
 var Connection: Class<Imap.Connection> = Imap.default

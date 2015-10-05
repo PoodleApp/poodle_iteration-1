@@ -15,6 +15,8 @@ export type Config = Record & {
 export type Account = Record & {
   displayName: string,
   email: string,
+  databaseName: string,
+  databaseOptions: Object,
 }
 
 var ConfigRecord = Record({
@@ -27,6 +29,8 @@ var ConfigRecord = Record({
 var AccountRecord = Record({
   displayName: null,
   email: null,
+  databaseName: null,
+  databaseOptions: null,
 })
 
 export {

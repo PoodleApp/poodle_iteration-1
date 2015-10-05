@@ -1,25 +1,21 @@
 /* @flow */
 
-import PouchDB        from 'pouchdb'
-import { MailParser } from 'mailparser'
-import * as Kefir     from 'kefir'
-import * as imap      from '../imap'
+import { MailParser }  from 'mailparser'
+import * as Kefir      from 'kefir'
+import * as imap       from '../imap'
+import { putIfAbsent } from './util'
 
 import type { ReadStream } from 'fs'
+import type { PouchDB }    from 'pouchdb'
+import type { Message }    from './types'
 
-const dbname = encodeURIComponent('poodle/jesse(at)sitr(dot)us')
-const db = new PouchDB(`http://localhost:5984/${dbname}`)
-
-function record(message: Object): Stream<Object> {
+function record(message: Message, db: PouchDB): Stream<Object> {
   const _id = message.messageId
 
   // Insert into db if document does not already exist
-  var resp = db.get(_id).catch(_ => db.put({
-    _id,
-    message,
-  }))
-
-  return Kefir.fromPromise(resp)
+  return Kefir.fromPromise(
+    putIfAbsent({ _id, message }, db)
+  )
 }
 
 function parseMessage(messageStream: ReadStream): Stream<Object> {
@@ -37,7 +33,6 @@ function parseMessage(messageStream: ReadStream): Stream<Object> {
 }
 
 export {
-  db,
   parseMessage,
   record,
 }
