@@ -13,7 +13,7 @@ const indexes = {
           nodes.forEach(node => {
             const message = node[0]
             const thread  = node[1]
-            emit(message.messageId)
+            emit(message.messageId, 1)
             recMessage(thread)
           })
         }
@@ -28,4 +28,3 @@ const indexes = {
 export {
   indexes,
 }
-
