@@ -4,7 +4,6 @@ import type { Thread, ThreadDoc } from './types'
 
 declare function emit(value: any): void
 
-
 const indexes = {
   _id: '_design/indexes',
   views: {
