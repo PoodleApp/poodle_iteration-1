@@ -7,31 +7,43 @@ import * as Kefir      from 'kefir'
 import * as imap       from '../imap'
 import { putIfAbsent } from './util'
 
-import type { ReadStream }                 from 'fs'
-import type { PouchDB }                    from 'pouchdb'
-import type { Message, Thread, ThreadDoc } from './types'
+import type { ReadStream }                                from 'fs'
+import type { PouchDB }                                   from 'pouchdb'
+import type { Message, Thread, ThreadDoc, QueryResponse } from './types'
 
-function record(message: Message, db: PouchDB): Promise<ThreadDoc> {
+function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   const _id = message.messageId
+  const references = message.references || []
 
-  // optimization
-  if (!hasReferences(message)) {
-    return db.put(newThread(message))
-    // TODO: this optimization does not apply if there are dangling references
-  }
-
-  // TODO
-  // db.query('indexes/byDanglingReference'
-
-  return db.query('indexes/byMessageId', { keys: message.references, include_docs: true })
-  .then(({ total_rows, rows }) => {
-    if (total_rows < 1) {
+  return Promise.all([
+    db.query('indexes/byDanglingReference', { keys: references.concat(_id), include_docs: true }),
+    db.query('indexes/byMessageId', { keys: references, include_docs: true })
+  ])
+  .then(([dangling, convs]: [QueryResponse<ThreadDoc>, QueryResponse<ThreadDoc>]) => {
+    if (dangling.total_rows + convs.total_rows < 1) {
       return db.put(newThread(message))
+    }
+    else {
+      return Promise.all([
+        updateWithMessage(message, dangling, db),
+        updateWithMessage(message, convs, db)
+      ])
+      .then(([xs, ys]) => xs.concat(ys))
+    }
+  })
+}
+
+function updateWithMessage(
+  message: Message,
+  { total_rows, rows }: QueryResponse<ThreadDoc>,
+  db: PouchDB
+): Promise<ThreadDoc[]> {
+    if (total_rows < 1) {
+      return db.put(newThread(message)).then(resp => [resp])
     }
     else {
       return Promise.all(rows.map(conv => db.put(insertMessage(message, conv))))
     }
-  })
 }
 
 function parseMessage(messageStream: ReadStream): Stream<Object> {

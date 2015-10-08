@@ -7,6 +7,11 @@ export type ThreadDoc = {
   thread: Thread,
 }
 
+export type QueryResponse<T> = {
+  total_rows: number,
+  rows:       T[],
+}
+
 export type Thread = [Message, Thread][]
 
 export type Message = {
