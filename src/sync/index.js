@@ -21,7 +21,7 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   ])
   .then(([dangling, convs]: [QueryResponse<ThreadDoc>, QueryResponse<ThreadDoc>]) => {
     if (dangling.total_rows + convs.total_rows < 1) {
-      return db.put(newThread(message))
+      return db.post(newThread(message))
     }
     else {
       return Promise.all([
@@ -39,7 +39,7 @@ function updateWithMessage(
   db: PouchDB
 ): Promise<ThreadDoc[]> {
     if (total_rows < 1) {
-      return db.put(newThread(message)).then(resp => [resp])
+      return db.post(newThread(message)).then(resp => [resp])
     }
     else {
       return Promise.all(rows.map(conv => db.put(insertMessage(message, conv))))
