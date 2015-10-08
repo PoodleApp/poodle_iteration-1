@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { Thread, ThreadDoc } from './types'
+import type { Message, Thread, ThreadDoc } from './types'
 
 declare function emit(value: any): void
 
@@ -20,6 +20,28 @@ const indexes = {
         if (doc.type === 'thread') {
           recMessage(doc.thread)
         }
+      }.toString(),
+    },
+
+    byDanglingReference: {
+      map: function(doc: ThreadDoc | Object) {
+        function eachMessage(fn: (_: Message) => any, thread: Thread) {
+          thread.forEach(node => {
+            const message = node[0]
+            const replies = node[1]
+            fn(message)
+            replies.forEach(eachMessage.bind(null, fn))
+          })
+        }
+        const ids = []
+        eachMessage(msg => ids.push(msg.messageId), doc.thread)
+        eachMessage(msg => {
+          (msg.references || []).forEach(ref => {
+            if (!ids.some(id => ref === id)) {
+              emit(ref, 1)
+            }
+          })
+        }, doc.thread)
       }.toString(),
     }
   }
