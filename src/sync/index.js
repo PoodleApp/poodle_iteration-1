@@ -7,9 +7,9 @@ import * as Kefir      from 'kefir'
 import * as imap       from '../imap'
 import { putIfAbsent } from './util'
 
-import type { ReadStream }                                from 'fs'
-import type { PouchDB }                                   from 'pouchdb'
-import type { Message, Thread, ThreadDoc, QueryResponse } from './types'
+import type { ReadStream } from 'fs'
+import type { PouchDB }    from 'pouchdb'
+import type { Message, Thread, ThreadDoc, QueryResponseWithDoc } from './types'
 
 function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   const _id = message.messageId
@@ -19,7 +19,9 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
     db.query('indexes/byDanglingReference', { keys: references.concat(_id), include_docs: true }),
     db.query('indexes/byMessageId', { keys: references, include_docs: true })
   ])
-  .then(([dangling, convs]: [QueryResponse<ThreadDoc>, QueryResponse<ThreadDoc>]) => {
+  .then(([dangling, convs]: [QueryResponseWithDoc<any,ThreadDoc>, QueryResponseWithDoc<any,ThreadDoc>]) => {
+    console.log('dangling', dangling)
+    console.log('convs', convs)
     if (dangling.total_rows + convs.total_rows < 1) {
       return db.post(newThread(message))
     }
@@ -35,14 +37,14 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
 
 function updateWithMessage(
   message: Message,
-  { total_rows, rows }: QueryResponse<ThreadDoc>,
+  { total_rows, rows }: QueryResponseWithDoc<any,ThreadDoc>,
   db: PouchDB
 ): Promise<ThreadDoc[]> {
     if (total_rows < 1) {
       return db.post(newThread(message)).then(resp => [resp])
     }
     else {
-      return Promise.all(rows.map(conv => db.put(insertMessage(message, conv))))
+      return Promise.all(rows.map(row => db.put(insertMessage(message, row.doc))))
     }
 }
 
@@ -107,7 +109,7 @@ function sortReplies(replies: ImmutableThread): ImmutableThread {
 
 function partition<T>(fn: (_: T) => boolean, xs: List<T>): [List<T>, List<T>] {
   const grouped = xs.groupBy(x => fn(x) ? 1 : 0)
-  return [grouped.get(1), grouped.get(0)]
+  return [grouped.get(1, List()), grouped.get(0, List())]
 }
 
 export {
