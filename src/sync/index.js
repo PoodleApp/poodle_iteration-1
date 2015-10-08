@@ -14,11 +14,11 @@ import type { Message, Thread, ThreadDoc, QueryResponseWithDoc } from './types'
 
 function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   const _id = message.messageId
-  const references = message.references || []
+  const refs = (message.references || []).concat(_id)
 
   return Promise.all([
-    db.query('indexes/byDanglingReference', { keys: references.concat(_id), include_docs: true, limit: 999 }),
-    db.query('indexes/byMessageId', { keys: references, include_docs: true, limit: 999 })
+    db.query('indexes/byDanglingReference', { keys: refs, include_docs: true, limit: 999 }),
+    db.query('indexes/byMessageId',         { keys: refs, include_docs: true, limit: 999 })
   ])
   .then(([dangling, convs]: [QueryResponseWithDoc<any,ThreadDoc>, QueryResponseWithDoc<any,ThreadDoc>]) => {
     if (dangling.total_rows + convs.total_rows < 1) {
@@ -63,14 +63,14 @@ function insertMessage(message: Message, doc: ThreadDoc): ThreadDoc {
   let [toplevel, replies] = partition(msg => (
     !msgs.some(m => ancestorOf(msg, m))
   ), msgs)
-  const thread = toplevel.map(msg => assembleTree(msg, replies))
+  const thread = toplevel.map(msg => assembleTree(msg, replies)).toArray()
   return assign({}, doc, { thread })
 }
 
 function assembleTree(message: Message, messages: List<Message>): [Message, Thread] {
   const replies = messages.filter(msg => msg !== message && ancestorOf(msg, message))
   const subthread = replies.map(msg => assembleTree(msg, replies))
-  return [message, sortReplies(subthread)]
+  return [message, sortReplies(subthread).toArray()]
 }
 
 function messages([message, replies]: Thread): List<Message> {
