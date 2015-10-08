@@ -6,6 +6,7 @@ declare function emit(value: any): void
 
 const indexes = {
   _id: '_design/indexes',
+  language: 'javascript',
   views: {
     byMessageId: {
       map: function(doc: ThreadDoc | Object) {
@@ -30,7 +31,7 @@ const indexes = {
             const message = node[0]
             const replies = node[1]
             fn(message)
-            replies.forEach(eachMessage.bind(null, fn))
+            eachMessage(fn, replies)
           })
         }
         if (doc.type !== 'thread') { return }
