@@ -49,9 +49,10 @@ function parseMessage(messageStream: ReadStream): Stream<Object> {
   })
 }
 
-function newThread(message: Message): { thread: Thread } {
+function newThread(message: Message): { thread: Thread, type: 'thread' } {
   return {
-    thread: [[message, []]]
+    thread: [[message, []]],
+    type: 'thread',
   }
 }
 
