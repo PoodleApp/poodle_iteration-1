@@ -21,9 +21,10 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
     db.query('indexes/byMessageId',         { keys: refs, include_docs: true, limit: 999 })
   ])
   .then(([dangling, convs]: [QueryResponseWithDoc<any,ThreadDoc>, QueryResponseWithDoc<any,ThreadDoc>]) => {
-    if (dangling.total_rows + convs.total_rows < 1) {
+    if (dangling.rows.length + convs.rows.length < 1) {
       return db.post(newThread(message))
     }
+    // TODO
     // else if (dangling.rows.length < dangling.total_rows || convs.rows.length < convs.total_rows) {
     //   throw new Error('handling paginated result sets is not handled yet')
     // }
