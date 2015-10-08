@@ -1,7 +1,7 @@
 /* @flow */
 
 import { MailParser }  from 'mailparser'
-import { List }        from 'immutable'
+import { List, Map }   from 'immutable'
 import assign          from 'object-assign'
 import * as Kefir      from 'kefir'
 import * as imap       from '../imap'
@@ -9,6 +9,7 @@ import { putIfAbsent } from './util'
 
 import type { ReadStream } from 'fs'
 import type { PouchDB }    from 'pouchdb'
+import type { IndexedSeq } from 'immutable'
 import type { Message, Thread, ThreadDoc, QueryResponseWithDoc } from './types'
 
 function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
@@ -16,36 +17,22 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   const references = message.references || []
 
   return Promise.all([
-    db.query('indexes/byDanglingReference', { keys: references.concat(_id), include_docs: true }),
-    db.query('indexes/byMessageId', { keys: references, include_docs: true })
+    db.query('indexes/byDanglingReference', { keys: references.concat(_id), include_docs: true, limit: 999 }),
+    db.query('indexes/byMessageId', { keys: references, include_docs: true, limit: 999 })
   ])
   .then(([dangling, convs]: [QueryResponseWithDoc<any,ThreadDoc>, QueryResponseWithDoc<any,ThreadDoc>]) => {
-    console.log('dangling', dangling)
-    console.log('convs', convs)
     if (dangling.total_rows + convs.total_rows < 1) {
       return db.post(newThread(message))
     }
-    else {
-      return Promise.all([
-        updateWithMessage(message, dangling, db),
-        updateWithMessage(message, convs, db)
-      ])
-      .then(([xs, ys]) => xs.concat(ys))
-    }
-  })
-}
+    // else if (dangling.rows.length < dangling.total_rows || convs.rows.length < convs.total_rows) {
+    //   throw new Error('handling paginated result sets is not handled yet')
+    // }
 
-function updateWithMessage(
-  message: Message,
-  { total_rows, rows }: QueryResponseWithDoc<any,ThreadDoc>,
-  db: PouchDB
-): Promise<ThreadDoc[]> {
-    if (total_rows < 1) {
-      return db.post(newThread(message)).then(resp => [resp])
-    }
-    else {
-      return Promise.all(rows.map(row => db.put(insertMessage(message, row.doc))))
-    }
+    const docs = uniqBy(doc => doc._id, dangling.rows.concat(convs.rows).map(row => row.doc))
+    return Promise.all(docs.map(doc => (
+      db.put(insertMessage(message, doc))
+    )))
+  })
 }
 
 function parseMessage(messageStream: ReadStream): Stream<Object> {
@@ -69,7 +56,10 @@ function newThread(message: Message): { thread: Thread } {
 }
 
 function insertMessage(message: Message, doc: ThreadDoc): ThreadDoc {
-  const msgs = List(doc.thread).flatMap(messages).push(message)
+  const msgs = uniqBy(
+    m => m.messageId,
+    List(doc.thread).flatMap(messages).push(message)
+  )
   let [toplevel, replies] = partition(msg => (
     !msgs.some(m => ancestorOf(msg, m))
   ), msgs)
@@ -110,6 +100,13 @@ function sortReplies(replies: ImmutableThread): ImmutableThread {
 function partition<T>(fn: (_: T) => boolean, xs: List<T>): [List<T>, List<T>] {
   const grouped = xs.groupBy(x => fn(x) ? 1 : 0)
   return [grouped.get(1, List()), grouped.get(0, List())]
+}
+
+function uniqBy<T,U>(fn: (_: T) => U, xs: IndexedSeq<T> | T[]): IndexedSeq<T> {
+  const map: Map<U,T> = xs.reduce((m, x) => (
+    m.set(fn(x), x)
+  ), Map())
+  return map.valueSeq()
 }
 
 export {
