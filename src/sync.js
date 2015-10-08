@@ -10,8 +10,9 @@ import * as views         from './sync/views'
 import { putOrUpdate }    from './sync/util'
 import { tokenGenerator } from './auth/tokenGenerator'
 
-import type { Stream } from 'kefir'
+import type { Stream }           from 'kefir'
 import type { XOAuth2Generator } from './auth/tokenGenerator'
+import type { ThreadDoc }        from './sync/types'
 
 function sync(query: string, account: Config.Account): Stream<Object> {
   return Kefir.fromPromise(
@@ -28,14 +29,17 @@ function init(account: Config.Account): Promise<PouchDB> {
   )
 }
 
-function getMessages(query: string, account: Config.Account, db: PouchDB): Stream<Object> {
+function getMessages(query: string, account: Config.Account, db: PouchDB): Stream<ThreadDoc[]> {
   return Kefir.fromPromise(
     getTokenGenerator(account).then(imap.getConnection)
   )
   .changes()
   .flatMap(conn => imap.fetchMail(query, conn))
   .flatMap(index.parseMessage)
-  .flatMap(message => index.record(message, db))
+  .scan((prev, message) => (
+    prev.then(_ => index.record(message, db))
+  ), Promise.resolve([]))
+  .flatMap(Kefir.fromPromise)
 }
 
 function getTokenGenerator(account: Config.Account): Promise<XOAuth2Generator> {
