@@ -33,6 +33,7 @@ const indexes = {
             replies.forEach(eachMessage.bind(null, fn))
           })
         }
+        if (doc.type !== 'thread') { return }
         const ids = []
         eachMessage(msg => ids.push(msg.messageId), doc.thread)
         eachMessage(msg => {
