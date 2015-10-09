@@ -1,6 +1,8 @@
 /* @flow */
 
-import type { Message, Thread, ThreadDoc } from './types'
+import type { Message }   from '../models/message'
+import type { Thread }    from '../models/thread'
+import type { ThreadDoc } from './types'
 
 declare function emit(value: any): void
 

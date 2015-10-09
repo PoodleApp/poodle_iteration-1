@@ -1,16 +1,22 @@
 /* @flow */
 
-import { MailParser }  from 'mailparser'
-import { List, Map }   from 'immutable'
-import assign          from 'object-assign'
-import * as Kefir      from 'kefir'
-import * as imap       from '../imap'
-import { putIfAbsent } from './util'
+import { MailParser } from 'mailparser'
+import assign         from 'object-assign'
+import * as Kefir     from 'kefir'
+import * as imap      from '../imap'
+import { uniqBy }     from '../util/immutable'
+import { insertMessage, newThread } from '../models/thread'
 
-import type { ReadStream } from 'fs'
-import type { PouchDB }    from 'pouchdb'
-import type { IndexedSeq } from 'immutable'
-import type { Message, Thread, ThreadDoc, QueryResponseWithDoc } from './types'
+import type { ReadStream }                      from 'fs'
+import type { PouchDB }                         from 'pouchdb'
+import type { Message }                         from '../models/message'
+import type { Thread }                          from '../models/thread'
+import type { ThreadDoc, QueryResponseWithDoc } from './types'
+
+export {
+  parseMessage,
+  record,
+}
 
 function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   const _id = message.messageId
@@ -31,7 +37,7 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
 
     const docs = uniqBy(doc => doc._id, dangling.rows.concat(convs.rows).map(row => row.doc))
     return Promise.all(docs.map(doc => (
-      db.put(insertMessage(message, doc))
+      db.put(assign({}, doc, { thread: insertMessage(message, doc) }))
     )))
   })
 }
@@ -50,71 +56,9 @@ function parseMessage(messageStream: ReadStream): Stream<Object> {
   })
 }
 
-function newThread(message: Message): { thread: Thread, type: 'thread' } {
+function newThreadDoc(message: Message): { thread: Thread, type: 'thread' } {
   return {
-    thread: [[message, []]],
+    thread: newThread(message),
     type: 'thread',
   }
-}
-
-function insertMessage(message: Message, doc: ThreadDoc): ThreadDoc {
-  const msgs = uniqBy(
-    m => m.messageId,
-    List(doc.thread).flatMap(messages).push(message)
-  )
-  let [toplevel, replies] = partition(msg => (
-    !msgs.some(m => ancestorOf(msg, m))
-  ), msgs)
-  const thread = toplevel.map(msg => assembleTree(msg, replies)).toArray()
-  return assign({}, doc, { thread })
-}
-
-function assembleTree(message: Message, messages: List<Message>): [Message, Thread] {
-  const descendents = messages.filter(msg => msg !== message && ancestorOf(msg, message))
-  let [replies, subreplies] = partition(msg => (
-    !descendents.some(m => ancestorOf(msg, m))
-  ), descendents)
-  const subthread = replies.map(msg => assembleTree(msg, subreplies))
-  return [message, sortReplies(subthread).toArray()]
-}
-
-function messages([message, replies]: Thread): List<Message> {
-  return List.of(message).concat(
-    List(replies).flatMap(messages)
-  )
-}
-
-function parentOf(msg: Message, msg_: Message): boolean {
-  return !!msg.inReplyTo && msg.inReplyTo.some(ref => ref === msg_.messageId)
-}
-
-function ancestorOf(msg: Message, msg_: Message): boolean {
-  return !!msg.references && msg.references.some(ref => ref === msg_.messageId)
-}
-
-function hasReferences(message: Message): boolean {
-  return !!message.references && message.references.length > 0
-}
-
-type ImmutableThread = List<[Message, ImmutableThread]>
-
-function sortReplies(replies: ImmutableThread): ImmutableThread {
-  return replies.sortBy(([msg, _]) => msg.receivedDate)
-}
-
-function partition<T>(fn: (_: T) => boolean, xs: List<T>): [List<T>, List<T>] {
-  const grouped = xs.groupBy(x => fn(x) ? 1 : 0)
-  return [grouped.get(1, List()), grouped.get(0, List())]
-}
-
-function uniqBy<T,U>(fn: (_: T) => U, xs: IndexedSeq<T> | T[]): IndexedSeq<T> {
-  const map: Map<U,T> = xs.reduce((m, x) => (
-    m.set(fn(x), x)
-  ), Map())
-  return map.valueSeq()
-}
-
-export {
-  parseMessage,
-  record,
 }
