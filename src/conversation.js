@@ -11,27 +11,22 @@ import { collapseEdits
        , title
        } from './derivedActivity'
 import { aside, collapseAsides } from './derive/aside'
-import { mailtoUri
-       , midUri
+import { mailtoUri } from './activity'
+import { midUri
        , midPartUri
        , parseMidUri
        , resolveUri
-       } from './activity'
+       } from './models/message'
 import * as Act from './activity'
-import { displayName
-       , parseList
-       , queryThreads
-       } from './notmuch'
+import { displayName } from './models/address'
+import { queryThreads } from './notmuch'
 
 import type { Moment }          from 'moment'
 import type { DerivedActivity } from './derivedActivity'
 import type { Activity, Zack }  from './activity'
-import type { Address
-            , MailingList
-            , Message
-            , Thread
-            , ThreadId
-            } from './notmuch'
+import type { Address }         from './models/address'
+import type { Message }         from './models/message'
+import type { Thread }          from './models/thread'
 
 export {
   allNames,
@@ -44,7 +39,7 @@ export {
 }
 
 export type Conversation = Record & {
-  id:            ThreadId,
+  id:            string,
   activities:    List<DerivedActivity>,
   allActivities: List<DerivedActivity>,
   subject?:      string,
@@ -82,7 +77,7 @@ function queryConversations(cmd: string, q: string): Promise<List<Conversation>>
   return queryThreads(cmd, q).then(ts => List(ts.map(threadToConversation)))
 }
 
-function threadToConversation({ id, thread }: { id: ThreadId, thread: Thread }): Conversation {
+function threadToConversation({ id, thread }: { id: string, thread: Thread }): Conversation {
   var activities = collapseAsides(thread)
   var conv = new ConversationRecord({
     id,

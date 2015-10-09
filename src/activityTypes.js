@@ -3,12 +3,13 @@
 import randomstring    from 'randomstring'
 import * as Act        from './derivedActivity'
 import { mailtoUri }   from './activity'
-import { displayName } from './notmuch'
+import { displayName } from './models/address'
 
 import type { DerivedActivity }                from './derivedActivity'
 import type { Activity, ActivityObject, Verb } from './activity'
 import type { Burger, ComposerAttachment }     from './compose'
-import type { Address, Email, URI }            from './notmuch'
+import type { Address, Email }                 from './models/address'
+import type { URI }                            from './models/message'
 
 export {
   document,

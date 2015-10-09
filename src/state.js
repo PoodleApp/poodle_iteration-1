@@ -6,14 +6,14 @@ import { field, index }               from 'safety-lens/immutable'
 import * as CS                        from './composer/state'
 import * as AS                        from './add_account/state'
 import * as AuthState                 from './auth/state'
-import { parseMidUri, published }     from './activity'
+import { published }                  from './activity'
+import { parseMidUri }                from './models/message'
 import * as Act                       from './derivedActivity'
 
 import type { Getter, Lens_, Traversal_ } from 'safety-lens'
 import type { URI }                       from './activity'
 import type { DerivedActivity }           from './derivedActivity'
 import type { Conversation }              from './conversation'
-import type { ThreadId }                  from './notmuch'
 import type { Config, Account }           from './config'
 
 export type AppState = Record<{
@@ -83,7 +83,7 @@ function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))
 }
 
-function conversation(id: ThreadId, state: AppState): ?Conversation {
+function conversation(id: string, state: AppState): ?Conversation {
   return state.conversations.find(c => c.id === id)
 }
 

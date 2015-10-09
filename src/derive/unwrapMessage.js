@@ -1,11 +1,12 @@
 /* @flow */
 
-import { List }                          from 'immutable'
-import { mailtoUri, midUri, midPartUri, parseMidUri, resolveUri } from '../activity'
-import { ActivityRecord }                from '../derivedActivity'
-import { displayName }                   from '../notmuch'
+import { List }                                        from 'immutable'
+import { mailtoUri }                                   from '../activity'
+import { midUri, midPartUri, parseMidUri, resolveUri } from '../models/message'
+import { ActivityRecord }                              from '../derivedActivity'
+import { displayName }                                 from '../models/address'
 
-import type { Message }         from '../notmuch'
+import type { Message }         from '../models/message'
 import type { Zack }            from '../activity'
 import type { DerivedActivity } from '../derivedActivity'
 
@@ -19,7 +20,7 @@ function unwrapMessage(message: Message): List<DerivedActivity> {
   ))
   .map(attachment => new ActivityRecord({
     id: handleLegacyId(attachment, message),
-    activity: JSON.parse(attachment.content.toString('utf8')),
+    activity: JSON.parse(attachment.content.toString('utf8')),  // TODO: content needs to be fetched from database
     message,
   }))
   if (activities.length > 0) {

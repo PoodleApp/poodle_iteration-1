@@ -3,12 +3,12 @@
 import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import stringHash      from 'string-hash'
-import { displayName } from '../notmuch'
+import { displayName } from '../models/address'
 import { Avatar
        , Styles
        } from 'material-ui'
 
-import type { Address } from '../notmuch'
+import type { Address } from '../models/address'
 import type { ActivityObject } from '../activity'
 
 export {

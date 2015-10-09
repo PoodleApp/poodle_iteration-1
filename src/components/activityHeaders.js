@@ -6,7 +6,7 @@ import { List }        from 'immutable'
 import { uniqBy }      from '../util/immutable'
 import * as Act        from '../derivedActivity'
 import * as C          from '../conversation'
-import * as N          from '../notmuch'
+import * as A          from '../models/address'
 import { actorAvatar, addressAvatar } from './avatar'
 import { Avatar
        , ListItem
@@ -37,7 +37,7 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
     var names   = joinNames(user, actors)
     var verbed  = displayVerb(verb, actors)
     var ppl     = C.flatParticipants(conversation)
-    var partStr = ppl.map(N.displayName).join(', ')
+    var partStr = ppl.map(A.displayName).join(', ')
 
     return (
       <ListItem

@@ -2,12 +2,14 @@
 
 import { List, Map, Record, Stack } from 'immutable'
 import { catMaybes, maybeToList }   from './maybe'
+import { resolveUri }               from './models/message'
 import * as Act                     from './activity'
-import * as N                       from './notmuch'
+import * as A                       from './models/address'
 
 import type { Moment }                              from 'moment'
 import type { Activity, ActivityObject, URI, Zack } from './activity'
-import type { Address, Message }                    from './notmuch'
+import type { Address }                             from './models/address'
+import type { Message }                             from './models/message'
 
 export type DerivedActivity = Record & {
   id:        string,
@@ -120,7 +122,7 @@ function insertJoins(
   }
   var addedActs = added.map(p => (
     activity
-    .set('actor', { uri: Act.mailtoUri(p.address), objectType: 'person', displayName: N.displayName(p) })
+    .set('actor', { uri: Act.mailtoUri(p.address), objectType: 'person', displayName: A.displayName(p) })
     .set('verb', 'join')
     .set('id', syntheticId())
   ))
@@ -235,7 +237,7 @@ function targetUri(activity: DerivedActivity): ?URI {
     if (!msg) {
       throw 'Cannot resolve URI in synthtic activity'
     }
-    return Act.resolveUri(msg, uri)
+    return resolveUri(msg, uri)
   }
 }
 

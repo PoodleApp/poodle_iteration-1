@@ -1,16 +1,18 @@
 /* @flow */
 
-import { List }                       from 'immutable'
-import { MailComposer }               from 'mailcomposer'
-import randomstring                   from 'randomstring'
-import uuid                           from 'uuid'
-import moment                         from 'moment'
-import objectAssign                   from 'object-assign'
-import { objectContent, parseMidUri } from './activity'
+import { List }          from 'immutable'
+import { MailComposer }  from 'mailcomposer'
+import randomstring      from 'randomstring'
+import uuid              from 'uuid'
+import moment            from 'moment'
+import objectAssign      from 'object-assign'
+import { objectContent } from './activity'
+import { parseMidUri }   from './models/message'
 
-import type { ReadStream }                  from 'fs'
-import type { Activity }                    from './activity'
-import type { Address, Message, MessageId } from './notmuch'
+import type { ReadStream }         from 'fs'
+import type { Activity }           from './activity'
+import type { Address }            from './models/address'
+import type { Message, MessageId } from './models/message'
 
 export type ComposerAttachment = {
   cid:                string,

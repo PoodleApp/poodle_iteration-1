@@ -24,7 +24,7 @@ import MoreVertIcon from 'material-ui/lib/svg-icons/navigation/more-vert'
 
 import type { DerivedActivity } from '../derivedActivity'
 import type { Conversation }    from '../conversation'
-import type { Address }         from '../notmuch'
+import type { Address }         from '../models/address'
 import type { Draft }           from '../compose'
 import type { ActivityProps }   from './activities'
 

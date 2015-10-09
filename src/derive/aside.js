@@ -5,8 +5,10 @@ import { flatParticipants }            from '../activity'
 import { ActivityRecord, syntheticId } from '../derivedActivity'
 import { unwrapMessage }               from './unwrapMessage'
 
-import type { Address, Message, Thread } from '../notmuch'
-import type { DerivedActivity }          from '../derivedActivity'
+import type { Address }         from '../models/address'
+import type { Message }         from '../models/message'
+import type { Thread }          from '../models/thread'
+import type { DerivedActivity } from '../derivedActivity'
 
 export {
   aside,

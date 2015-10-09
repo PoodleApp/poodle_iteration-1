@@ -5,7 +5,7 @@ import { compose, filtering, getter } from 'safety-lens'
 import { field }                      from 'safety-lens/immutable'
 
 import type { Getter, Lens_, Traversal_ } from 'safety-lens'
-import type { Address }                   from '../notmuch'
+import type { Address }                   from '../models/address'
 import type { DerivedActivity }           from '../derivedActivity'
 
 export type ComposerState = Record<{

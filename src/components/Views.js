@@ -3,7 +3,7 @@
 import * as Sunshine                       from 'sunshine-framework/react'
 import React                               from 'react'
 import { compose, get, lookup }            from 'safety-lens'
-import { parseMidUri }                     from '../activity'
+import { parseMidUri }                     from '../models/message'
 import * as Act                            from '../derivedActivity'
 import * as State                          from '../state'
 import * as CS                             from '../composer/state'
