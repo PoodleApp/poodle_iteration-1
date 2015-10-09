@@ -8,10 +8,6 @@ import * as AS                        from './add_account/state'
 import * as AuthState                 from './auth/state'
 import { parseMidUri, published }     from './activity'
 import * as Act                       from './derivedActivity'
-import { map
-       , pipe
-       , sortBy
-       } from 'ramda'
 
 import type { Getter, Lens_, Traversal_ } from 'safety-lens'
 import type { URI }                       from './activity'

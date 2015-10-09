@@ -63,11 +63,16 @@ export type MessageId = string
 export type Headers   = { [key: string]: string | string[] }
 export type Priority  = 'normal' | 'high' | 'low'
 export type ISO8601   = string
+export type URI       = string
 
 export {
   flatParts,
   textParts,
   htmlParts,
+  midUri,
+  midPartUri,
+  parseMidUri,
+  resolveUri,
 }
 
 function flatParts(msg: Message): MessagePart[] {
@@ -82,3 +87,34 @@ function textParts(msg: Message): MessagePart[] {
 function htmlParts(msg: Message): MessagePart[] {
   return flatParts(msg).filter(part => part.contentType.match(/text\/html/i))
 }
+
+function midUri(message: Message): URI {
+  return `mid:${message.messageId}`
+}
+
+function midPartUri(part: MessagePart, message: Message): URI {
+  return `${midUri(message)}/${part.contentId}`
+}
+
+const midExp = /(mid:|cid:)([^/]+)(?:\/(.+))?$/
+
+function parseMidUri(uri: URI): ?{ scheme: string, messageId: ?MessageId, partId: ?string } {
+  var matches = uri.match(midExp)
+  if (matches) {
+    var scheme    = matches[1]
+    var messageId = scheme === 'mid:' ? matches[2] : undefined
+    var partId    = scheme === 'cid:' ? matches[2] : matches[3]
+    return { scheme, messageId, partId }
+  }
+}
+
+function resolveUri(msg: Message, uri: URI): URI {
+  var parsed = parseMidUri(uri)
+  if (parsed && parsed.scheme === 'cid:' && parsed.partId) {
+    return `mid:${msg.messageId}/${parsed.partId}`
+  }
+  else {
+    return uri
+  }
+}
+

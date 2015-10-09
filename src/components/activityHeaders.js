@@ -3,7 +3,7 @@
 import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import { List }        from 'immutable'
-import { uniqBy }      from 'ramda'
+import { uniqBy }      from '../util/immutable'
 import * as Act        from '../derivedActivity'
 import * as C          from '../conversation'
 import * as N          from '../notmuch'
@@ -82,7 +82,7 @@ function getActivities(user: ?URI, activities: List<DerivedActivity>): List<Deri
 
 function getActors(user: ?URI, activities: List<DerivedActivity>): List<ActivityObject> {
   var actors = activities.map(act => Act.actor(act)).filter(p => !!p)
-  return List(uniqBy(a => a.uri, actors.toArray()))
+  return uniqBy(a => a.uri, actors)
 }
 
 function joinNames(user: ?URI, actors: List<ActivityObject>): string {

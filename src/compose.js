@@ -2,7 +2,6 @@
 
 import { List }                       from 'immutable'
 import { MailComposer }               from 'mailcomposer'
-import { chain }                      from 'ramda'
 import randomstring                   from 'randomstring'
 import uuid                           from 'uuid'
 import moment                         from 'moment'
@@ -106,9 +105,9 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
 
 // TODO: specific fallback behavior for each verb and object type
 function fallbackContent(acts: Burger[]): string {
-  var contents  = chain(([_, __, attachments]) => attachments, acts)
-  var textParts = contents.filter(c => c.contentType === 'text/plain')
-  var text      = textParts.length > 0 ? textParts[0].contents.toString('utf8') : ''
+  const contents  = List(acts).flatMap(([_, __, attachments]) => attachments)
+  const textParts = contents.filter(c => c.contentType === 'text/plain')
+  const text      = textParts.length > 0 ? textParts.first().contents.toString('utf8') : ''
   return text
 }
 

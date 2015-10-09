@@ -1,33 +1,29 @@
 /* @flow */
 
-import moment from 'moment'
-import { reverse, uniqBy } from 'ramda'
-import { displayName
-       , flatParts
+import moment          from 'moment'
+import { uniqBy }      from './util/immutable'
+import { displayName } from './models/address'
+import { flatParts
        , textParts
        , htmlParts
-       } from './notmuch'
+       } from './models/message'
 
-import type { Moment } from 'moment'
-import type { List }   from 'immutable'
-import type { Address
-            , Attachment
-            , Email
+import type { Moment }  from 'moment'
+import type { List }    from 'immutable'
+import type { Address } from './models/address'
+import type { Email
             , Message
             , MessageId
-            } from './notmuch'
+            , MessagePart
+            } from './models/message'
 
 export {
   actor,
   flatParticipants,
   mailtoUri,
-  midUri,
-  midPartUri,
   objectContent,
   participants,
-  parseMidUri,
   published,
-  resolveUri,
   title,
 }
 
@@ -78,47 +74,17 @@ export type MediaLink = {
 
 export type Zack = [Activity, Message]
 
-function midUri(message: Message): URI {
-  return `mid:${message.messageId}`
-}
-
-function midPartUri(part: Attachment, message: Message): URI {
-  return `${midUri(message)}/${part.contentId}`
-}
-
-var midExp = /(mid:|cid:)([^/]+)(?:\/(.+))?$/
-
-function parseMidUri(uri: URI): ?{ scheme: string, messageId: ?MessageId, partId: ?string } {
-  var matches = uri.match(midExp)
-  if (matches) {
-    var scheme    = matches[1]
-    var messageId = scheme === 'mid:' ? matches[2] : undefined
-    var partId    = scheme === 'cid:' ? matches[2] : matches[3]
-    return { scheme, messageId, partId }
-  }
-}
-
-function resolveUri(msg: Message, uri: URI): URI {
-  var parsed = parseMidUri(uri)
-  if (parsed && parsed.scheme === 'cid:' && parsed.partId) {
-    return `mid:${msg.messageId}/${parsed.partId}`
-  }
-  else {
-    return uri
-  }
-}
-
 function mailtoUri(email: Email): URI {
   // TODO: Should we normalize? Maybe lowercase?
   return `mailto:${email}`
 }
 
-function participants(messages: List<Message>): { to: Address[], from: Address[], cc: Address[] } {
+function participants(messages: List<Message>): { to: List<Address>, from: List<Address>, cc: List<Address> } {
   var { to, from, cc } = messages.reduce((ls, message) => ({
-    to:   ls.to.concat((message.to || []).filter(addr => !!addr)),
-    from: ls.from.concat((message.from || []).filter(addr => !!addr)),
-    cc:   ls.cc.concat((message.cc || []).filter(addr => !!addr)),
-  }), { to: [], from: [], cc: [] })
+    to:   ls.to.concat((message.to || List()).filter(addr => !!addr)),
+    from: ls.from.concat((message.from || List()).filter(addr => !!addr)),
+    cc:   ls.cc.concat((message.cc || List()).filter(addr => !!addr)),
+  }), { to: List(), from: List(), cc: List() })
   return {
     to:   uniqBy(addr => addr.address, to),
     from: uniqBy(addr => addr.address, from),
@@ -130,7 +96,7 @@ function flatParticipants(messages: List<Message>): Address[] {
   var { from, to, cc } = participants(messages)
   return uniqBy(
     addr => addr.address,
-    reverse(from).concat(reverse(to)).concat(reverse(cc))
+    from.reverse().concat(to.reverse()).concat(cc.reverse())
   )
 }
 
