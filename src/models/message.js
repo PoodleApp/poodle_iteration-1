@@ -1,5 +1,7 @@
 /* @flow */
 
+import type { Address } from './address'
+
 export type Message = {
   messageId:     MessageId,
   headers:       Headers,
@@ -17,11 +19,6 @@ export type Message = {
   receivedDate:  ISO8601,
   attachments?:  Attachment[],
   mimeTree:      MIMETree,
-}
-
-export type Address = {
-  address: Email,
-  name: string,
 }
 
 export type Attachment = {
@@ -50,9 +47,38 @@ export type MIMETree = {
   mimeBoundary?:      string,
 }
 
+export type MessagePart = {
+  headers:            Headers,
+  contentId?:         string,
+  contentType:        string,
+  charset?:           string,
+  transferEncoding?:  string,
+  attachment?:        boolean,
+  generatedFileName?: string,
+  length?:            number,
+  checksum?:          string,
+}
+
 export type MessageId = string
 export type Headers   = { [key: string]: string | string[] }
 export type Priority  = 'normal' | 'high' | 'low'
 export type ISO8601   = string
-export type Email     = string
 
+export {
+  flatParts,
+  textParts,
+  htmlParts,
+}
+
+function flatParts(msg: Message): MessagePart[] {
+  const subparts = part => !!part.mimeMultipart ? List(part.childNodes).flatMap(subparts) : List.of(part)
+  return subparts(msg.mimeTree)
+}
+
+function textParts(msg: Message): MessagePart[] {
+  return flatParts(msg).filter(part => part.contentType.match(/text\/plain/i))
+}
+
+function htmlParts(msg: Message): MessagePart[] {
+  return flatParts(msg).filter(part => part.contentType.match(/text\/html/i))
+}

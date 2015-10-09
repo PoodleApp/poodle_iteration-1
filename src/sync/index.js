@@ -44,7 +44,11 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
 
 function parseMessage(messageStream: ReadStream): Stream<Object> {
   return Kefir.stream(emitter => {
-    const mailparser = new MailParser({ includeMimeTree: true, streamAttachments: true })
+    const mailparser = new MailParser({
+      includeMimeTree:   true,
+      streamAttachments: true,
+      defaultCharset:    'utf8',
+    })
     mailparser.on('end', mail => {
       emitter.emit(mail)
       emitter.end()
