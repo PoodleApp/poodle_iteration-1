@@ -70,8 +70,11 @@ function insertMessage(message: Message, doc: ThreadDoc): ThreadDoc {
 }
 
 function assembleTree(message: Message, messages: List<Message>): [Message, Thread] {
-  const replies = messages.filter(msg => msg !== message && ancestorOf(msg, message))
-  const subthread = replies.map(msg => assembleTree(msg, replies))
+  const descendents = messages.filter(msg => msg !== message && ancestorOf(msg, message))
+  let [replies, subreplies] = partition(msg => (
+    !descendents.some(m => ancestorOf(msg, m))
+  ), descendents)
+  const subthread = replies.map(msg => assembleTree(msg, subreplies))
   return [message, sortReplies(subthread).toArray()]
 }
 
