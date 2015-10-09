@@ -1,18 +1,19 @@
 /* @flow */
 
 import moment          from 'moment'
+import { List }        from 'immutable'
 import { uniqBy }      from './util/immutable'
 import { displayName } from './models/address'
 import { flatParts
        , textParts
        , htmlParts
+       , parseMidUri
+       , resolveUri
        } from './models/message'
 
 import type { Moment }  from 'moment'
-import type { List }    from 'immutable'
-import type { Address } from './models/address'
-import type { Email
-            , Message
+import type { Address, Email } from './models/address'
+import type { Message
             , MessageId
             , MessagePart
             } from './models/message'
@@ -118,27 +119,10 @@ function actor([act, msg]: Zack): ActivityObject {
   }
 }
 
-function objectContent([act, msg]: Zack): { contentType: string, content: Buffer }[] {
+function objectContent([act, msg]: Zack): ?URI {
   var { object } = act
-  if (!object) { return [] }
+  if (!object) { return null }
   var { uri } = object
-  if (!uri) { return [] }
-
-  var parsed = parseMidUri(resolveUri(msg, uri))  // TODO: handle schemes other than mid:
-  if (!parsed) { return [] }
-
-  var { partId } = parsed
-  if (!partId) {  // URI refers to entire message
-    return [
-      { contentType: 'text/plain', content: msg.text },
-      { contentType: 'text/html',  content: msg.html }
-    ]
-    .filter(c => !!c.content)
-    .map(({ contentType, content }) => ({ contentType, content: new Buffer((content:any)) }))
-  }
-
-  return flatParts(msg).filter(part => part['content-id'] === partId).map(part => ({
-    content:     new Buffer(typeof part.content === 'string' ? part.content : '', 'utf8'),
-    contentType: part['content-type'],
-  }))
+  if (!uri) { return null }
+  return resolveUri(msg, uri)
 }
