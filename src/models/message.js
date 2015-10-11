@@ -1,6 +1,7 @@
 /* @flow */
 
-import type { Address } from './address'
+import type { ReadStream } from 'fs'
+import type { Address }    from './address'
 
 export type Message = {
   messageId:     MessageId,
@@ -19,6 +20,7 @@ export type Message = {
   receivedDate:  ISO8601,
   attachments?:  Attachment[],
   mimeTree:      MIMETree,
+  activities?:   Object[],
 }
 
 export type Attachment = {
@@ -57,6 +59,7 @@ export type MessagePart = {
   generatedFileName?: string,
   length?:            number,
   checksum?:          string,
+  stream?:            ReadStream,
 }
 
 export type MessageId = string
@@ -73,11 +76,44 @@ export {
   midPartUri,
   parseMidUri,
   resolveUri,
+  toplevelParts,
 }
 
 function flatParts(msg: Message): MessagePart[] {
   const subparts = part => !!part.mimeMultipart ? List(part.childNodes).flatMap(subparts) : List.of(part)
   return subparts(msg.mimeTree)
+}
+
+function toplevelParts(msg: Message): MessagePart[] {
+  return toplevelRec(msg.mimeTree)
+}
+
+function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): MessagePart[] {
+  const multi = part.mimeMultipart
+  const children = List(part.childNodes)
+  if (!multi) {
+    return predicate(part) ? List.of(part) : List()
+  }
+  // mixed: get all parts
+  else if (multi === 'mixed') {
+    return children.flatMap(toplevelRec.bind(null, predicate))
+  }
+  // alternative: get the last matching part
+  else if (multi === 'alternative') {
+    return children.map(toplevelRec.bind(null, predicate)).findLast(parts => parts.some(predicate)) || List()
+  }
+  // related: get the first part
+  else if (multi === 'related') {
+    return children.length > 0 ?
+      toplevelRec(predicate, children.first()) :
+      List()
+  }
+  // signed: get the first part
+  else if (multi.indexOf('signature') > -1) {
+    return children.length > 0 ?
+      toplevelRec(predicate, children.first()) :
+      List()
+  }
 }
 
 function textParts(msg: Message): MessagePart[] {

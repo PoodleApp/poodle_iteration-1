@@ -4,10 +4,7 @@ import moment          from 'moment'
 import { List }        from 'immutable'
 import { uniqBy }      from './util/immutable'
 import { displayName } from './models/address'
-import { flatParts
-       , textParts
-       , htmlParts
-       , parseMidUri
+import { parseMidUri
        , resolveUri
        } from './models/message'
 

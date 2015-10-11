@@ -46,6 +46,7 @@
     "object-assign": "^4.0.1",
     "pouchdb": "^4.0.1",
     "randomstring": "^1.0.7",
+    "raw-body": "^2.1.4",
     "react": "^0.13.3",
     "react-tap-event-plugin": "^0.1.7",
     "repa": "^1.0.0",

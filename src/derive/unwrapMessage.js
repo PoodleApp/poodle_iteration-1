@@ -14,6 +14,7 @@ export {
   unwrapMessage,
 }
 
+// TODO: This is outdated: activites are parsed and id is assigned in sync/index
 function unwrapMessage(message: Message): List<DerivedActivity> {
   var activities: DerivedActivity[] = (message.attachments || []).filter(a => (
     a.contentType === 'application/activity+json'

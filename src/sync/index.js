@@ -2,10 +2,12 @@
 
 import { MailParser } from 'mailparser'
 import assign         from 'object-assign'
+import getRawBody     from 'raw-body'
 import * as Kefir     from 'kefir'
 import * as imap      from '../imap'
 import { uniqBy }     from '../util/immutable'
 import { insertMessage, newThread } from '../models/thread'
+import { toplevelParts }            from '../models/message'
 
 import type { ReadStream }                      from 'fs'
 import type { PouchDB }                         from 'pouchdb'
@@ -22,6 +24,8 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   const _id = message.messageId
   const refs = (message.references || []).concat(_id)
 
+  const activities = getActivities(message)
+
   return Promise.all([
     db.query('indexes/byDanglingReference', { keys: refs, include_docs: true, limit: 999 }),
     db.query('indexes/byMessageId',         { keys: refs, include_docs: true, limit: 999 })
@@ -36,9 +40,10 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
     // }
 
     const docs = uniqBy(doc => doc._id, dangling.rows.concat(convs.rows).map(row => row.doc))
-    return Promise.all(docs.map(doc => (
-      db.put(assign({}, doc, { thread: insertMessage(message, doc) }))
-    )))
+    return activities.then(as => Promise.all(docs.map(doc => {
+      const msg = assign({ activities: as }, message)
+      return db.put(assign({}, doc, { thread: insertMessage(msg, doc) }))
+    })))
   })
 }
 
@@ -58,6 +63,17 @@ function parseMessage(messageStream: ReadStream): Stream<Object> {
     })
     messageStream.pipe(mailparser)
   })
+}
+
+function getActivities(message: Message): Promise<Object[]> {
+  const parts = toplevelParts(part => part.contentType === 'application/activity+json', message)
+  return Promise.all(parts.map(part => {
+    getRawBody(part.stream, { encoding: 'utf8' })
+    .then(JSON.parse)
+    .then(json => (
+      object.assign(json, { id: midPartUri(part, message) })
+    ))
+  }))
 }
 
 function newThreadDoc(message: Message): { thread: Thread, type: 'thread' } {
