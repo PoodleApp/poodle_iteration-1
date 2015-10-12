@@ -6,8 +6,8 @@ import getRawBody     from 'raw-body'
 import * as Kefir     from 'kefir'
 import * as imap      from '../imap'
 import { uniqBy }     from '../util/immutable'
-import { insertMessage, newThread } from '../models/thread'
-import { toplevelParts }            from '../models/message'
+import { insertMessage, newThread }  from '../models/thread'
+import { midPartUri, toplevelParts } from '../models/message'
 
 import type { ReadStream }                      from 'fs'
 import type { PouchDB }                         from 'pouchdb'
@@ -18,6 +18,7 @@ import type { ThreadDoc, QueryResponseWithDoc } from './types'
 export {
   parseMessage,
   record,
+  query,
 }
 
 function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
@@ -47,6 +48,13 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   })
 }
 
+function query(q: string, db: PouchDB): Promise<Thread[]> {
+  return db.query('indexes/byMessageId', { include_docs: true, limit: 100 })
+  .then(rows => (
+    uniqBy(doc => doc._id, rows.map(row => row.doc)).map(doc => doc.thread)
+  ))
+}
+
 function parseMessage(messageStream: ReadStream): Stream<Object> {
   return Kefir.stream(emitter => {
     const mailparser = new MailParser({
@@ -67,13 +75,11 @@ function parseMessage(messageStream: ReadStream): Stream<Object> {
 
 function getActivities(message: Message): Promise<Object[]> {
   const parts = toplevelParts(part => part.contentType === 'application/activity+json', message)
-  return Promise.all(parts.map(part => {
+  return Promise.all(parts.map(part => (
     getRawBody(part.stream, { encoding: 'utf8' })
     .then(JSON.parse)
-    .then(json => (
-      object.assign(json, { id: midPartUri(part, message) })
-    ))
-  }))
+    .then(json => assign(json, { id: midPartUri(part, message) }))
+  )))
 }
 
 function newThreadDoc(message: Message): { thread: Thread, type: 'thread' } {

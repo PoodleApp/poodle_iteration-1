@@ -16,12 +16,13 @@ import { midUri
        , midPartUri
        , parseMidUri
        , resolveUri
-       } from './models/message'
-import * as Act from './activity'
+       }               from './models/message'
+import * as Act        from './activity'
 import { displayName } from './models/address'
-import { queryThreads } from './notmuch'
+import { query }       from './sync/index'
 
 import type { Moment }          from 'moment'
+import type { PouchDB }         from 'pouchdb'
 import type { DerivedActivity } from './derivedActivity'
 import type { Activity, Zack }  from './activity'
 import type { Address }         from './models/address'
@@ -73,13 +74,14 @@ function allNames(conv: Conversation): string[] {
   return flatParticipants(conv).map(displayName)
 }
 
-function queryConversations(cmd: string, q: string): Promise<List<Conversation>> {
-  return queryThreads(cmd, q).then(ts => List(ts.map(threadToConversation)))
+function queryConversations(q: string, db: PouchDB): Promise<List<Conversation>> {
+  return query(q, db).then(ts => List(ts.map(threadToConversation)))
 }
 
-function threadToConversation({ id, thread }: { id: string, thread: Thread }): Conversation {
-  var activities = collapseAsides(thread)
-  var conv = new ConversationRecord({
+function threadToConversation(thread: Thread): Conversation {
+  const id = thread[0][0].messageId
+  const activities = collapseAsides(thread)
+  const conv = new ConversationRecord({
     id,
     activities:    derive(activities),
     allActivities: activities,
