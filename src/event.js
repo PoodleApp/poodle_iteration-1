@@ -14,7 +14,6 @@ import { participants, queryConversations } from './conversation'
 import { loadConfig, saveConfig }           from './config'
 import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
-import * as Mail                            from './maildir'
 import * as AuthEvent                       from './auth/event'
 
 import type { List }            from 'immutable'
