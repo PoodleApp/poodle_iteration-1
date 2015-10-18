@@ -10,6 +10,30 @@ const indexes = {
   _id: '_design/indexes',
   language: 'javascript',
   views: {
+    byByLatestActivity: {
+      map: function(doc: ThreadDoc | Object) {
+        function eachMessage(fn: (_: Message) => any, thread: Thread) {
+          thread.forEach(node => {
+            const message = node[0]
+            const replies = node[1]
+            fn(message)
+            eachMessage(fn, replies)
+          })
+        }
+        if (doc.type !== 'thread') { return }
+        let latest = null
+        eachMessage(msg => {
+          if (msg.date && (!latest ||  msg.date > latest)) {
+            // latest = msg.date.split(/[\-T:.]/)
+            latest = msg.date
+          }
+        }, doc.thread)
+        if (latest) {
+          emit(latest, 1)
+        }
+      }.toString(),
+    },
+
     byMessageId: {
       map: function(doc: ThreadDoc | Object) {
         function recMessage(nodes: Thread) {

@@ -10,11 +10,12 @@ import * as Create                          from './activityTypes'
 import { activityId }                       from './derivedActivity'
 import * as Act                             from './derivedActivity'
 import { parseMidUri }                      from './models/message'
-import { participants, queryConversations } from './conversation'
+import { participants, findConversation, queryConversations } from './conversation'
 import { loadConfig, saveConfig }           from './config'
 import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
 import * as AuthEvent                       from './auth/event'
+import * as sync                            from './sync'
 
 import type { List }            from 'immutable'
 import type { URI }             from './activity'
@@ -27,8 +28,13 @@ import type { Burger, Draft }   from './compose'
 import type { AppState }        from './state'
 
 class QueryConversations {
-  query: string;
-  constructor(query: string) { this.query = query }
+  since: Date;
+  constructor(since: Date) { this.since = since }
+}
+
+class FindConversation {
+  messageId: string;
+  constructor(messageId: string) { this.messageId = messageId }
 }
 
 class Conversations {
@@ -124,22 +130,23 @@ class ShowLink {
 class Reload {}
 
 function init(app: Sunshine.App<AppState>) {
-
-  app.on(QueryConversations, (state, { query }) => {
-    var cmd = lookup(State.notmuchCmd, state) || 'notmuch'
+  app.on(QueryConversations, (state, { since }) => {
+    const account = lookup(State.useraccount, state)
     indicateLoading('conversations',
-      queryConversations(cmd, query).then(
-        convs => app.emit(new Conversations(convs)),
-        err   => app.emit(new GenericError(err))
-      )
+      sync.getDatabase(account).then(db => (
+        queryConversations(since, db).then(
+          convs => app.emit(new Conversations(convs)),
+          err   => app.emit(new GenericError(err))
+        )
+      ))
     )
-    return set(State.searchQuery, query, state)
+    return set(State.searchQuery, since.toString(), state)
   })
 
   app.on(Reload, (state, _) => {
     var query = get(State.searchQuery, state)
     if (query) {
-      app.emit(new QueryConversations(query))
+      app.emit(new QueryConversations(new Date(query)))
     }
   })
 
@@ -157,7 +164,7 @@ function init(app: Sunshine.App<AppState>) {
 
   app.on(ViewRoot, (state, { searchQuery }) => {
     if (searchQuery) {
-      app.emit(new QueryConversations(searchQuery))
+      app.emit(new QueryConversations(new Date(searchQuery)))
     }
     return set(State.view, 'root',
            set(State.routeParams, Map({ q: searchQuery }),
@@ -171,24 +178,27 @@ function init(app: Sunshine.App<AppState>) {
   })
 
   app.on(ViewActivity, (state, { uri }) => {
-    var parsed = parseMidUri(uri)
-    if (!parsed) {
+    const parsed = parseMidUri(uri)
+    const messageId = parsed ? parsed.messageId : null
+    const account = lookup(State.useraccount, state)
+    if (!parsed || !messageId) {
       app.emit(new GenericError(`Unable to parse activity URI: ${uri}`))
       return
     }
-    var { messageId } = parsed
-    var cmd = lookup(State.notmuchCmd, state) || 'notmuch'
+    const msgId = messageId  // Helps typechecker verify that msgId is not null
 
     indicateLoading('activityByUri',
-      queryConversations(cmd, `id:${messageId}`).then(convs => {
-        if (convs.size > 0) {
-          app.emit(new Conversations(convs))
-          app.emit(new ViewConversation(convs.get(0).id, uri))
-        }
-        else {
-          return Promise.reject(`Could not find activity for given URI: ${uri}`)
-        }
-      })
+      sync.getDatabase(account).then(db => (
+        findConversation(msgId, db).then(convs => {
+          if (convs.size > 0) {
+            app.emit(new Conversations(convs))
+            app.emit(new ViewConversation(convs.get(0).id, uri))
+          }
+          else {
+            return Promise.reject(`Could not find activity for given URI: ${uri}`)
+          }
+        })
+      ))
       .catch(err => app.emit(new GenericError(err)))
     )
   })
@@ -199,7 +209,7 @@ function init(app: Sunshine.App<AppState>) {
                  state))
     var conv = State.currentConversation(state_)
     if (!conv) {
-      app.emit(new QueryConversations(id))
+      app.emit(new FindConversation(id))
     }
     return state_
   })
@@ -329,7 +339,6 @@ function init(app: Sunshine.App<AppState>) {
   function send(draft: Draft, state: AppState) {
     var msg     = assemble(draft)
     var sentDir = lookup(compose(State.config_, field('sentDir')), state)
-    var cmd     = lookup(State.notmuchCmd, state)
     var msg_    = new (stream:any).PassThrough()
     msg.pipe(msg_)  // Grabs a duplicate of the msg stream
     indicateLoading('send',
@@ -363,6 +372,7 @@ export {
   Notify,
   DismissNotify,
   QueryConversations,
+  FindConversation,
   Send,
   SendReply,
   ShowLink,

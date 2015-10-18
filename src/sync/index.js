@@ -18,7 +18,8 @@ import type { ThreadDoc, QueryResponseWithDoc } from './types'
 export {
   parseMessage,
   record,
-  query,
+  queryLatest,
+  findThread,
 }
 
 function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
@@ -48,8 +49,21 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
   })
 }
 
-function query(q: string, db: PouchDB): Promise<Thread[]> {
-  return db.query('indexes/byMessageId', { include_docs: true, limit: 100 })
+function queryLatest(since: Date, db: PouchDB): Promise<Thread[]> {
+  return db.query('indexes/byLatestActivity', {
+    include_docs: true,
+    limit: 100,
+    descending: true,
+    startkey: since.toString(),
+  })
+  .then(rows => rows.map(row => row.doc.thread))
+}
+
+function findThread(messageId: string, db: PouchDB): Promise<Thread[]> {
+  return db.query('indexes/byMessageId', {
+    include_docs: true,
+    key: messageId,
+  })
   .then(rows => (
     uniqBy(doc => doc._id, rows.map(row => row.doc)).map(doc => doc.thread)
   ))

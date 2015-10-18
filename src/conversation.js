@@ -16,10 +16,10 @@ import { midUri
        , midPartUri
        , parseMidUri
        , resolveUri
-       }               from './models/message'
-import * as Act        from './activity'
-import { displayName } from './models/address'
-import { query }       from './sync/index'
+       }                           from './models/message'
+import * as Act                    from './activity'
+import { displayName }             from './models/address'
+import { findThread, queryLatest } from './sync/index'
 
 import type { Moment }          from 'moment'
 import type { PouchDB }         from 'pouchdb'
@@ -37,6 +37,7 @@ export {
   lastActive,
   participants,
   queryConversations,
+  findConversation,
 }
 
 export type Conversation = Record & {
@@ -74,8 +75,12 @@ function allNames(conv: Conversation): string[] {
   return flatParticipants(conv).map(displayName)
 }
 
-function queryConversations(q: string, db: PouchDB): Promise<List<Conversation>> {
-  return query(q, db).then(ts => List(ts.map(threadToConversation)))
+function queryConversations(since: Date, db: PouchDB): Promise<List<Conversation>> {
+  return queryLatest(since, db).then(ts => List(ts.map(threadToConversation)))
+}
+
+function findConversation(messageId: string, db: PouchDB): Promise<List<Conversation>> {
+  return findThread(messageId, db).then(ts => List(ts.map(threadToConversation)))
 }
 
 function threadToConversation(thread: Thread): Conversation {

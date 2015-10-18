@@ -116,4 +116,5 @@ function getContent(uri: URI, db: PouchDB): Promise<{ contentType: string, conte
 export {
   sync,
   getContent,
+  getDatabase,
 }
