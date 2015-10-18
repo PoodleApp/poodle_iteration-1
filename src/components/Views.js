@@ -142,7 +142,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
             <IconMenu
               iconButtonElement={
                 <IconButton>
-                  <ContentCreate color={muiTheme.component.appBar.textColor} />
+                  <ContentCreate color={muiTheme.appBar.textColor} />
                 </IconButton>
               }
               onItemTouchTap={this.onCompose.bind(this)}

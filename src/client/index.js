@@ -1,17 +1,18 @@
 /* @flow */
 
-import * as Sunshine  from 'sunshine-framework/react'
-import React          from 'react'
-import * as immutable from 'immutable'
-import makeRouter     from 'hash-brown-router'
-import { set }        from 'safety-lens'
-import { Styles }     from 'material-ui'
-import * as State     from '../state'
-import * as Event     from '../event'
-import * as CE        from '../composer/event'
-import * as AE        from '../add_account/event'
-import { App }        from '../components/Views'
-import {}             from './polyfills'
+import * as Sunshine   from 'sunshine-framework/react'
+import React           from 'react'
+import * as immutable  from 'immutable'
+import makeRouter      from 'hash-brown-router'
+import { set }         from 'safety-lens'
+import ThemeManager    from 'material-ui/lib/styles/theme-manager'
+import { PoodleTheme } from '../themes'
+import * as State      from '../state'
+import * as Event      from '../event'
+import * as CE         from '../composer/event'
+import * as AE         from '../add_account/event'
+import { App }         from '../components/Views'
+import {}              from './polyfills'
 
 export {
   run,
@@ -62,15 +63,11 @@ router.add('/add_account', params => {
   app.emit(new Event.ViewAccountSetup(decodeURIComponent(params.email)))
 })
 
-var ThemeManager = new Styles.ThemeManager()
-import { PoodleTheme } from '../themes'
-ThemeManager.setTheme(PoodleTheme)
-
 class ContextWrapper extends React.Component<{},{},{}> {
   getChildContext(): Object {
     return {
       _sunshineApp: app,
-      muiTheme: ThemeManager.getCurrentTheme(),
+      muiTheme: ThemeManager.getMuiTheme(PoodleTheme),
     }
   }
 
