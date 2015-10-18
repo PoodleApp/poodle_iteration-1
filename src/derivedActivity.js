@@ -21,6 +21,7 @@ export type DerivedActivity = Record & {
   revisions: Stack<DerivedActivity>,
   verb:      ?DerivedVerb,
   allActivities: ?List<DerivedActivity>,
+  attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
 var ActivityRecord = Record({
@@ -186,16 +187,22 @@ function object(activity: DerivedActivity): ?ActivityObject {
 }
 
 function objectContent(activity: DerivedActivity): { contentType: string, content: Buffer }[] {
-  var act = getActivity(activity)
-  var obj = act ? act.object : undefined
-  var msg = getMessage(activity)
-  if (obj && msg && obj.objectType === 'activity' && obj.inline) {
-    return Act.objectContent([obj.inline, msg])
-  }
-  else {
-    var z = zack(activity)
-    return z ? Act.objectContent(z) : []
-  }
+  const act = getActivity(activity)
+  const obj = act ? act.object : undefined
+  const msg = getMessage(activity)
+
+  // TODO
+  // if (obj && msg && obj.objectType === 'activity' && obj.inline) {
+  //   return Act.objectContent([obj.inline, msg])
+  // }
+  // else {
+  //   var z = zack(activity)
+  //   return z ? Act.objectContent(z) : []
+  // }
+
+  const z = zack(activity)
+  const uri = z ? Act.objectContent(z) : null
+  return activity.attachments.filter(a => a.uri === uri)
 }
 
 function objectType(activity: DerivedActivity): ?string {

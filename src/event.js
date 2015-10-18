@@ -335,21 +335,7 @@ function init(app: Sunshine.App<AppState>) {
     msg.pipe(msg_)  // Grabs a duplicate of the msg stream
     indicateLoading('send',
       msmtp(msg)
-      .then(() => {
-        if (sentDir) {
-          return Mail.record(msg_, sentDir).then(() => {
-            if (cmd) {
-              return notmuch(cmd, 'new').then(() => {
-                app.emit(new Reload())
-              })
-            }
-          })
-          .catch(err => {
-            // An error here should not prevent the snackbar notification
-            app.emit(new GenericError('Your message was sent. However: '+err))
-          })
-        }
-      })
+      // TODO: record copy of message in database
       .then(_ => app.emit(new Notify('Message sent')))
       .catch(err => {
         app.emit(new GenericError(err))

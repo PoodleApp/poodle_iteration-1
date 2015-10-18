@@ -45,6 +45,7 @@ export type MIMETree = {
   generatedFileName?: string,
   length?:            number,
   checksum?:          string,
+  stream?:            ReadStream,
   mimeMultipart?:     string,
   mimeBoundary?:      string,
 }
@@ -84,8 +85,8 @@ function flatParts(msg: Message): MessagePart[] {
   return subparts(msg.mimeTree)
 }
 
-function toplevelParts(msg: Message): MessagePart[] {
-  return toplevelRec(msg.mimeTree)
+function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): MessagePart[] {
+  return toplevelRec(predicate, msg.mimeTree)
 }
 
 function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): MessagePart[] {
@@ -113,6 +114,10 @@ function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): Me
     return children.length > 0 ?
       toplevelRec(predicate, children.first()) :
       List()
+  }
+  else {
+    // TODO: What to do when encountering unknown multipart subtype?
+    return List()
   }
 }
 
