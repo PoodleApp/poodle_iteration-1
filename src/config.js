@@ -8,8 +8,6 @@ import { List, Record } from 'immutable'
 export type Config = Record & {
   accounts: List<Account>,
   likeMessage: string,
-  notmuchCmd: string,
-  sentDir: string,
 }
 
 export type Account = Record & {
@@ -22,8 +20,6 @@ export type Account = Record & {
 var ConfigRecord = Record({
   accounts: List(),
   likeMessage: '+1',
-  notmuchCmd: 'notmuch',
-  sentDir: '',
 })
 
 var AccountRecord = Record({
@@ -38,6 +34,7 @@ export {
   AccountRecord,
   loadConfig,
   saveConfig,
+  loadAccount,
 }
 
 var home = process.env.HOME
@@ -53,9 +50,9 @@ function loadConfig(): Promise<Config> {
             reject(err)
           }
           else {
-            var data = JSON.parse(data)
-            if (data.accounts) { data.accounts = List(data.accounts.map(a => new AccountRecord(a))) }
-            resolve(new ConfigRecord(data))
+            const config = JSON.parse(data)
+            if (config.accounts) { config.accounts = List(config.accounts.map(a => new AccountRecord(a))) }
+            resolve(new ConfigRecord(config))
           }
         })
       })
@@ -73,6 +70,12 @@ function saveConfig(conf: Config): Promise<void> {
       if (err) { reject(err) } else { resolve(undefined) }
     })
   }))
+}
+
+function loadAccount(): Promise<Account> {
+  return loadConfig().then(config => (
+    !config.accounts.isEmpty() ? config.accounts.first() : Promise.reject("Please configure account settings")
+  ))
 }
 
 type Path = string

@@ -23,13 +23,12 @@ const indexes = {
         if (doc.type !== 'thread') { return }
         let latest = null
         eachMessage(msg => {
-          if (msg.date && (!latest ||  msg.date > latest)) {
-            // latest = msg.date.split(/[\-T:.]/)
-            latest = msg.date
+          if (msg.date && (!latest ||  msg.date > latest.date)) {
+            latest = msg
           }
         }, doc.thread)
         if (latest) {
-          emit(latest, 1)
+          emit(latest.date, latest.messageId)
         }
       }.toString(),
     },

@@ -11,7 +11,7 @@ import { activityId }                       from './derivedActivity'
 import * as Act                             from './derivedActivity'
 import { parseMidUri }                      from './models/message'
 import { participants, findConversation, queryConversations } from './conversation'
-import { loadConfig, saveConfig }           from './config'
+import { loadConfig, saveConfig, loadAccount } from './config'
 import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
 import * as AuthEvent                       from './auth/event'
@@ -131,19 +131,16 @@ class Reload {}
 
 function init(app: Sunshine.App<AppState>) {
   app.on(QueryConversations, (state, { since }) => {
-    const account = lookup(State.useraccount, state)
-    if (!account) {
-      app.emit(new GenericError('Please configure account settings'))
-      return set(State.searchQuery, since.toString(), state)
-    }
-
     indicateLoading('conversations',
-      sync.getDatabase(account).then(db => (
-        queryConversations(since, db).then(
-          convs => app.emit(new Conversations(convs)),
-          err   => app.emit(new GenericError(err))
-        )
+      loadAccount().then(account => (
+        sync.getDatabase(account).then(db => (
+          queryConversations(since, db).then(
+            convs => app.emit(new Conversations(convs)),
+            err   => app.emit(new GenericError(err))
+          )
+        ))
       ))
+      .catch(err => app.emit(new GenericError(err)))
     )
     return set(State.searchQuery, since.toString(), state)
   })

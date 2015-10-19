@@ -44,7 +44,7 @@ function record(message: Message, db: PouchDB): Promise<ThreadDoc[]> {
     const docs = uniqBy(doc => doc._id, dangling.rows.concat(convs.rows).map(row => row.doc))
     return activities.then(as => Promise.all(docs.map(doc => {
       const msg = assign({ activities: as }, message)
-      return db.put(assign({}, doc, { thread: insertMessage(msg, doc) }))
+      return db.put(assign({}, doc, { thread: insertMessage(msg, doc.thread) }))
     })))
   })
 }
