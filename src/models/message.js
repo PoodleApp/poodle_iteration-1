@@ -1,5 +1,7 @@
 /* @flow */
 
+import { List } from 'immutable'
+
 import type { ReadStream } from 'fs'
 import type { Address }    from './address'
 
@@ -158,4 +160,3 @@ function resolveUri(msg: Message, uri: URI): URI {
     return uri
   }
 }
-
