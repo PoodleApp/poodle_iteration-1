@@ -132,6 +132,11 @@ class Reload {}
 function init(app: Sunshine.App<AppState>) {
   app.on(QueryConversations, (state, { since }) => {
     const account = lookup(State.useraccount, state)
+    if (!account) {
+      app.emit(new GenericError('Please configure account settings'))
+      return set(State.searchQuery, since.toString(), state)
+    }
+
     indicateLoading('conversations',
       sync.getDatabase(account).then(db => (
         queryConversations(since, db).then(
