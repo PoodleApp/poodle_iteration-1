@@ -56,7 +56,7 @@ function queryLatest(since: Date, db: PouchDB): Promise<Thread[]> {
     descending: true,
     startkey: since.toString(),
   })
-  .then(rows => rows.map(row => row.doc.thread))
+  .then(({ rows }) => rows.map(row => row.doc.thread))
 }
 
 function findThread(messageId: string, db: PouchDB): Promise<Thread[]> {

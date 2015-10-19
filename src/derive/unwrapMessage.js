@@ -21,7 +21,7 @@ function unwrapMessage(message: Message): List<DerivedActivity> {
     activity,
     message,
   }))
-  if (activities.length > 0) {
+  if (!activities.isEmpty()) {
     return activities
   }
   else {

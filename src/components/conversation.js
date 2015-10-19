@@ -98,9 +98,9 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
 
 export class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversation },{}> {
   getStyles(): Object {
-    var participantListWidth = Spacing.desktopKeylineIncrement * 4 + 'px'
-    var { palette } = this.context.muiTheme
-    var styles = {
+    const participantListWidth = Spacing.desktopKeylineIncrement * 4 + 'px'
+    const { palette } = this.context.muiTheme.rawTheme
+    const styles = {
       body: {
         padding: '16px',
         paddingTop: 0,

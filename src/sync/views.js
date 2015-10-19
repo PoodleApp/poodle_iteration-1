@@ -10,7 +10,7 @@ const indexes = {
   _id: '_design/indexes',
   language: 'javascript',
   views: {
-    byByLatestActivity: {
+    byLatestActivity: {
       map: function(doc: ThreadDoc | Object) {
         function eachMessage(fn: (_: Message) => any, thread: Thread) {
           thread.forEach(node => {
@@ -21,9 +21,9 @@ const indexes = {
           })
         }
         if (doc.type !== 'thread') { return }
-        let latest = null
+        let latest: ?Message = null
         eachMessage(msg => {
-          if (msg.date && (!latest ||  msg.date > latest.date)) {
+          if (msg.date && (!latest || !latest.date || (msg.date > latest.date))) {
             latest = msg
           }
         }, doc.thread)

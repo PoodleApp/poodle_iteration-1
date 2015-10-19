@@ -91,7 +91,7 @@ function joinNames(user: ?URI, actors: List<ActivityObject>): string {
     return ns.join(' and ')
   }
   else if (ns.size > 2) {
-    return `${ns.pop().join(', ')}, and ${ns.last()}`
+    return `${ns.butLast().join(', ')}, and ${ns.last()}`
   }
   else {
     return ns.join(', ')

@@ -142,7 +142,7 @@ function init(app: Sunshine.App<AppState>) {
       ))
       .catch(err => app.emit(new GenericError(err)))
     )
-    return set(State.searchQuery, since.toString(), state)
+    return set(State.searchQuery, since.toISOString(), state)
   })
 
   app.on(Reload, (state, _) => {
