@@ -22,9 +22,9 @@
   "homepage": "https://github.com/hallettj/poodle#readme",
   "devDependencies": {
     "babel": "^5.8.21",
-    "electron-prebuilt": "^0.34.0",
+    "electron-prebuilt": "^0.35.1",
     "electron-rebuild": "^1.0.0",
-    "flow-bin": "^0.17.0"
+    "flow-bin": "^0.18.1"
   },
   "dependencies": {
     "babel-core": "^5.8.23",
