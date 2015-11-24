@@ -6,17 +6,17 @@ all: build
 
 build: node_modules $(SRC)
 	node_modules/.bin/babel src \
-		--out-dir lib \
+		--out-dir build \
 		--source-maps
 
 watch:
 	node_modules/.bin/babel src \
-		--out-dir lib \
+		--out-dir build \
 		--source-maps \
 		--watch
 
 clean:
-	rm -rf lib
+	rm -rf build
 
 run: node_modules build
 	node_modules/.bin/electron .

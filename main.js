@@ -31,7 +31,7 @@ app.on('ready', function() {
   })
 
   var ipc = require('electron-safe-ipc/host')
-  var account = require('./lib/account')
+  var account = require('./build/account')
 
   ipc.respond('google-account', function(email) {
     return account.setupGoogle(email)
