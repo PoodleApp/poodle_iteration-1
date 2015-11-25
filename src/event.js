@@ -146,9 +146,13 @@ function init(app: Sunshine.App<AppState>) {
   })
 
   app.on(Reload, (state, _) => {
-    var query = get(State.searchQuery, state)
-    if (query) {
-      app.emit(new QueryConversations(new Date(query)))
+    const query = get(State.searchQuery, state)
+    const since = parseQuery(query)
+    if (since) {
+      app.emit(new QueryConversations(since))
+    }
+    else {
+      app.emit(new GenericError(`Unable to parse search query: ${query}`))
     }
   })
 
@@ -165,8 +169,12 @@ function init(app: Sunshine.App<AppState>) {
   })
 
   app.on(ViewRoot, (state, { searchQuery }) => {
-    if (searchQuery) {
-      app.emit(new QueryConversations(new Date(searchQuery)))
+    const since = parseQuery(searchQuery)
+    if (since) {
+      app.emit(new QueryConversations(since))
+    }
+    else {
+      app.emit(new GenericError(`Unable to parse search query: ${searchQuery}`))
     }
     return set(State.view, 'root',
            set(State.routeParams, Map({ q: searchQuery }),
@@ -360,6 +368,17 @@ function withoutSelf(self: Address, addrs: Address[]): Address[] {
 
 function without(exclude: Address[], addrs: Address[]): Address[] {
   return addrs.filter(a => !exclude.some(e => e.address === a.address))
+}
+
+function parseQuery(q: ?string): ?Date {
+  if (!q) { return null }
+  const d = new Date(q)
+  if (isNaN(d.getTime())) {
+    return null
+  }
+  else {
+    return d
+  }
 }
 
 export {
