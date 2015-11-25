@@ -10,6 +10,7 @@ import { objectContent } from './activity'
 import { parseMidUri }   from './models/message'
 
 import type { ReadStream }         from 'fs'
+import type { Content }            from 'mailcomposer'
 import type { Activity }           from './activity'
 import type { Address }            from './models/address'
 import type { Message, MessageId } from './models/message'
@@ -41,7 +42,7 @@ export {
 }
 
 function assemble({ activities, from, to, cc, inReplyTo, references, subject, fallback }: Draft): ReadStream {
-  var comp = new MailComposer()
+  const comp = new MailComposer()
   comp.setMessageOption({
     from: convertAddress(comp, from),
     to:   to.map(convertAddress.bind(null, comp)).join(', '),
@@ -62,17 +63,18 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   comp.addHeader('Message-ID', `<${uuid.v4()}@${from.address.split('@')[1]}>`)
   comp.addHeader('Date', moment().format('ddd, DD MMM YYYY HH:mm:ss ZZ'))
 
-  var textPart = {
+  const textPart = {
     contentType: 'text/plain',
     contentEncoding: 'quoted-printable',
     contents: fallback || fallbackContent(activities),
   }
 
-  var jsonAndAttachments = activities.map(([activityId, activity, attachments]) => {
-    var parsed = parseMidUri(activityId)
-    if (!parsed || !parsed.partId) { throw "No part Id for activity" }
-    var { partId } = parsed
-    var jsonPart = {
+  const jsonAndAttachments = activities.map(([activityId, activity, attachments]) => {
+    const parsed = parseMidUri(activityId)
+    if (!parsed) { throw "Could not parse activity ID" }
+    const { partId } = parsed
+    if (!partId) { throw "No part Id for activity" }
+    const jsonPart: Content = {
       cid: partId,
       contents: JSON.stringify(activity),
       contentEncoding: 'quoted-printable',
@@ -83,13 +85,13 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
     return [jsonPart, attachments]
   })
 
-  var jsonParts = jsonAndAttachments.map(([json, _]) => json)
-  var attachments = List(jsonAndAttachments).flatMap(([_, as]) => as).toArray()
+  const jsonParts = jsonAndAttachments.map(([json, _]) => json)
+  const attachments = List(jsonAndAttachments).flatMap(([_, as]) => as).toArray()
 
-  var combinedJsonParts = jsonParts.length > 0 ?
+  const combinedJsonParts = jsonParts.length > 0 ?
     { multipart: 'mixed', childNodes: jsonParts } : jsonParts[0]
 
-  var activitiesPart = attachments.length > 0 ?
+  const activitiesPart = attachments.length > 0 ?
     { multipart: 'related', childNodes: [combinedJsonParts].concat(attachments) } :
     combinedJsonParts
 
@@ -102,7 +104,7 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   })
 
   comp.streamMessage()
-  return comp
+  return (comp: any)
 }
 
 // TODO: specific fallback behavior for each verb and object type
