@@ -34,6 +34,7 @@ var ActivityRecord = Record({
   verb:      null,
   aside:     null,
   allActivities: null,
+  attachments: List(),
 })
 
 // Some derived activities are synthetic, and use verbs that are not available
