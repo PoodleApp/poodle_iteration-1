@@ -40,4 +40,24 @@ app.on('ready', function() {
   ipc.respond('google-credentials', function(email) {
     return account.getGoogleCredentials(email)
   })
+
+  ipc.on('sync', function(query) {
+    var config = require('./lib/config')
+    var sync = require('./lib/sync').sync
+
+    config.loadConfig().then(function(config) {
+      // console.log('config', config, config.accounts.toJS())
+      var account = config.accounts.get(0)
+      if (account) {
+        // console.log('account', account, account.email)
+        // sync(account)
+        sync(query, account).onValue(function(resp) {
+          // console.log('resp', resp)
+          ipc.send('message', resp)
+        })
+        .onError(function(err) { console.log(err) })
+      }
+    })
+  })
+
 })

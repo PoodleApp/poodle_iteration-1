@@ -90,7 +90,7 @@ function participants(messages: List<Message>): { to: List<Address>, from: List<
   }
 }
 
-function flatParticipants(messages: List<Message>): Address[] {
+function flatParticipants(messages: List<Message>): List<Address> {
   var { from, to, cc } = participants(messages)
   return uniqBy(
     addr => addr.address,

@@ -14,6 +14,8 @@ export {
 }
 
 function newThread(message: Message): Thread {
+  console.log('newThread', message)
+  console.log(JSON.stringify(message))
   return [[message, []]]
 }
 

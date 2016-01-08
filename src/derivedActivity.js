@@ -113,7 +113,7 @@ function insertJoins(
   var added = Act.flatParticipants(maybeToList(getMessage(activity))).filter(p => (
     !ppl.some(p_ => p.address === p_.address)
   ))
-  if (added.length <= 0 || prev.size <= 0) {
+  if (added.size <= 0 || prev.size <= 0) {
     return List.of(activity)
   }
   else if (added.every(p => {
@@ -203,6 +203,9 @@ function objectContent(activity: DerivedActivity): { contentType: string, conten
 
   const z = zack(activity)
   const uri = z ? Act.objectContent(z) : null
+  if (!activity.attachments) {
+    console.log(activity.toJSON())
+  }
   return activity.attachments.filter(a => a.uri === uri)
 }
 

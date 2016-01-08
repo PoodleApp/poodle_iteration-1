@@ -88,3 +88,27 @@ function run(domElement: Element) {
     domElement
   )
 }
+
+
+// import ipc from 'electron-safe-ipc/guest'
+
+// ipc.on('message', message => {
+//   console.log('message', message)
+// })
+
+// ipc.send('sync', 'Changes in Poodle')
+
+import PouchDB     from 'pouchdb'
+import * as config from '../config'
+import { sync }    from '../sync'
+
+config.loadConfig().then(config => {
+  var account = config.accounts.get(0)
+  if (account) {
+    sync('Testing Poodle', account).onValue(resp => {
+      // console.log('message', typeof resp)
+      console.log('message', resp)
+    })
+    .onError(err => console.log(err))
+  }
+})
