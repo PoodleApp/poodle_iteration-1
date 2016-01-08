@@ -33,18 +33,21 @@
     "mailcomposer": "hallettj/mailcomposer#patched",
     "mailparser": "andris9/mailparser#7ce164ef0c5d3a608dd168bbf0529f65a781b93d",
     "marked": "^0.3.5",
-    "material-ui": "^0.11.0",
+    "material-ui": "0.11.0",
     "mkdirp": "^0.5.1",
     "moment": "^2.10.6",
     "object-assign": "^4.0.1",
     "ramda": "^0.17.1",
     "randomstring": "^1.0.7",
     "react": "^0.13.3",
-    "react-tap-event-plugin": "^0.1.7",
+    "react-tap-event-plugin": "0.1.7",
     "repa": "^1.0.0",
     "safety-lens": "^1.0.2",
     "string-hash": "^1.1.0",
     "sunshine-framework": "^1.2.1",
     "uuid": "^2.0.1"
+  },
+  "engines": {
+    "node": "^4.2.0"
   }
 }
