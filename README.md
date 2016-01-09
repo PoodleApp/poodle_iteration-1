@@ -41,9 +41,14 @@ A good source of information for configuration is the Arch Wiki:
 [offlineimap]: https://github.com/OfflineIMAP/offlineimap/blob/master/README.md
 [notmuch]: http://notmuchmail.org/
 
-To build Poodle you will also need [Node.js and npm][npm].
+To build Poodle you will also need Node.js v4.2 and npm v2.
+Use [nvm][] to install those specific versions together:
 
-[npm]: https://docs.npmjs.com/getting-started/installing-node
+    $ nvm install 4.2
+
+[nvm]: https://github.com/creationix/nvm/blob/master/README.markdown
+
+Poodle is not yet set up to build with npm v3.
 
 
 Detailed setup guide for OS X
@@ -146,7 +151,7 @@ Running
 
 From the project directory, run:
 
-    $ npm install && npm start
+    $ make run
 
 
 Configuring
