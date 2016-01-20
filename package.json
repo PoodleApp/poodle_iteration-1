@@ -22,8 +22,7 @@
   "homepage": "https://github.com/hallettj/poodle#readme",
   "devDependencies": {
     "babel": "^5.8.21",
-    "electron-prebuilt": "^0.35.1",
-    "electron-rebuild": "^1.0.0",
+    "electron-prebuilt": "0.36.4",
     "flow-bin": "^0.20.1"
   },
   "dependencies": {
@@ -57,6 +56,6 @@
     "xoauth2": "^1.1.0"
   },
   "engines": {
-    "node": "^4.2.0"
+    "node": "^5.1.1"
   }
 }
