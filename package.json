@@ -24,7 +24,7 @@
     "babel": "^5.8.21",
     "electron-prebuilt": "^0.35.1",
     "electron-rebuild": "^1.0.0",
-    "flow-bin": "^0.18.1"
+    "flow-bin": "^0.20.1"
   },
   "dependencies": {
     "babel-core": "^5.8.23",
