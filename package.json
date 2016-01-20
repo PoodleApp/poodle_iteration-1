@@ -2,7 +2,6 @@
   "name": "poodle",
   "version": "1.0.0",
   "description": "Experimental email client with social features",
-  "main": "main.js",
   "scripts": {
     "start": "make run",
     "test": "make typecheck"
@@ -20,14 +19,28 @@
     "url": "https://github.com/hallettj/poodle/issues"
   },
   "homepage": "https://github.com/hallettj/poodle#readme",
+  "babel": {
+    "presets": [
+      "react",
+      "es2015"
+    ],
+    "plugins": [
+      "transform-runtime",
+      "transform-class-properties"
+    ]
+  },
   "devDependencies": {
-    "babel": "^5.8.21",
+    "babel-cli": "6.4.5",
+    "babel-plugin-transform-class-properties": "6.4.0",
+    "babel-plugin-transform-runtime": "6.3.13",
+    "babel-preset-es2015": "6.3.13",
+    "babel-preset-react": "6.3.13",
     "electron-prebuilt": "0.36.4",
-    "flow-bin": "^0.20.1"
+    "flow-bin": "0.20.1"
   },
   "dependencies": {
-    "babel-core": "^5.8.23",
-    "electron-safe-ipc": "^0.6.1",
+    "babel-runtime": "6.3.19",
+    "electron-safe-ipc": "0.6.1",
     "email-addresses": "^2.0.1",
     "googleapis": "^2.1.3",
     "hash-brown-router": "^1.5.0",

@@ -1,5 +1,3 @@
-require('babel/register')
-
 var app = require('app')
 var BrowserWindow = require('browser-window')
 
@@ -31,7 +29,7 @@ app.on('ready', function() {
   })
 
   var ipc = require('electron-safe-ipc/host')
-  var account = require('./build/account')
+  var account = require('./account')
 
   ipc.respond('google-account', function(email) {
     return account.setupGoogle(email)
@@ -42,8 +40,8 @@ app.on('ready', function() {
   })
 
   ipc.on('sync', function(query) {
-    var config = require('./lib/config')
-    var sync = require('./lib/sync').sync
+    var config = require('./config')
+    var sync = require('./sync').sync
 
     config.loadConfig().then(function(config) {
       // console.log('config', config, config.accounts.toJS())

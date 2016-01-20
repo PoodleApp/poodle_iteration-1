@@ -9,7 +9,7 @@ build: node_modules $(SRC)
 		--out-dir build \
 		--source-maps
 
-watch:
+watch: node_modules
 	node_modules/.bin/babel src \
 		--out-dir build \
 		--source-maps \
@@ -19,7 +19,7 @@ clean:
 	rm -rf build
 
 run: node_modules build
-	node_modules/.bin/electron .
+	node_modules/.bin/electron build
 
 typecheck: node_modules
 	node_modules/.bin/flow
