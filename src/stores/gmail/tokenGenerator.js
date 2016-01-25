@@ -2,7 +2,7 @@
 
 import xoauth2 from 'xoauth2'
 
-import type { OauthCredentials } from './google'
+import type { OauthCredentials } from './google-oauth'
 
 export {
   tokenGenerator,

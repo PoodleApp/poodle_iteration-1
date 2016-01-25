@@ -1,20 +1,20 @@
 /* @flow */
 
-import { Map, Seq }     from 'immutable'
-import * as Imap        from 'imap'
-import * as Kefir       from 'kefir'
-import { inspect }      from 'util'
-import * as Config      from './config'
-import { lift1, lift0 } from './util/promises'
+import { Map, Seq, Set } from 'immutable'
+import * as Imap         from 'imap'
+import * as Kefir        from 'kefir'
+import { inspect }       from 'util'
+import { lift1, lift0 }  from '../../util/promises'
 
-import type { Box, ImapOpts }    from 'imap'
+import type { Box, ImapMessage, ImapOpts }    from 'imap'
 import type { Stream }           from 'kefir'
 import type { ReadStream }       from 'fs'
 import type { OauthCredentials } from './auth/google'
 import type { XOAuth2Generator } from './auth/tokenGenerator'
 
 export {
-  fetchMail,
+  fetchMessages,
+  fetchConversations,
   getConnection,
   openInbox,
   openAllMail,
@@ -46,25 +46,59 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMail(query: string, imap: Imap): Stream<Result> {
+function fetchMessages(query: string, imap: Imap): Stream<Result> {
+  return _fetchMessages([['X-GM-RAW', query]], imap)
+}
+
+function _fetchMessages(criteria: Array, imap: Imap): Stream<Result> {
   const uidsPromise = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
-  return Kefir.fromPromise(uidsPromise).changes().flatMap(uids => fetch(uids, {
+  return Kefir.fromPromise(uidsPromise).flatMap(uids => fetch(uids, {
     struct: true,
     bodies: [''],
   }, imap))
+  .flatMap(messageBodyStream)
+}
+
+function fetchConversations(query: string, imap: Imap): Promise<Set<Stream<Result>>> {
+  const messageIds = openAllMail(true, imap).then(box => (
+    lift1(cb => imap.search([['X-GM-RAW', query]], cb))
+  ))
+
+  const threadIds = Kefir.fromPromise(messageIds)
+  .flatMap(uids => fetch(uids, {/* metadata only */}, imap))
+  .flatMap(message => attributes(message))
+  .scan((threadIds, msgAttrs) => (
+    threadIds.add(msgAttrs['x-gm-thrid'])
+  ), Set())
+  .toPromise()
+
+  const threads = threadIds.then(ids => (
+    ids.map(id => _fetchMessages([['X-GM-THRID', id]], imap)
+  ))
+
+  // TODO: Currently returns promise that resolves to set of streams - kinda weird
+
+  return threads
 }
 
 // TODO: Use 'changedsince' option defined by RFC4551
-function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<Result> {
+function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<ImapMessage> {
   return Kefir.stream(emitter => {
     const fetch = imap.fetch(source, opts)
     fetch.on('message', (msg, seqno) => emitter.emit(msg))
     fetch.once('error', err => emitter.error(err))
     fetch.once('end', () => emitter.end())
   })
-  .flatMap(messageBodyStream)
+}
+
+function attributes(message: ImapMessage): Stream<Object> {
+  return Kefir.stream(emitter => {
+    message.on('attributes', attrs => emitter.emit(attrs))
+    message.once('error', err => emitter.error(err))
+    message.once('end', () => emitter.end())
+  })
 }
 
 function messageBodyStream(msg: imap$ImapMessage): Stream<Result> {

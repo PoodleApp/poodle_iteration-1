@@ -1,26 +1,20 @@
 /* @flow */
 
 import * as Kefir         from 'kefir'
+import { MailParser }     from 'mailparser'
 import * as imap          from './google-imap'
 import { tokenGenerator } from './tokenGenerator'
 
-import type { ReadStream }                      from 'fs'
+import type { ReadStream }       from 'fs'
 import type { Thread }           from '../models/thread'
 import type { XOAuth2Generator } from './tokenGenerator'
 
-function fetch(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread[]> {
+function fetchStream(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread[]> {
   return Kefir.fromPromise(
     imap.getConnection(tokenGenerator)
   )
-  .changes()
-  .flatMap(conn => imap.fetchMail(query, conn))
+  .flatMap(conn => imap.fetchConversations(query, conn))
   .flatMap(parseMessage)
-  .scan((prev, message) => (
-
-    prev.then(_ => index.record(message, db))
-  ))
-
-  imap.fetchMail(query, conn)
 }
 
 function parseMessage(messageStream: ReadStream): Stream<Object> {
@@ -42,6 +36,5 @@ function parseMessage(messageStream: ReadStream): Stream<Object> {
 }
 
 export {
-  fetch,
-  tokenGenerator,
+  fetchStream,
 }
