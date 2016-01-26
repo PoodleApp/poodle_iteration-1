@@ -103,6 +103,9 @@ type imap$MessageAttributes = {
   date:   Date,
   struct: imap$MessageTree,
   size:   number,
+  'x-gm-labels'?: string[],
+  'x-gm-thrid'?:  string,
+  'x-gm-msgid'?:  string,
 }
 
 declare class imap$ConnectionSeq {

@@ -2,18 +2,23 @@
 
 import * as Kefir         from 'kefir'
 import keytar             from 'keytar'
-import { fetchStream }    from '../gmail'
+import { search }         from '../gmail'
 import { tokenGenerator } from '../tokenGenerator'
 
 function fetchMessages() {
   return Kefir.fromPromise(
     getTokenGenerator('jesse@sitr.us')
   )
-  .flatMap(tokgen => fetchStream('poodle talking points', tokgen))
+  .flatMap(tokgen => search('poodle talking points', tokgen))
   .onValue(val => {
     console.log(val)
     console.log("---\n")
   })
+  .onError(err => {
+    console.err(err)
+    process.exit(1)
+  })
+  .onEnd(() => process.exit(0))
 }
 
 function getTokenGenerator(email: string): Promise<XOAuth2Generator> {

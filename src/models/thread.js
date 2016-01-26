@@ -5,21 +5,26 @@ import { partition, uniqBy } from '../util/immutable'
 
 import type { Message } from './message'
 
-export type Thread = [Message, Thread][]
+export type Thread = List<[Message, Thread]>
 
 export {
-  newThread,
+  buildThread,
   insertMessage,
   getMessages,
+  singleton,
 }
 
-function newThread(message: Message): Thread {
-  console.log('newThread', message)
-  console.log(JSON.stringify(message))
-  return [[message, []]]
+function buildThread(messages: List<Message>): Thread {
+  if (messages.isEmpty()) { throw "Cannot build thread from empty message list" }
+  const first = messages.first()
+  return messages.shift().reduce(insertMessage, singleton(first))
 }
 
-function insertMessage(message: Message, thread: Thread): Thread {
+function singleton(message: Message): Thread {
+  return List.of([message, []])
+}
+
+function insertMessage(thread: Thread, message: Message): Thread {
   const msgs = uniqBy(
     m => m.messageId,
     List(thread).flatMap(getMessages).push(message)
@@ -27,7 +32,7 @@ function insertMessage(message: Message, thread: Thread): Thread {
   let [toplevel, replies] = partition(msg => (
     !msgs.some(m => ancestorOf(msg, m))
   ), msgs)
-  return toplevel.map(msg => assembleTree(msg, replies)).toArray()
+  return toplevel.map(msg => assembleTree(msg, replies))
 }
 
 function assembleTree(message: Message, messages: List<Message>): [Message, Thread] {
@@ -36,13 +41,11 @@ function assembleTree(message: Message, messages: List<Message>): [Message, Thre
     !descendents.some(m => ancestorOf(msg, m))
   ), descendents)
   const subthread = replies.map(msg => assembleTree(msg, subreplies))
-  return [message, sortReplies(subthread).toArray()]
+  return [message, sortReplies(subthread)]
 }
 
 function getMessages([message, replies]: Thread): List<Message> {
-  return List.of(message).concat(
-    List(replies).flatMap(getMessages)
-  )
+  return replies.flatMap(getMessages).unshift(message)
 }
 
 function parentOf(msg: Message, msg_: Message): boolean {
@@ -57,8 +60,6 @@ function hasReferences(message: Message): boolean {
   return !!message.references && message.references.length > 0
 }
 
-type ImmutableThread = List<[Message, ImmutableThread]>
-
-function sortReplies(replies: ImmutableThread): ImmutableThread {
+function sortReplies(replies: Thread): Thread {
   return replies.sortBy(([msg, _]) => msg.receivedDate)
 }
