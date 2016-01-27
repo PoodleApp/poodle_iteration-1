@@ -18,7 +18,7 @@ function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread>
   )
   .flatMap(conn => imap.fetchConversations(query, conn))
   .flatMap(messages => {
-    const msgStreams = messages.map(([attrs, source]) => parseMessage(source))
+    const msgStreams = messages.map(parseMessage)
     const msgListStream = Kefir.merge(msgStreams.toArray()).scan(
       (msgs, msg) => msgs.add(msg), List()
     )

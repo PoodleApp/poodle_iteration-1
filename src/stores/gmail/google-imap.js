@@ -43,19 +43,20 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMessages(query: string, imap: Imap): Stream<[MessageAttributes, Message]> {
+function fetchMessages(query: string, imap: Imap): Stream<Message> {
   return _fetchMessages([['X-GM-RAW', query]], imap)
 }
 
-function _fetchMessages(criteria: Array, imap: Imap): Stream<Result> {
+function _fetchMessages(criteria: Array, imap: Imap): Stream<Message> {
   const uidsPromise = openAllMail(true, imap).then(box => (
-    lift1(cb => imap.search([['X-GM-RAW', query]], cb))
+    lift1(cb => imap.search(criteria, cb))
   ))
-  return Kefir.fromPromise(uidsPromise).flatMap(uids => fetch(uids, { bodies: [''] }, imap))
+  return Kefir.fromPromise(uidsPromise)
+  .flatMap(uids => fetch(uids, { bodies: [''] }, imap))
   .flatMap(messageBodyStream)
 }
 
-function fetchConversations(query: string, imap: Imap): Stream<List<[MessageAttributes, Message]>> {
+function fetchConversations(query: string, imap: Imap): Stream<List<Message>> {
   const messageIds = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
@@ -81,28 +82,29 @@ function fetchConversations(query: string, imap: Imap): Stream<List<[MessageAttr
 
 // TODO: Use 'changedsince' option defined by RFC4551
 function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<ImapMessage> {
-  return Kefir.stream(emitter => {
-    const fetch = imap.fetch(source, opts)
-    fetch.on('message', (msg, seqno) => emitter.emit(msg))
-    fetch.once('error', err => emitter.error(err))
-    fetch.once('end', () => emitter.end())
-  })
+  return fromEventsWithEnd(imap.fetch(source, opts), 'message', (msg, seqno) => msg)
 }
 
-function attributes(message: ImapMessage): Stream<Object> {
-  return Kefir.stream(emitter => {
-    message.on('attributes', attrs => emitter.emit(attrs))
-    message.once('error', err => emitter.error(err))
-    message.once('end', () => emitter.end())
-  })
+function attributes(message: ImapMessage): Stream<MessageAttributes> {
+  return fromEventsWithEnd(message, 'attributes')
 }
 
-function messageBodyStream(msg: imap$ImapMessage): Stream<Result> {
+function messageBodyStream(msg: ImapMessage): Stream<Message> {
+  return fromEventsWithEnd(msg, 'body', (stream, info) => stream)
+}
+
+function fromEventsWithEnd<T>(
+  eventSource: EventEmitter,
+  eventName: string,
+  transform: ?((...values: any) => T) = null
+): Stream<T> {
   return Kefir.stream(emitter => {
-    msg.on('body', (stream, info) => {
-      emitter.emit(stream)
+    eventSource.on(eventName, (...values) => {
+      const value = transform ? transform(...values) : values[0]
+      emitter.emit(value)
     })
-    msg.once('end', () => emitter.end())
+    eventSource.on('error', err => { emitter.emit(err); emitter.end() })
+    eventSource.once('end', () => { emitter.end() })
   })
 }
 

@@ -15,7 +15,7 @@ function fetchMessages() {
     console.log("---\n")
   })
   .onError(err => {
-    console.err(err)
+    console.log(err)
     process.exit(1)
   })
   .onEnd(() => process.exit(0))
