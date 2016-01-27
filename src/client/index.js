@@ -26,44 +26,47 @@ var initialState = q ?
   set(State.routeParams, immutable.Map({ q: decodeURIComponent(q) }), State.initialState) :
   State.initialState
 
-var app = new Sunshine.App(initialState, Event.reducers)
+// TOOD: wire these as includes
+CE.init(app)
+AE.init(app)
+
+const routingEvents = Kefir.stream(emitter => {
+  router.add('/', params => {
+    emitter.emit(new Event.ViewRoot(params.q))
+  })
+
+  router.add('/compose/:activityType', params => {
+    emitter.emit(new Event.ViewCompose(immutable.fromJS(params)))
+  })
+
+  router.add('/conversations/:id', params => {
+    emitter.emit(new Event.ViewConversation(params.id))
+  })
+
+  router.add('/conversations/:id', params => {
+    emitter.emit(new Event.ViewConversation(params.id))
+  })
+
+  router.add('/activities/:uri', params => {
+    emitter.emit(new Event.ViewActivity(decodeURIComponent(params.uri)))
+  })
+
+  router.add('/settings', () => {
+    emitter.emit(new Event.ViewSettings())
+  })
+
+  router.add('/add_account', params => {
+    emitter.emit(new Event.ViewAccountSetup(decodeURIComponent(params.email)))
+  })
+})
+
+const app = new Sunshine.App(initialState, Event.reducers)
+const session = app.run(routingEvents)  // TODO: pass incoming event stream to app
 
 setTimout(() => {
   app.emit(new Event.LoadConfig())
   router.evaluateCurrent('/')
 }, 0)
-
-Event.init(app, router)
-CE.init(app)
-AE.init(app)
-
-router.add('/', params => {
-  app.emit(new Event.ViewRoot(params.q))
-})
-
-router.add('/compose/:activityType', params => {
-  app.emit(new Event.ViewCompose(immutable.fromJS(params)))
-})
-
-router.add('/conversations/:id', params => {
-  app.emit(new Event.ViewConversation(params.id))
-})
-
-router.add('/conversations/:id', params => {
-  app.emit(new Event.ViewConversation(params.id))
-})
-
-router.add('/activities/:uri', params => {
-  app.emit(new Event.ViewActivity(decodeURIComponent(params.uri)))
-})
-
-router.add('/settings', () => {
-  app.emit(new Event.ViewSettings())
-})
-
-router.add('/add_account', params => {
-  app.emit(new Event.ViewAccountSetup(decodeURIComponent(params.email)))
-})
 
 class ContextWrapper extends React.Component<{},{},{}> {
   getChildContext(): Object {
