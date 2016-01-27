@@ -26,10 +26,12 @@ var initialState = q ?
   set(State.routeParams, immutable.Map({ q: decodeURIComponent(q) }), State.initialState) :
   State.initialState
 
-var app = new Sunshine.App(initialState, () => {
+var app = new Sunshine.App(initialState, Event.reducers)
+
+setTimout(() => {
   app.emit(new Event.LoadConfig())
   router.evaluateCurrent('/')
-})
+}, 0)
 
 Event.init(app, router)
 CE.init(app)

@@ -1,6 +1,14 @@
 /* @flow */
 
-import * as Sunshine                        from 'sunshine-framework'
+import {
+  EventResult,
+  Reducers,
+  asyncResult,
+  asyncUpdate,
+  emit,
+  reduce,
+  update,
+} from 'sunshine-framework'
 import { Map, fromJS }                      from 'immutable'
 import { compose, get, lookup, over, set }  from 'safety-lens'
 import { field }                            from 'safety-lens/immutable'
@@ -26,21 +34,6 @@ import type { Message }         from './models/message'
 import type { Config }          from './config'
 import type { Burger, Draft }   from './compose'
 import type { AppState }        from './state'
-
-class QueryConversations {
-  since: Date;
-  constructor(since: Date) { this.since = since }
-}
-
-class FindConversation {
-  messageId: string;
-  constructor(messageId: string) { this.messageId = messageId }
-}
-
-class Conversations {
-  convs: List<Conversation>;
-  constructor(convs: List<Conversation>) { this.convs = convs }
-}
 
 class Loading {}
 class DoneLoading {}
@@ -129,237 +122,239 @@ class ShowLink {
 
 class Reload {}
 
-function init(app: Sunshine.App<AppState>) {
-  app.on(QueryConversations, (state, { since }) => {
-    indicateLoading('conversations',
-      loadAccount().then(account => (
-        sync.getDatabase(account).then(db => (
-          queryConversations(since, db).then(
-            convs => app.emit(new Conversations(convs)),
-            err   => app.emit(new GenericError(err))
-          )
-        ))
-      ))
-      .catch(err => app.emit(new GenericError(err)))
-    )
-    return set(State.searchQuery, since.toISOString(), state)
-  })
+const { emit, reduce, update } = Sunshine
 
-  app.on(Reload, (state, _) => {
+const reducers: Reducers<AppState> = [
+
+  // TODO: handle errors for failed async results
+
+  reduce(Reload, (state, _) => {
     const query = get(State.searchQuery, state)
-    const since = parseQuery(query)
-    if (since) {
-      app.emit(new QueryConversations(since))
+    if (query) {
+      return emit(new QueryConversations(query))
     }
-    else {
-      app.emit(new GenericError(`Unable to parse search query: ${query}`))
-    }
-  })
+  }),
 
-  app.on(Conversations, (state, { convs }) => {
-    return set(State.conversations, convs, state)
-  })
+  reduce(Loading, (state, _) => {
+    return update(over(State.loading, n => n + 1, state))
+  }),
 
-  app.on(Loading, (state, _) => {
-    return over(State.loading, n => n + 1, state)
-  })
+  reduce(DoneLoading, (state, _) => {
+    return update(over(State.loading, n => Math.max(0, n - 1), state))
+  }),
 
-  app.on(DoneLoading, (state, _) => {
-    return over(State.loading, n => Math.max(0, n - 1), state)
-  })
+  reduce(ViewRoot, (state, { searchQuery }) => {
+    const view = new State.RootView(searchQuery)
 
-  app.on(ViewRoot, (state, { searchQuery }) => {
-    const since = parseQuery(searchQuery)
-    if (since) {
-      app.emit(new QueryConversations(since))
-    }
-    else {
-      app.emit(new GenericError(`Unable to parse search query: ${searchQuery}`))
-    }
-    return set(State.view, 'root',
-           set(State.routeParams, Map({ q: searchQuery }),
-           state))
-  })
+    return indicateLoading('conversations', {
+      state: State.pushView(view, state)
 
-  app.on(ViewCompose, (state, { params }) => {
-    return set(State.view, 'compose',
-           set(State.routeParams, params,
-           state))
-  })
-
-  app.on(ViewActivity, (state, { uri }) => {
-    const parsed = parseMidUri(uri)
-    const messageId = parsed ? parsed.messageId : null
-    const account = lookup(State.useraccount, state)
-    if (!parsed || !messageId) {
-      app.emit(new GenericError(`Unable to parse activity URI: ${uri}`))
-      return
-    }
-    const msgId = messageId  // Helps typechecker verify that msgId is not null
-
-    indicateLoading('activityByUri',
-      sync.getDatabase(account).then(db => (
-        findConversation(msgId, db).then(convs => {
-          if (convs.size > 0) {
-            app.emit(new Conversations(convs))
-            app.emit(new ViewConversation(convs.get(0).id, uri))
-          }
-          else {
-            return Promise.reject(`Could not find activity for given URI: ${uri}`)
-          }
-        })
+      asyncResult: loadAccount().then(account => (
+        queryConversations(searchQuery, account.email, tokenGenerator /* TODO */).then(
+          convs => asyncUpdate(state_ => {
+            const view_ = lookup(State.view, state_)
+            if (view_ == view) {
+              return State.replaceView(new State.RootView(searchQuery, convs), state_)
+            }
+            else {
+              return state_
+            }
+          })
+        )
       ))
-      .catch(err => app.emit(new GenericError(err)))
+    })
+  }),
+
+  reduce(ViewCompose, (state, { params }) => update(
+    set(State.routeParams, params,
+        State.pushView(new State.ComposeView, state))
+  ),
+
+  reduce(ViewActivity, (state, { uri }) => viewConversation(state, uri)),
+
+  reduce(ViewConversation, (state, { id, activityUri }) => {
+    const result = viewConversation(state, activityUri, id)
+    return over(
+      prop('state'),
+      state_ => set(State.view, 'conversation',
+                set(State.routeParams, fromJS({ conversationId: id, activityUri }),
+                state_)),
+      result
     )
-  })
+  }),
 
-  app.on(ViewConversation, (state, { id, activityUri }) => {
-    var state_ = set(State.view, 'conversation',
-                 set(State.routeParams, fromJS({ conversationId: id, activityUri }),
-                 state))
-    var conv = State.currentConversation(state_)
-    if (!conv) {
-      app.emit(new FindConversation(id))
-    }
-    return state_
-  })
+  reduce(ViewSettings, (state, _) => update(
+    State.pushView(new State.SettingsView, state)
+  )),
 
-  app.on(ViewSettings, (state, _) => {
-    return set(State.view, 'settings', state)
-  })
+  reduce(ViewAccountSetup, (state, _) => update(
+    State.pushView(new State.AddAccountView, state)
+  )),
 
-  app.on(ViewAccountSetup, (state, _) => {
-    return set(State.view, 'add_account', state)
-  })
+  reduce(GenericError, (state, { err }) => update(
+    set(State.genericError, err, state)
+  )),
 
-  app.on(GenericError, (state, { err }) => {
-    return set(State.genericError, err, state)
-  })
-
-  app.on(DismissError, (state, _) => {
+  reduce(DismissError, (state, _) => update(
     return set(State.genericError, null, state)
-  })
+  )),
 
-  app.on(GotConfig, (state, { config }) => {
-    var account = config.accounts.first()
-    if (account) {
-      app.emit(new AuthEvent.SetAccount(account))
+  reduce(GotConfig, (state, { config }) => {
+    const account = config.accounts.first()
+    return {
+      state: set(State.config, config, state)
+      events: account ? [new AuthEvent.SetAccount(account)] : []
     }
-    return set(State.config, config, state)
-  })
+  }),
 
-  app.on(LoadConfig, (_, __) => {
-    indicateLoading('config',
-      loadConfig().then(
-        config => app.emit(new GotConfig(config)),
-        err    => app.emit(new GenericError(err))
+  reduce(LoadConfig, (_, __) => indicateLoading('config', asyncResult(
+    loadConfig().then(
+      config => emit(new GotConfig(config)),
+    )
+  ))),
+
+  reduce(SaveConfig, (state, { config }) => indicateLoading('config', asyncResult(
+    saveConfig(config).then(
+      _ => emit(
+        new GotConfig(config),
+        new Notify('Saved settings'),
       )
     )
-  })
+  ))),
 
-  app.on(SaveConfig, (state, { config }) => {
-    indicateLoading('config',
-      saveConfig(config).then(
-        _ => {
-          app.emit(new GotConfig(config))
-          app.emit(new Notify('Saved settings'))
-        },
-        err => app.emit(new GenericError(`Error saving configuration: ${err}`))
-      )
-    )
-  })
+  reduce(Notify, (state, { message }) => update(
+    set(State.notification, message, state)
+  )),
 
-  app.on(Notify, (state, { message }) => {
-    return set(State.notification, message, state)
-  })
-
-  app.on(DismissNotify, (state, _) => {
+  reduce(DismissNotify, (state, _) => update(
     return set(State.notification, null, state)
-  })
+  )),
 
-  app.on(Send, (state, { draft }) => {
-    send(draft, state)
-  })
+  reduce(Send, (state, { draft }) => send(draft, state)),
 
-  app.on(SendReply, (state, event) => {
-    sendReply(event, state)
-  })
+  reduce(SendReply, (state, event) => sendReply(event, state)),
 
-  app.on(Like, (state, { activity, conversation }) => {
-    var like = Create.like({
+  reduce(Like, (state, { activity, conversation }) => {
+    const like = Create.like({
       objectType: 'activity',
       uri: activityId(activity),
     })
-    var message = Act.getMessage(activity)
+    const message = Act.getMessage(activity)
     if (message) {
-      sendReply(new SendReply({ reply: like, message, conversation }), state)
+      return sendReply(new SendReply({ reply: like, message, conversation }), state)
     }
     else {
-      app.emit(new GenericError('Cannot +1 synthetic activity.'))
+      return emit(new GenericError('Cannot +1 synthetic activity.'))
     }
-  })
+  }),
 
-  app.on(ShowLink, (state, { activity }) => (
+  reduce(ShowLink, (state, { activity }) => update(
     set(State.showLink, activity, state)
+  )),
+
+]
+
+function indicateLoading(label: string, result: EventResult<AppState>): EventResult<AppState> {
+  return Object.assign({}, result, {
+    events: (result.events || []).concat(new Loading(label)),
+    asyncResult: (result.asyncResult || Promise.resolve()).then(
+      eventResult => Object.assign({}, eventResult, {
+        events: (eventResult.events || []).concat(new DoneLoading(label))
+      }),
+      err => {
+        events: [new DoneLoading(label)],
+        asyncResult: Promise.reject(err)
+      }
+    )
+  })
+}
+
+function viewConversation(state: AppState, uri: string = null, id: string = null): EventResult<AppState> {
+  if (!uri && !id) {
+    throw "uri or message id is required"
+  }
+
+  id = id || messageIdFromUri(uri)
+  if (!id) {
+    return emit(new GenericError(`Unable to parse activity URI: ${uri}`))
+  }
+
+  const query = `rfc822msgid:${id}`
+  const view = new State.ConversationView(id, uri)
+
+  return indicateLoading('conversation', {
+    state: State.pushView(view, state)
+
+    asyncResult: loadAccount().then(account => (
+      queryConversations(query, account.email, tokenGenerator /* TODO */).then(
+        convs => asyncUpdate(state_ => {
+          const conv  = convs.first()
+          const view_ = lookup(State.view, state_)
+          if (!conv) {
+            return emit(new GenericError(`Could not find activity for given URI: ${uri}`))
+          }
+          else if (view_ == view) {
+            return State.replaceView(new State.ConversationView(id, uri, conv), state_)
+          }
+          else {
+            return state_
+          }
+        })
+      )
+    ))
+  })
+}
+
+function messageIdFromUri(uri: string): ?string {
+  const parsed = parseMidUri(uri)
+  const messageId = parsed ? parsed.messageId : null
+  if (parsed && messageId) {
+    return messageId
+  }
+}
+
+function sendReply({ reply, message, conversation, addPeople }: SendReply, state: AppState): EventResult<AppState> {
+  const username  = lookup(State.username, state)
+  const useremail = lookup(State.useremail, state)
+  if (!username || !useremail) {
+    return emit(new GenericError("Please set your name and email address in 'Settings'"))
+  }
+
+  const { to, from, cc } = participants(conversation)
+  const subject          = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`
+  const author           = { name: username, address: useremail }
+
+  const recipients    = to.concat(from).concat(addPeople)
+  const toWithoutSelf = withoutSelf(author, recipients)
+  const recipients_   = toWithoutSelf.length > 0 ? toWithoutSelf : recipients
+
+  const draft: Draft = {
+    activities: [reply],
+    from:       author,
+    to:         recipients_,
+    cc:         withoutSelf(author, without(recipients, cc)),
+    subject,
+    inReplyTo:  message.messageId,
+    references: (message.references || []).concat(message.messageId),
+  }
+
+  if (reply[1].verb === 'like') {
+    const fallback = lookup(State.likeMessage, state) || '+1'
+    draft.fallback = fallback
+  }
+
+  return send(draft, state)
+}
+
+function send(draft: Draft, state: AppState): EventResult<AppState> {
+  const msg     = assemble(draft)
+  const sentDir = lookup(compose(State.config_, field('sentDir')), state)
+  const msg_    = new (stream:any).PassThrough()
+  msg.pipe(msg_)  // Grabs a duplicate of the msg stream
+  return indicateLoading('send', asyncResult(
+    // TODO: record copy of message in database
+    msmtp(msg).then(_ => emit(new Notify('Message sent')))
   ))
-
-  function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
-    app.emit(new Loading())
-    p.then(
-      success => app.emit(new DoneLoading()),
-      err => app.emit(new DoneLoading())
-    )
-    return p
-  }
-
-  function sendReply({ reply, message, conversation, addPeople }: SendReply, state: AppState) {
-    var username  = lookup(State.username, state)
-    var useremail = lookup(State.useremail, state)
-    if (!username || !useremail) {
-      app.emit(new GenericError("Please set your name and email address in 'Settings'"))
-      return
-    }
-
-    var { to, from, cc } = participants(conversation)
-    var subject          = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`
-    var author           = { name: username, address: useremail }
-
-    var recipients    = to.concat(from).concat(addPeople)
-    var toWithoutSelf = withoutSelf(author, recipients)
-    var recipients_   = toWithoutSelf.length > 0 ? toWithoutSelf : recipients
-
-    var draft: Draft = {
-      activities: [reply],
-      from:       author,
-      to:         recipients_,
-      cc:         withoutSelf(author, without(recipients, cc)),
-      subject,
-      inReplyTo:  message.messageId,
-      references: (message.references || []).concat(message.messageId),
-    }
-
-    if (reply[1].verb === 'like') {
-      var fallback = lookup(State.likeMessage, state) || '+1'
-      draft.fallback = fallback
-    }
-
-    send(draft, state)
-  }
-
-  function send(draft: Draft, state: AppState) {
-    var msg     = assemble(draft)
-    var sentDir = lookup(compose(State.config_, field('sentDir')), state)
-    var msg_    = new (stream:any).PassThrough()
-    msg.pipe(msg_)  // Grabs a duplicate of the msg stream
-    indicateLoading('send',
-      msmtp(msg)
-      // TODO: record copy of message in database
-      .then(_ => app.emit(new Notify('Message sent')))
-      .catch(err => {
-        app.emit(new GenericError(err))
-      })
-    )
-  }
 }
 
 function withoutSelf(self: Address, addrs: Address[]): Address[] {
@@ -370,19 +365,9 @@ function without(exclude: Address[], addrs: Address[]): Address[] {
   return addrs.filter(a => !exclude.some(e => e.address === a.address))
 }
 
-function parseQuery(q: ?string): ?Date {
-  if (!q) { return null }
-  const d = new Date(q)
-  if (isNaN(d.getTime())) {
-    return null
-  }
-  else {
-    return d
-  }
-}
 
 export {
-  init,
+  reducers,
   DismissError,
   GenericError,
   Like,
@@ -392,8 +377,6 @@ export {
   DoneLoading,
   Notify,
   DismissNotify,
-  QueryConversations,
-  FindConversation,
   Send,
   SendReply,
   ShowLink,

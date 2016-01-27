@@ -6,7 +6,7 @@ declare class Immutable$Record<T:Object> {
   size: number;
 }
 
-declare module immutable {
+declare module "immutable" {
 
   declare function Record<T:Object, R: T & Immutable$Record<T>>(spec: T): Class<R>;
 

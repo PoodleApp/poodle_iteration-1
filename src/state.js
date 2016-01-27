@@ -1,42 +1,63 @@
 /* @flow */
 
-import { List, Map, Record }          from 'immutable'
-import { compose, filtering, getter } from 'safety-lens'
-import { field, index }               from 'safety-lens/immutable'
-import * as CS                        from './composer/state'
-import * as AS                        from './add_account/state'
-import * as AuthState                 from './auth/state'
-import { published }                  from './activity'
-import { parseMidUri }                from './models/message'
-import * as Act                       from './derivedActivity'
+import { List, Map, Record }                  from 'immutable'
+import { compose, filtering, getter, lookup } from 'safety-lens'
+import { field, index }                       from 'safety-lens/immutable'
+import * as CS                                from './composer/state'
+import * as AS                                from './add_account/state'
+import * as AuthState                         from './auth/state'
+import { published }                          from './activity'
+import { parseMidUri }                        from './models/message'
+import * as Act                               from './derivedActivity'
 
-import type { Getter, Lens_, Traversal_ } from 'safety-lens'
-import type { URI }                       from './activity'
-import type { DerivedActivity }           from './derivedActivity'
-import type { Conversation }              from './conversation'
-import type { Config, Account }           from './config'
+import type { Fold, Getter, Lens_, Traversal_ } from 'safety-lens'
+import type { URI }                             from './activity'
+import type { DerivedActivity }                 from './derivedActivity'
+import type { Conversation }                    from './conversation'
+import type { Config, Account }                 from './config'
 
 export type AppState = Record<{
-  conversations: List<Conversation>,
-  loading:       number,
-  view:          View,
-  routeParams:   Map<string,string>,
-  genericError:  ?Object,
-  config?:       Config,
-  notification?: string,
-  composerState: CS.ComposerState,
-  addAccountState: AS.AddAccountState,
-  authState:     AuthState.AuthState,
-  showLink:      ?DerivedActivity,
-  searchQuery:   ?string,
+  loading:          number,
+  view:             List<View>,
+  routeParams:      Map<string,string>,
+  genericError:     ?Object,
+  config?:          Config,
+  notification?:    string,
+  composerState:    CS.ComposerState,
+  addAccountState   : AS.AddAccountState,
+  authState:        AuthState.AuthState,
+  showLink:         ?DerivedActivity,
 }>
 
-export type View = 'root' | 'compose' | 'conversation' | 'settings' | 'add_account'
+class RootView {
+  searchQuery: ?string,
+  conversations: List<Conversation>,
+  constructor(searchQuery: ?string = null, conversations: List<Conversation> = List()) {
+    this.conversations = conversations
+    this.searchQuery = searchQuery
+  }
+}
 
-var AppStateRecord = Record({
-  conversations: List(),
+class ConversationView {
+  id: ?string,
+  uri: ?string,
+  conversation: ?Conversation,
+  constructor(id: string, uri: string, conversations: Conversation = null) {
+    this.id = id
+    this.uri = uri
+    this.conversation = conversation
+  }
+}
+
+class ComposeView {}
+class SettingsView {}
+class AddAccountView {}
+
+export type View = RootView | ComposeView | ConversationView | SettingsView | AddAccountView
+
+const AppStateRecord = Record({
   loading:       0,
-  view:          'root',
+  view:          List.of(new RootView),
   routeParams:   Map(),
   genericError:  null,
   config:        null,
@@ -45,68 +66,93 @@ var AppStateRecord = Record({
   addAccountState: AS.initialState,
   authState:     AuthState.initialState,
   showLink:      null,
-  searchQuery:   null,
 })
 
-var initialState: AppState = new AppStateRecord()
+const initialState: AppState = new AppStateRecord()
 
-var composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
-var addAccountState: Lens_<AppState,AS.AddAccountState> = field('addAccountState')
+const composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
+const addAccountState: Lens_<AppState,AS.AddAccountState> = field('addAccountState')
 
-var conversations: Lens_<AppState,List<Conversation>> = field('conversations')
-var loading: Lens_<AppState,number> = field('loading')
-var isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
-var view: Lens_<AppState,View> = field('view')
-var routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
-var genericError: Lens_<AppState,?Object> = field('genericError')
-var notification = field('notification')
-var showLink = field('showLink')
-var searchQuery = field('searchQuery')
+const conversations: Fold<any,AppState,List<Conversation>> = compose(view, index('conversations'))
+const conversation: Fold<any,AppState,Conversation> = compose(view, index('conversation'))
+const loading: Lens_<AppState,number> = field('loading')
+const isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
+const view: Traversal_<AppState,View> = compose(field('view'), index(0))
+const views: Lens<AppState,List<View>> = field('view')
+const routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
+const genericError: Lens_<AppState,?Object> = field('genericError')
+const notification = field('notification')
+const showLink = field('showLink')
+const searchQuery: Fold<any,AppState,string> = compose(view, index('searchQuery'))
 
-var config: Lens_<AppState,?Config> = field('config')
-var config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
+const config: Lens_<AppState,?Config> = field('config')
+const config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
 
-var username: Traversal_<AppState,string> = compose(config_, field('name'))
-var useremail: Traversal_<AppState,string> = compose(config_, field('email'))
+const username: Traversal_<AppState,string> = compose(config_, field('name'))
+const useremail: Traversal_<AppState,string> = compose(config_, field('email'))
 
-var useraccount: Traversal_<AppState,Account> =
+const useraccount: Traversal_<AppState,Account> =
   compose(compose(config_, field('accounts')), index(0))
-var username: Traversal_<AppState,string> =
+const username: Traversal_<AppState,string> =
   compose(useraccount, field('displayName'))
-var useremail: Traversal_<AppState,string> =
+const useremail: Traversal_<AppState,string> =
   compose(useraccount, field('email'))
 
-var likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
-var notmuchCmd: Traversal_<AppState,string> = compose(config_, field('notmuchCmd'))
+const likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
+const notmuchCmd: Traversal_<AppState,string> = compose(config_, field('notmuchCmd'))
 
 function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))
 }
 
-function conversation(id: string, state: AppState): ?Conversation {
-  return state.conversations.find(c => c.id === id)
+function conversationById(id: string, state: AppState): ?Conversation {
+  const convs = lookup(conversations, state)
+  return convs && convs.find(c => c.id === id)
 }
 
 function currentConversation(state: AppState): ?Conversation {
-  var id = state.routeParams.get('conversationId')
-  if (id) { return conversation(id, state) }
+  const id = state.routeParams.get('conversationId')
+  const conv = lookup(conversation, state)
+  if (conv && conv.id === id) {
+    return conv
+  }
 }
 
 function currentActivity(state: AppState): ?Conversation {
-  var conv = currentConversation(state)
-  var uri = state.routeParams.get('activityUri')
+  const conv = currentConversation(state)
+  const uri = state.routeParams.get('activityUri')
   if (conv && uri) {
     return conv.activities.find(a => Act.activityId(a) === uri)
   }
 }
 
+function pushView(view: View, state: AppState): AppState {
+  return over(views, vs => vs.unshift(view), state)
+}
+
+function popView(state: AppState): [View, AppState] {
+  const view = lookup(view, state)
+  const state_ = over(views, vs => vs.count() > 1 ? vs.shift() : vs, state)
+  return [view, state_]
+}
+
+function replaceView(v: View, state: AppState): AppState {
+  return set(view, v, state)
+}
+
 export {
+  RootView,
+  ConversationView,
+  ComposeView,
+  SettingsView,
+  AddAccountView,
   addAccountState,
   composerState,
   config,
   config_,
   conversation,
   conversations,
+  conversationById,
   currentConversation,
   genericError,
   initialState,
@@ -116,6 +162,9 @@ export {
   // lookupUri,
   notification,
   notmuchCmd,
+  popView,
+  pushView,
+  replaceView,
   routeParam,
   routeParams,
   searchQuery,
@@ -124,4 +173,5 @@ export {
   username,
   useremail,
   view,
+  views,
 }
