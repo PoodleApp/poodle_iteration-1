@@ -20,4 +20,3 @@ function uniqBy<T,U>(fn: (_: T) => U, xs: IndexedSeq<T> | T[]): IndexedSeq<T> {
   ), Map())
   return map.valueSeq()
 }
-

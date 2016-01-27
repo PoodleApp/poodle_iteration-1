@@ -21,14 +21,14 @@ function buildThread(messages: List<Message>): Thread {
 }
 
 function singleton(message: Message): Thread {
-  return List.of([message, []])
+  return List.of([message, List()])
 }
 
 function insertMessage(thread: Thread, message: Message): Thread {
   const msgs = uniqBy(
     m => m.messageId,
     List(thread).flatMap(getMessages).push(message)
-  )
+  ).toList()
   let [toplevel, replies] = partition(msg => (
     !msgs.some(m => ancestorOf(msg, m))
   ), msgs)

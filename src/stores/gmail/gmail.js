@@ -20,7 +20,7 @@ function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread>
   .flatMap(messages => {
     const msgStreams = messages.map(parseMessage)
     const msgListStream = Kefir.merge(msgStreams.toArray()).scan(
-      (msgs, msg) => msgs.add(msg), List()
+      (msgs, msg) => msgs.push(msg), List()
     )
     .last()
     return msgListStream.map(buildThread)

@@ -72,7 +72,7 @@ function fetchConversations(query: string, imap: Imap): Stream<List<Message>> {
   return threadIds.flatMap(ids => {
     const threadStreams = ids.toArray().map(
       id => _fetchMessages([['X-GM-THRID', id]], imap).scan(
-        (thread, message) => thread.add(message), List()
+        (thread, message) => thread.push(message), List()
       )
       .last()
     )
