@@ -1,8 +1,6 @@
 /* @flow */
 
 import {
-  EventResult,
-  Reducers,
   asyncResult,
   asyncUpdate,
   emit,
@@ -25,15 +23,16 @@ import { msmtp }                            from './msmtp'
 import * as AuthEvent                       from './auth/event'
 import * as sync                            from './sync'
 
-import type { List }            from 'immutable'
-import type { URI }             from './activity'
-import type { DerivedActivity } from './derivedActivity'
-import type { Conversation }    from './conversation'
-import type { Address }         from './models/address'
-import type { Message }         from './models/message'
-import type { Config }          from './config'
-import type { Burger, Draft }   from './compose'
-import type { AppState }        from './state'
+import type { List }                  from 'immutable'
+import type { Reducers, EventResult } from 'sunshine-framework'
+import type { URI }                   from './activity'
+import type { DerivedActivity }       from './derivedActivity'
+import type { Conversation }          from './conversation'
+import type { Address }               from './models/address'
+import type { Message }               from './models/message'
+import type { Config }                from './config'
+import type { Burger, Draft }         from './compose'
+import type { AppState }              from './state'
 
 class Loading {}
 class DoneLoading {}

@@ -1,10 +1,10 @@
 /* @flow */
 
-import * as Sunshine          from 'sunshine-framework'
-import { compose, over, set } from 'safety-lens'
-import * as State             from '../state'
-import * as CS                from './state'
+import { reduce, update } from 'sunshine-framework'
+import { set }            from 'safety-lens'
+import * as CS            from './state'
 
+import type { Reducers }        from 'sunshine-framework'
 import type { DerivedActivity } from '../derivedActivity'
 
 class Edit {
@@ -18,25 +18,23 @@ class ShowAddPeople {
 }
 class Reset {}
 
-function init(app: Sunshine.App<State.AppState>) {
-  app.on(Edit, (state, { activity }) => (
-    set(compose(State.composerState, CS.editing), activity, state)
-  ))
+const reducers: Reducers<CS.ComposerState> = [
 
-  app.on(ShowAddPeople, (state, { toggle }) => (
-    set(compose(State.composerState, CS.setAddPeople), toggle ? [] : null, state)
-  ))
+  reduce(Edit, (state, { activity }) => update(
+    set(CS.editing, activity, state)
+  )),
 
-  app.on(Reset, (state, _) => (
-    set(State.composerState, CS.initialState,
-    set(compose(State.composerState, CS.editing), null,
-    state))
-  ))
-}
+  reduce(ShowAddPeople, (state, { toggle }) => update(
+    set(CS.setAddPeople, toggle ? [] : null, state)
+  )),
+
+  reduce(Reset, (state, _) => update(CS.initialState)),
+
+]
 
 export {
-  init,
   Edit,
   Reset,
   ShowAddPeople,
+  reducers,
 }

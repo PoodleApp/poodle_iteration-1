@@ -9,8 +9,8 @@ import ThemeManager    from 'material-ui/lib/styles/theme-manager'
 import { PoodleTheme } from '../themes'
 import * as State      from '../state'
 import * as Event      from '../event'
-import * as CE         from '../composer/event'
-import * as AE         from '../add_account/event'
+import * as Composer   from '../composer/app'
+import * as AddAccount from '../add_account/app'
 import { App }         from '../components/Views'
 import {}              from './polyfills'
 
@@ -18,17 +18,7 @@ export {
   run,
 }
 
-var router = makeRouter()
-
-var q = (window.location.href.match(/[?&]q=(.*?)&?$/) || [])[1]
-
-var initialState = q ?
-  set(State.routeParams, immutable.Map({ q: decodeURIComponent(q) }), State.initialState) :
-  State.initialState
-
-// TOOD: wire these as includes
-CE.init(app)
-AE.init(app)
+const router = makeRouter()
 
 const routingEvents = Kefir.stream(emitter => {
   router.add('/', params => {
@@ -60,8 +50,16 @@ const routingEvents = Kefir.stream(emitter => {
   })
 })
 
-const app = new Sunshine.App(initialState, Event.reducers)
-const session = app.run(routingEvents)  // TODO: pass incoming event stream to app
+const q = (window.location.href.match(/[?&]q=(.*?)&?$/) || [])[1]
+
+const initialState = q ?
+  set(State.routeParams, immutable.Map({ q: decodeURIComponent(q) }), State.initialState) :
+  State.initialState
+
+const app =
+  new Sunshine.App(initialState, Event.reducers)
+  .include(Composer.app, AddAccount.app)
+  .input(routingEvents)
 
 setTimout(() => {
   app.emit(new Event.LoadConfig())
@@ -93,27 +91,3 @@ function run(domElement: Element) {
     domElement
   )
 }
-
-
-// import ipc from 'electron-safe-ipc/guest'
-
-// ipc.on('message', message => {
-//   console.log('message', message)
-// })
-
-// ipc.send('sync', 'Changes in Poodle')
-
-import PouchDB     from 'pouchdb'
-import * as config from '../config'
-import { sync }    from '../sync'
-
-config.loadConfig().then(config => {
-  var account = config.accounts.get(0)
-  if (account) {
-    sync('Testing Poodle', account).onValue(resp => {
-      // console.log('message', typeof resp)
-      console.log('message', resp)
-    })
-    .onError(err => console.log(err))
-  }
-})

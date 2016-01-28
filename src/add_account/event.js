@@ -1,10 +1,11 @@
 /* @flow */
 
-import * as Sunshine from 'sunshine-framework'
-import ipc           from 'electron-safe-ipc/guest'
-import * as State    from '../state'
-import * as Ev       from '../event'
-import * as AS       from './state'
+import { emit, reduce } from 'sunshine-framework'
+import ipc              from 'electron-safe-ipc/guest'
+import * as Ev          from '../event'
+import * as AS          from './state'
+
+import type { Reducers } from 'sunshine-framework'
 
 class NewAccount {
   email: ?string;
@@ -13,29 +14,20 @@ class NewAccount {
   }
 }
 
-function init(app: Sunshine.App<State.AppState>) {
-  app.on(NewAccount, (state, { email }) => {
-    indicateLoading(
-      'Authorizing with Google',
-      ipc.request('google-account', email)
-      .then(
-        () => app.emit(new Ev.LoadConfig()),
-        err => app.enit(new Ev.GenericError(err))
-      )
-    )
-  })
+// TODO: Rearrange things so that we do not have to import from '../event'
 
-  function indicateLoading<T>(label: string, p: Promise<T>): Promise<T> {
-    app.emit(new Ev.Loading())
-    p.then(
-      success => app.emit(new Ev.DoneLoading()),
-      err => app.emit(new Ev.DoneLoading())
+const reducers: Reducers<AS.AddAccountState> = [
+
+  reduce(NewAccount, (state, { email }) => Ev.indicateLoading(
+    'Authorizing with Google',
+    ipc.request('google-account', email).then(
+      () => emit(new Ev.LoadConfig()),
     )
-    return p
-  }
-}
+  )),
+
+]
 
 export {
   NewAccount,
-  init,
+  reducers,
 }
