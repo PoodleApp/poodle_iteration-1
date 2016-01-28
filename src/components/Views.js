@@ -43,7 +43,7 @@ var styles = {
 }
 
 type AppComponentState = {
-  view:         State.View,
+  view:         ?State.View,
   loading:      boolean,
   conversation: ?Conversation,
   editing:      ?DerivedActivity,
@@ -57,7 +57,7 @@ type AppComponentState = {
 export class App extends Sunshine.Component<{},{},AppComponentState> {
   getState(state: AppState): AppComponentState {
     return {
-      view:         get(State.view, state),
+      view:         lookup(State.view, state),
       loading:      get(State.isLoading, state),
       conversation: State.currentConversation(state),
       editing:      get(compose(State.composerState, CS.editing), state),

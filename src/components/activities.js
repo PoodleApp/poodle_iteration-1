@@ -77,8 +77,9 @@ var styles = {
   },
 }
 
-var contextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+const contextTypes = {
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.Session).isRequired,
+  _sunshineLens: React.PropTypes.func,
   muiTheme: React.PropTypes.object.isRequired,
 }
 
@@ -195,7 +196,7 @@ class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
     var from    = actor(activity)
     var fromStr = (from && from.displayName) || '[unknown sender]'
     var dateStr = published(activity).fromNow()
-    var { palette } = this.context.muiTheme
+    var { palette } = (this.context: any).muiTheme
     return (
       <ActivityCard nestLevel={this.props.nestLevel} style={{backgroundColor: palette.borderColor}}>
         <div style={styles.inlineNotice}>
@@ -214,7 +215,7 @@ class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
     var { activity } = this.props
     var from    = actor(activity)
     var fromStr = (from && from.displayName) || '[unknown sender]'
-    var { palette } = this.context.muiTheme
+    var { palette } = (this.context: any).muiTheme
     return (
       <ActivityCard nestLevel={this.props.nestLevel} style={{backgroundColor: palette.borderColor}}>
         <CardHeader
@@ -253,7 +254,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         />
     ))
 
-    var { palette } = this.context.muiTheme
+    var { palette } = (this.context: any).muiTheme
 
     return (
       <ActivityCard nestLevel={nestLevel} style={{backgroundColor: palette.primary3Color}}>

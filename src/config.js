@@ -5,17 +5,17 @@ import * as path        from 'path'
 import mkdirp           from 'mkdirp'
 import { List, Record } from 'immutable'
 
-export type Config = Record & {
+export type Config = Record<{
   accounts: List<Account>,
   likeMessage: string,
-}
+}>
 
-export type Account = Record & {
+export type Account = Record<{
   displayName: string,
   email: string,
   databaseName: string,
   databaseOptions: Object,
-}
+}>
 
 var ConfigRecord = Record({
   accounts: List(),
@@ -38,7 +38,7 @@ export {
 }
 
 var home = process.env.HOME
-var configDir  = path.join(home, '.config', 'poodle')
+var configDir  = path.join(home || '', '.config', 'poodle')
 var configPath = path.join(configDir, 'config.json')
 
 function loadConfig(): Promise<Config> {

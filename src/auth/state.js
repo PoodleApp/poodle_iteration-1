@@ -5,9 +5,9 @@ import xoauth2    from 'xoauth2'
 import { field }  from 'safety-lens/immutable'
 import { lift1 }  from '../util/promises'
 
-export type AuthState = Record & {
+export type AuthState = Record<{
   tokenGen: ?Object,
-}
+}>
 
 var AuthStateRecord = Record({
   tokenGen: null,

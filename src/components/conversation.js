@@ -2,6 +2,7 @@
 
 import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
+import { List }         from 'immutable'
 import { get, lookup }  from 'safety-lens'
 import { mailtoUri }    from '../activity'
 import * as Act         from '../derivedActivity'
@@ -29,7 +30,6 @@ import { Card
        , ToolbarTitle
        } from 'material-ui'
 
-import type { List }            from 'immutable'
 import type { Address }         from '../models/address'
 import type { Activity, URI }   from '../activity'
 import type { Conversation }    from '../conversation'
@@ -48,11 +48,11 @@ var { Colors, Spacing } = Styles
 export class Conversations extends Sunshine.Component<{},{},ConversationsState> {
   getState(state: State.AppState): ConversationsState {
     return {
-      conversations: get(State.conversations, state),
-      loading: get(State.isLoading, state),
-      searchQuery:  lookup(State.routeParam('q'), state),
-      username:     lookup(State.username, state),
-      useremail:    lookup(State.useremail, state),
+      conversations: lookup(State.conversations, state) || List(),
+      loading:       get(State.isLoading, state),
+      searchQuery:   lookup(State.routeParam('q'), state),
+      username:      lookup(State.username, state),
+      useremail:     lookup(State.useremail, state),
     }
   }
 
@@ -99,7 +99,7 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
 export class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversation },{}> {
   getStyles(): Object {
     const participantListWidth = Spacing.desktopKeylineIncrement * 4 + 'px'
-    const { palette } = this.context.muiTheme.rawTheme
+    const { palette } = (this.context: any).muiTheme.rawTheme
     const styles = {
       body: {
         padding: '16px',

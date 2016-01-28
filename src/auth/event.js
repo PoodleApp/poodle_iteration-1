@@ -1,15 +1,14 @@
 /* @flow */
 
-import * as Sunshine          from 'sunshine-framework'
-import { compose, over, set } from 'safety-lens'
-import { field }              from 'safety-lens/immutable'
-import keytar                 from 'keytar'
-import { tokenGenerator }     from './tokenGenerator'
-import * as State             from '../state'
-import * as AuthState         from './state'
-import * as Config            from '../config'
+import { emit, reduce, update } from 'sunshine-framework'
+import { set }                  from 'safety-lens'
+import keytar                   from 'keytar'
+import { tokenGenerator }       from '../stores/gmail/tokenGenerator'
+import * as AuthState           from './state'
+import * as Config              from '../config'
 
-import type { OauthCredentials } from './google'
+import type { Reducers }         from 'sunshine-framework'
+import type { OauthCredentials } from '../stores/gmail/google-oauth'
 
 class AccessToken {
   email: string;
@@ -25,24 +24,27 @@ class SetAccount {
   constructor(account: Config.Account) { this.account = account }
 }
 
-var authLens = field('authState')
+const reducers: Reducers<AuthState.AuthState> = [
 
-function init(app: Sunshine.App<State.AppState>) {
-  app.on(AccessToken, (state, { email, creds }) => {
-    var tokenGen = tokenGenerator(email, creds)
-    return set(compose(authLens, AuthState.tokenGen), tokenGen, state)
-  })
+  reduce(AccessToken, (state, { email, creds }) => {
+    const tokenGen = tokenGenerator(email, creds)
+    return update(
+      set(AuthState.tokenGen, tokenGen, state)
+    )
+  }),
 
-  app.on(SetAccount, (state, { account }) => {
-    var creds = keytar.getPassword('Poodle', account.email)
+  reduce(SetAccount, (state, { account }) => {
+    let creds = keytar.getPassword('Poodle', account.email)
     creds = creds && JSON.parse(creds)
     if (creds && creds.refresh_token) {
-      app.emit(new AccessToken(account.email, creds))
+      return emit(new AccessToken(account.email, creds))
     }
-  })
-}
+  }),
+
+]
 
 export {
   AccessToken,
   SetAccount,
+  reducers,
 }

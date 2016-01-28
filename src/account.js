@@ -3,10 +3,10 @@
 import { List } from 'immutable'
 import keytar from 'keytar'
 import google from 'googleapis'
-import { getAccessToken, oauthClient } from './auth/google'
+import { getAccessToken, oauthClient } from './stores/gmail/google-oauth'
 import * as Config from './config'
 
-import type { OauthCredentials } from './auth/google'
+import type { OauthCredentials } from './stores/gmail/google-oauth'
 
 export {
   setupGoogle,

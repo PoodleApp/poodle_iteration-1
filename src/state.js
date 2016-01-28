@@ -30,22 +30,22 @@ export type AppState = Record<{
 }>
 
 class RootView {
-  searchQuery: ?string,
-  conversations: List<Conversation>,
-  constructor(searchQuery: ?string = null, conversations: List<Conversation> = List()) {
-    this.conversations = conversations
-    this.searchQuery = searchQuery
+  searchQuery: ?string;
+  conversations: List<Conversation>;
+  constructor(q: ?string = null, convs: List<Conversation> = List()) {
+    this.conversations = convs
+    this.searchQuery = q
   }
 }
 
 class ConversationView {
-  id: ?string,
-  uri: ?string,
-  conversation: ?Conversation,
-  constructor(id: string, uri: string, conversations: Conversation = null) {
+  id: ?string;
+  uri: ?string;
+  conversation: ?Conversation;
+  constructor(id: string, uri: string, conv: ?Conversation = null) {
     this.id = id
     this.uri = uri
-    this.conversation = conversation
+    this.conversation = conv
   }
 }
 
@@ -70,15 +70,16 @@ const AppStateRecord = Record({
 
 const initialState: AppState = new AppStateRecord()
 
-const composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
 const addAccountState: Lens_<AppState,AS.AddAccountState> = field('addAccountState')
+const authState: Lens_<AppState,AuthState.AuthState> = field('authState')
+const composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
 
+const view: Traversal_<AppState,View> = compose(field('view'), index(0))
+const views: Lens_<AppState,List<View>> = field('view')
 const conversations: Fold<any,AppState,List<Conversation>> = compose(view, index('conversations'))
 const conversation: Fold<any,AppState,Conversation> = compose(view, index('conversation'))
 const loading: Lens_<AppState,number> = field('loading')
 const isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
-const view: Traversal_<AppState,View> = compose(field('view'), index(0))
-const views: Lens<AppState,List<View>> = field('view')
 const routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
 const genericError: Lens_<AppState,?Object> = field('genericError')
 const notification = field('notification')
@@ -147,6 +148,7 @@ export {
   SettingsView,
   AddAccountView,
   addAccountState,
+  authState,
   composerState,
   config,
   config_,

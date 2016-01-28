@@ -119,34 +119,23 @@ class ShowLink {
   constructor(activity: ?DerivedActivity) { this.activity = activity }
 }
 
-class Reload {}
-
-const { emit, reduce, update } = Sunshine
-
 const reducers: Reducers<AppState> = [
 
   // TODO: handle errors for failed async results
 
-  reduce(Reload, (state, _) => {
-    const query = get(State.searchQuery, state)
-    if (query) {
-      return emit(new QueryConversations(query))
-    }
-  }),
+  reduce(Loading, (state, _) => update(
+    over(State.loading, n => n + 1, state)
+  )),
 
-  reduce(Loading, (state, _) => {
-    return update(over(State.loading, n => n + 1, state))
-  }),
-
-  reduce(DoneLoading, (state, _) => {
-    return update(over(State.loading, n => Math.max(0, n - 1), state))
-  }),
+  reduce(DoneLoading, (state, _) => update(
+    over(State.loading, n => Math.max(0, n - 1), state)
+  )),
 
   reduce(ViewRoot, (state, { searchQuery }) => {
     const view = new State.RootView(searchQuery)
 
     return indicateLoading('conversations', {
-      state: State.pushView(view, state)
+      state: State.pushView(view, state),
 
       asyncResult: loadAccount().then(account => (
         queryConversations(searchQuery, account.email, tokenGenerator /* TODO */).then(
@@ -160,14 +149,14 @@ const reducers: Reducers<AppState> = [
             }
           })
         )
-      ))
+      )),
     })
   }),
 
   reduce(ViewCompose, (state, { params }) => update(
     set(State.routeParams, params,
         State.pushView(new State.ComposeView, state))
-  ),
+  )),
 
   reduce(ViewActivity, (state, { uri }) => viewConversation(state, uri)),
 
@@ -195,14 +184,14 @@ const reducers: Reducers<AppState> = [
   )),
 
   reduce(DismissError, (state, _) => update(
-    return set(State.genericError, null, state)
+    set(State.genericError, null, state)
   )),
 
   reduce(GotConfig, (state, { config }) => {
     const account = config.accounts.first()
     return {
-      state: set(State.config, config, state)
-      events: account ? [new AuthEvent.SetAccount(account)] : []
+      state: set(State.config, config, state),
+      events: account ? [new AuthEvent.SetAccount(account)] : [],
     }
   }),
 
@@ -226,7 +215,7 @@ const reducers: Reducers<AppState> = [
   )),
 
   reduce(DismissNotify, (state, _) => update(
-    return set(State.notification, null, state)
+    set(State.notification, null, state)
   )),
 
   reduce(Send, (state, { draft }) => send(draft, state)),
@@ -260,10 +249,10 @@ function indicateLoading(label: string, result: EventResult<AppState>): EventRes
       eventResult => Object.assign({}, eventResult, {
         events: (eventResult.events || []).concat(new DoneLoading(label))
       }),
-      err => {
+      err => ({
         events: [new DoneLoading(label)],
         asyncResult: Promise.reject(err)
-      }
+      })
     )
   })
 }
@@ -282,7 +271,7 @@ function viewConversation(state: AppState, uri: string = null, id: string = null
   const view = new State.ConversationView(id, uri)
 
   return indicateLoading('conversation', {
-    state: State.pushView(view, state)
+    state: State.pushView(view, state),
 
     asyncResult: loadAccount().then(account => (
       queryConversations(query, account.email, tokenGenerator /* TODO */).then(
@@ -300,7 +289,7 @@ function viewConversation(state: AppState, uri: string = null, id: string = null
           }
         })
       )
-    ))
+    )),
   })
 }
 
@@ -366,7 +355,6 @@ function without(exclude: Address[], addrs: Address[]): Address[] {
 
 
 export {
-  reducers,
   DismissError,
   GenericError,
   Like,
@@ -385,4 +373,6 @@ export {
   ViewConversation,
   ViewRoot,
   ViewSettings,
+  indicateLoading,
+  reducers,
 }

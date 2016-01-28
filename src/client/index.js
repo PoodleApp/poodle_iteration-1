@@ -3,14 +3,16 @@
 import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import * as immutable  from 'immutable'
+import * as Kefir      from 'kefir'
 import makeRouter      from 'hash-brown-router'
 import { set }         from 'safety-lens'
 import ThemeManager    from 'material-ui/lib/styles/theme-manager'
 import { PoodleTheme } from '../themes'
 import * as State      from '../state'
 import * as Event      from '../event'
-import * as Composer   from '../composer/app'
 import * as AddAccount from '../add_account/app'
+import * as Auth       from '../auth/app'
+import * as Composer   from '../composer/app'
 import { App }         from '../components/Views'
 import {}              from './polyfills'
 
@@ -58,11 +60,17 @@ const initialState = q ?
 
 const app =
   new Sunshine.App(initialState, Event.reducers)
-  .include(Composer.app, AddAccount.app)
-  .input(routingEvents)
+  .include(
+    [AddAccount.app, State.addAccountState],
+    [Auth.app, State.authState],
+    [Composer.app, State.composerState]
+  )
+  .input(
+    routingEvents,
+    Kefir.later(0, new Event.LoadConfig)
+  )
 
-setTimout(() => {
-  app.emit(new Event.LoadConfig())
+setTimeout(() => {
   router.evaluateCurrent('/')
 }, 0)
 
