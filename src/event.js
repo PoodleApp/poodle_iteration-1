@@ -16,12 +16,13 @@ import * as Create                          from './activityTypes'
 import { activityId }                       from './derivedActivity'
 import * as Act                             from './derivedActivity'
 import { parseMidUri }                      from './models/message'
-import { participants, findConversation, queryConversations } from './conversation'
+import { participants, findConversation, threadToConversation } from './conversation'
 import { loadConfig, saveConfig, loadAccount } from './config'
 import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
+import * as AuthState                       from './auth/state'
 import * as AuthEvent                       from './auth/event'
-import * as sync                            from './sync'
+import { hasEnded }                         from './util/observable'
 
 import type { List }                  from 'immutable'
 import type { Reducers, EventResult } from 'sunshine-framework'
@@ -133,24 +134,28 @@ const reducers: Reducers<AppState> = [
 
   reduce(ViewRoot, (state, { searchQuery }) => {
     const view = new State.RootView(searchQuery)
+    const tokenGenerator = get(compose(State.authState, AuthState.tokenGen), state)
 
     return indicateLoading('conversations', {
       state: State.pushView(view, state),
 
       asyncResult: loadAccount().then(account => (
-        queryConversations(searchQuery, account.email, tokenGenerator /* TODO */).then(
-          convs => asyncUpdate(state_ => {
-            const view_ = lookup(State.view, state_)
-            if (view_ == view) {
-              return State.replaceView(new State.RootView(searchQuery, convs), state_)
-            }
-            else {
-              return state_
-            }
-          })
+        Gmail.search(query, account.email, tokenGenerator).scan(
+          (threads, thread) => threads.push(thread),
+          List()
         )
-      )),
-    })
+        .last()
+        .toPromise()
+      ))
+      .then(convs => asyncUpdate(state_ => {
+        const view_ = lookup(State.view, state_)
+        if (view_ == view) {
+          return State.replaceView(new State.RootView(searchQuery, convs), state_)
+        }
+        else {
+          return state_
+        }
+      })),
   }),
 
   reduce(ViewCompose, (state, { params }) => update(
@@ -269,27 +274,32 @@ function viewConversation(state: AppState, uri: string = null, id: string = null
 
   const query = `rfc822msgid:${id}`
   const view = new State.ConversationView(id, uri)
+  const tokenGenerator = get(compose(State.authState, AuthState.tokenGen), state)
 
   return indicateLoading('conversation', {
     state: State.pushView(view, state),
 
     asyncResult: loadAccount().then(account => (
-      queryConversations(query, account.email, tokenGenerator /* TODO */).then(
-        convs => asyncUpdate(state_ => {
-          const conv  = convs.first()
-          const view_ = lookup(State.view, state_)
-          if (!conv) {
-            return emit(new GenericError(`Could not find activity for given URI: ${uri}`))
-          }
-          else if (view_ == view) {
-            return State.replaceView(new State.ConversationView(id, uri, conv), state_)
-          }
-          else {
-            return state_
-          }
-        })
+      Gmail.search(query, account.email, tokenGenerator).scan(
+        (threads, thread) => threads.push(thread),
+        List()
       )
-    )),
+      .last()
+      .toPromise()
+    ))
+    .then(convs => asyncUpdate(state_ => {
+      const conv  = convs.first()
+      const view_ = lookup(State.view, state_)
+      if (!conv) {
+        return emit(new GenericError(`Could not find activity for given URI: ${uri}`))
+      }
+      else if (view_ == view) {
+        return State.replaceView(new State.ConversationView(id, uri, conv), state_)
+      }
+      else {
+        return state_
+      }
+    }))
   })
 }
 
