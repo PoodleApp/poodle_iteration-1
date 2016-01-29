@@ -2,6 +2,7 @@
 
 import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
+import ReactDOM        from 'react-dom'
 import * as immutable  from 'immutable'
 import * as Kefir      from 'kefir'
 import makeRouter      from 'hash-brown-router'
@@ -77,7 +78,7 @@ setTimeout(() => {
 class ContextWrapper extends React.Component<{},{},{}> {
   getChildContext(): Object {
     return {
-      _sunshineApp: app,
+      _sunshineApp: app.run(),
       muiTheme: ThemeManager.getMuiTheme(PoodleTheme),
     }
   }
@@ -89,12 +90,12 @@ class ContextWrapper extends React.Component<{},{},{}> {
   }
 }
 ContextWrapper.childContextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.Session).isRequired,
   muiTheme: React.PropTypes.object.isRequired,
 }
 
 function run(domElement: Element) {
-  React.render(
+  ReactDOM.render(
     <ContextWrapper />,
     domElement
   )

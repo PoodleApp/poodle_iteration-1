@@ -242,7 +242,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
 }
 
 App.contextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App),
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.Session),
   muiTheme:     React.PropTypes.object,
 }
 

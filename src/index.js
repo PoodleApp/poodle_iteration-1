@@ -4,7 +4,7 @@ var BrowserWindow = require('browser-window')
 require('crash-reporter').start({
   productName: 'Poodle',
   companyName: 'Jesse Hallett',
-  submitUrl:   'http://localhost:1127/post',
+  submitURL:   'http://localhost:1127/post',
   autoSubmit:  true,
 })
 
@@ -22,7 +22,7 @@ app.on('window-all-closed', function() {
 
 app.on('ready', function() {
   mainWindow = new BrowserWindow({ width: 800, height: 600 })
-  mainWindow.loadUrl('file:///'+ __dirname +'/static/index.html')
+  mainWindow.loadURL('file:///'+ __dirname +'/../static/index.html')
   mainWindow.openDevTools()
   mainWindow.on('closed', function() {
     mainWindow = null

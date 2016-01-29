@@ -167,7 +167,7 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
 }
 
 ConversationView.contextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.App).isRequired,
+  _sunshineApp: React.PropTypes.instanceOf(Sunshine.Session).isRequired,
   muiTheme: React.PropTypes.object.isRequired,
 }
 

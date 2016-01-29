@@ -8,7 +8,7 @@
       content="
         default-src 'self';
         connect-src 'self' electron-safe-ipc:;
-        script-src 'sha256-Vhso5DMWk0O5vxpyc_OeDFJgZzuYA_axCD7A_NQ_G-8=' 'unsafe-eval';
+        script-src 'sha256-RKdtpZ5Ic+kRq1wQMaoBfB0dz2D+CNAVKcywebw0+AM=' 'unsafe-eval';
         style-src 'self' 'unsafe-inline' http://fonts.googleapis.com;
         img-src 'self' data:;
         child-src 'self' data:;
@@ -22,7 +22,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         require('babel-core/external-helpers');
-        require('../build/client/index').run(document.body);
+        require('../build/client/index').run(document.getElementById('app'));
       });
     </script>
   </head>
