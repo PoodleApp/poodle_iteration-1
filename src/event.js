@@ -121,6 +121,11 @@ class ShowLink {
   constructor(activity: ?DerivedActivity) { this.activity = activity }
 }
 
+class LeftNavToggle {
+  open: ?boolean;
+  constructor(open: ?boolean = null) { this.open = open }
+}
+
 const reducers: Reducers<AppState> = [
 
   // TODO: handle errors for failed async results
@@ -250,6 +255,10 @@ const reducers: Reducers<AppState> = [
     set(State.showLink, activity, state)
   )),
 
+  reduce(LeftNavToggle, (state, open) => update(
+    over(State.leftNavOpen, s => typeof open === 'boolean' ? open : !s, state)
+  )),
+
 ]
 
 function indicateLoading(label: string, result: EventResult<AppState>): EventResult<AppState> {
@@ -374,6 +383,7 @@ function without(exclude: Address[], addrs: Address[]): Address[] {
 export {
   DismissError,
   GenericError,
+  LeftNavToggle,
   Like,
   LoadConfig,
   SaveConfig,

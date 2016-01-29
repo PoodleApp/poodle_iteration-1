@@ -28,6 +28,7 @@ export type AppState = Record<{
   addAccountState   : AS.AddAccountState,
   authState:        AuthState.AuthState,
   showLink:         ?DerivedActivity,
+  leftNavOpen:      boolean,
 }>
 
 class RootView {
@@ -67,6 +68,7 @@ const AppStateRecord = Record({
   addAccountState: AS.initialState,
   authState:     AuthState.initialState,
   showLink:      null,
+  leftNavOpen:   false,
 })
 
 const initialState: AppState = new AppStateRecord()
@@ -99,6 +101,8 @@ const useremail: Traversal_<AppState,string> =
 
 const likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
 const notmuchCmd: Traversal_<AppState,string> = compose(config_, field('notmuchCmd'))
+
+const leftNavOpen: Lens_<AppState,boolean> = field('leftNavOpen')
 
 function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))
@@ -160,6 +164,7 @@ export {
   likeMessage,
   loading,
   // lookupUri,
+  leftNavOpen,
   notification,
   notmuchCmd,
   popView,

@@ -32,9 +32,9 @@ import type { DerivedActivity } from '../derivedActivity'
 import type { Conversation }    from '../conversation'
 import type { AppState }        from '../state'
 
-var { Spacing } = Styles
+const { Spacing } = Styles
 
-var styles = {
+const styles = {
   body: {
     padding: '16px',
     paddingTop: 0,
@@ -45,6 +45,7 @@ var styles = {
 type AppComponentState = {
   view:         ?State.View,
   loading:      boolean,
+  leftNavOpen:  boolean,
   conversation: ?Conversation,
   editing:      ?DerivedActivity,
   error:        ?Object,
@@ -59,6 +60,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     return {
       view:         lookup(State.view, state),
       loading:      get(State.isLoading, state),
+      leftNavOpen:  get(State.leftNavOpen, state),
       conversation: State.currentConversation(state),
       editing:      get(compose(State.composerState, CS.editing), state),
       error:        get(State.genericError, state),
@@ -86,21 +88,21 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   render(): React.Element {
-    var { view, conversation, editing, loading, username, useremail } = this.state
-    var content, selected
-    var iconLeft = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
-    var title = 'Activity Stream'
+    const { view, conversation, editing, loading, leftNavOpen, username, useremail } = this.state
+    let content, selected
+    let iconLeft = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
+    let title = 'Activity Stream'
 
-    if (view === 'root') {
+    if (view instanceof State.RootView) {
       content  = <Conversations/>
       selected = 0
       iconLeft = undefined
     }
-    else if (view === 'compose') {
+    else if (view instanceof State.ComposeView) {
       content = <ComposeView />
       title = 'New Activity'
     }
-    else if (view === 'conversation') {
+    else if (view instanceof State.ConversationView) {
       content = <ConversationView
                   conversation={conversation}
                   editing={editing}
@@ -110,34 +112,35 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
                   />
       if (conversation) { title = conversation.subject }
     }
-    else if (view === 'settings') {
+    else if (view instanceof State.SettingsView) {
       content = <Settings />
       title = 'Settings'
     }
-    else if (view === 'add_account') {
+    else if (view instanceof State.AddAccountView) {
       content = <AddAccount />
       title = 'Set up new account'
     }
 
-    var styles = this.getStyles()
-    var { muiTheme } = (this.context:any)
+    const styles = this.getStyles()
+    const { muiTheme } = (this.context:any)
 
-    var menuItems = !!this.state.useremail ?
-      [
-        { route: '#/',            text: 'Activity Stream' },
-        { route: '#/settings',    text: 'Settings' },
-      ] :
-      [
-        { route: '#/',            text: 'Activity Stream' },
-        { route: '#/add_account', text: 'Set up account' },
-      ];
+    const menuOptions = !!this.state.useremail ? [
+      { route: '#/',            text: 'Activity Stream' },
+      { route: '#/settings',    text: 'Settings' },
+    ] : [
+      { route: '#/',            text: 'Activity Stream' },
+      { route: '#/add_account', text: 'Set up account' },
+    ];
+    const menuItems = menuOptions.map(({ route, text }) => (
+      <MenuItem key={route} onTouchTap={() => this.onNavChange(route)}>{text}</MenuItem>
+    ))
 
     return (
       <AppCanvas>
         <AppBar
           title={title}
           iconElementLeft={iconLeft}
-          onLeftIconButtonTouchTap={() => this.refs.leftNav.toggle()}
+          onLeftIconButtonTouchTap={() => this.leftNavToggle()}
           iconElementRight={
             <IconMenu
               iconButtonElement={
@@ -153,10 +156,12 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
           }
           />
         <LeftNav
-          ref='leftNav'
+          open={leftNavOpen}
           docked={false}
-          onChange={this.navChange.bind(this)}
-          selectedIndex={selected} menuItems={menuItems} />
+          onRequestChange={(s) => this.leftNavToggle(s)}
+          >
+          {menuItems}
+        </LeftNav>
         <div style={styles.root} onClick={interceptMidUris} className={loading ? 'wait' : ''}>
           <div style={styles.content}>
             {content}
@@ -173,7 +178,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   showError(error: Object): React.Element {
-    var actions = [
+    const actions = [
       { text: 'Ok', onTouchTap: this.dismissError.bind(this), ref: 'ok' }
     ]
     return (
@@ -199,11 +204,11 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   showLink(activity: DerivedActivity): React.Element {
-    var actions = [
+    const actions = [
       { text: 'Ok', onTouchTap: () => this.emit(new Ev.ShowLink(null)), ref: 'ok' }
     ]
-    var uri = Act.activityId(activity)
-    var title = Act.title(activity)
+    const uri = Act.activityId(activity)
+    const title = Act.title(activity)
     return (
       <Dialog
         title='Link to activity'
@@ -221,22 +226,22 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     )
   }
 
-  componentDidMount() {
-    super.componentDidMount()
-    this.refs.leftNav.close()
-  }
-
-  navChange(event: Event, selectedIndex: number, menuItem: { route: string }) {
-    window.location = menuItem.route
-  }
-
   onCompose(event: Event, item: Object) {
-    var activityType = item.props.value
+    const activityType = item.props.value
     window.location = `#/compose/${activityType}`
+  }
+
+  onNavChange(route: string) {
+    this.emit(new Ev.LeftNavToggle(false))
+    window.location = route
   }
 
   dismissError() {
     this.emit(new Ev.DismissError())
+  }
+
+  leftNavToggle(open: ?boolean = null) {
+    this.emit(new Ev.LeftNavToggle(open))
   }
 
 }
@@ -247,8 +252,8 @@ App.contextTypes = {
 }
 
 function interceptMidUris(event: Event) {
-  var href = (event.target:any).href
-  var parsed = href && parseMidUri(href)
+  const href = (event.target:any).href
+  const parsed = href && parseMidUri(href)
   if (parsed) {
     event.preventDefault()
     window.location = `#/activities/${encodeURIComponent(href)}`
