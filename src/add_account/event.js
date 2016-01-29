@@ -21,7 +21,7 @@ const reducers: Reducers<AS.AddAccountState> = [
   reduce(NewAccount, (state, { email }) => Ev.indicateLoading(
     'Authorizing with Google',
     ipc.request('google-account', email).then(
-      () => emit(new Ev.LoadConfig()),
+      () => emit(new Ev.LoadConfig())
     )
   )),
 

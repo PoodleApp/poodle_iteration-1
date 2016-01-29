@@ -5,6 +5,8 @@ import keytar             from 'keytar'
 import { search }         from '../gmail'
 import { tokenGenerator } from '../tokenGenerator'
 
+import type { XOAuth2Generator } from '../tokenGenerator'
+
 function fetchMessages() {
   return Kefir.fromPromise(
     getTokenGenerator('jesse@sitr.us')

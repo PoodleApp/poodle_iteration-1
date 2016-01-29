@@ -9,8 +9,9 @@ import { lift1, lift0 }   from '../../util/promises'
 import type { Box, ImapMessage, ImapOpts, MessageAttributes } from 'imap'
 import type { Stream }           from 'kefir'
 import type { ReadStream }       from 'fs'
-import type { OauthCredentials } from './auth/google'
-import type { XOAuth2Generator } from './auth/tokenGenerator'
+import type { EventEmitter }     from 'events'
+import type { OauthCredentials } from './google-oauth'
+import type { XOAuth2Generator } from './tokenGenerator'
 
 export {
   fetchMessages,
@@ -47,7 +48,7 @@ function fetchMessages(query: string, imap: Imap): Stream<Message> {
   return _fetchMessages([['X-GM-RAW', query]], imap)
 }
 
-function _fetchMessages(criteria: Array, imap: Imap): Stream<Message> {
+function _fetchMessages(criteria: any[], imap: Imap): Stream<Message> {
   const uidsPromise = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search(criteria, cb))
   ))

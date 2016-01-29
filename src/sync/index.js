@@ -1,4 +1,9 @@
-/* @flow */
+/*
+ * TODO: This module, and modules under src/sync/, are not used at this time.
+ * They may be returned to active duty at some future time.
+ *
+ * @noflow
+ */
 
 import { MailParser } from 'mailparser'
 import assign         from 'object-assign'

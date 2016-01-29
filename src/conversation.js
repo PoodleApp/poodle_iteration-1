@@ -34,6 +34,7 @@ export {
   flatParticipants,
   lastActive,
   participants,
+  threadToConversation,
 }
 
 export type Conversation = Record & {

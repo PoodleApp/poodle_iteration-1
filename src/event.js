@@ -7,8 +7,9 @@ import {
   reduce,
   update,
 } from 'sunshine-framework'
-import { Map, fromJS }                      from 'immutable'
+import { List, Map, fromJS }                from 'immutable'
 import { compose, get, lookup, over, set }  from 'safety-lens'
+import { prop }                             from 'safety-lens/es2015'
 import { field }                            from 'safety-lens/immutable'
 import * as stream                          from 'stream'
 import * as State                           from './state'
@@ -16,15 +17,15 @@ import * as Create                          from './activityTypes'
 import { activityId }                       from './derivedActivity'
 import * as Act                             from './derivedActivity'
 import { parseMidUri }                      from './models/message'
-import { participants, findConversation, threadToConversation } from './conversation'
+import { participants, threadToConversation } from './conversation'
 import { loadConfig, saveConfig, loadAccount } from './config'
 import { assemble }                         from './compose'
 import { msmtp }                            from './msmtp'
 import * as AuthState                       from './auth/state'
 import * as AuthEvent                       from './auth/event'
 import { hasEnded }                         from './util/observable'
+import * as Gmail                           from './stores/gmail/gmail'
 
-import type { List }                  from 'immutable'
 import type { Reducers, EventResult } from 'sunshine-framework'
 import type { URI }                   from './activity'
 import type { DerivedActivity }       from './derivedActivity'
@@ -136,6 +137,11 @@ const reducers: Reducers<AppState> = [
     const view = new State.RootView(searchQuery)
     const tokenGenerator = get(compose(State.authState, AuthState.tokenGen), state)
 
+    if (!searchQuery) {
+      return update(State.pushView(view, state))
+    }
+    const query = searchQuery  // To help the typechecker
+
     return indicateLoading('conversations', {
       state: State.pushView(view, state),
 
@@ -150,12 +156,13 @@ const reducers: Reducers<AppState> = [
       .then(convs => asyncUpdate(state_ => {
         const view_ = lookup(State.view, state_)
         if (view_ == view) {
-          return State.replaceView(new State.RootView(searchQuery, convs), state_)
+          return State.replaceView(new State.RootView(query, convs), state_)
         }
         else {
           return state_
         }
       })),
+    })
   }),
 
   reduce(ViewCompose, (state, { params }) => update(
@@ -167,11 +174,9 @@ const reducers: Reducers<AppState> = [
 
   reduce(ViewConversation, (state, { id, activityUri }) => {
     const result = viewConversation(state, activityUri, id)
-    return over(
-      prop('state'),
-      state_ => set(State.view, 'conversation',
-                set(State.routeParams, fromJS({ conversationId: id, activityUri }),
-                state_)),
+    return set(
+      compose(prop('state'), State.routeParams),
+      fromJS({ conversationId: id, activityUri }),
       result
     )
   }),
@@ -202,7 +207,7 @@ const reducers: Reducers<AppState> = [
 
   reduce(LoadConfig, (_, __) => indicateLoading('config', asyncResult(
     loadConfig().then(
-      config => emit(new GotConfig(config)),
+      config => emit(new GotConfig(config))
     )
   ))),
 
@@ -210,7 +215,7 @@ const reducers: Reducers<AppState> = [
     saveConfig(config).then(
       _ => emit(
         new GotConfig(config),
-        new Notify('Saved settings'),
+        new Notify('Saved settings')
       )
     )
   ))),
@@ -249,10 +254,10 @@ const reducers: Reducers<AppState> = [
 
 function indicateLoading(label: string, result: EventResult<AppState>): EventResult<AppState> {
   return Object.assign({}, result, {
-    events: (result.events || []).concat(new Loading(label)),
+    events: Array.from(result.events || []).concat(new Loading(label)),
     asyncResult: (result.asyncResult || Promise.resolve()).then(
       eventResult => Object.assign({}, eventResult, {
-        events: (eventResult.events || []).concat(new DoneLoading(label))
+        events: Array.from(eventResult.events || []).concat(new DoneLoading(label))
       }),
       err => ({
         events: [new DoneLoading(label)],
@@ -262,12 +267,14 @@ function indicateLoading(label: string, result: EventResult<AppState>): EventRes
   })
 }
 
-function viewConversation(state: AppState, uri: string = null, id: string = null): EventResult<AppState> {
+function viewConversation(state: AppState, uri: ?string = null, id: ?string = null): EventResult<AppState> {
   if (!uri && !id) {
     throw "uri or message id is required"
   }
 
-  id = id || messageIdFromUri(uri)
+  if (uri) {
+    id = id || messageIdFromUri(uri)
+  }
   if (!id) {
     return emit(new GenericError(`Unable to parse activity URI: ${uri}`))
   }
@@ -299,7 +306,7 @@ function viewConversation(state: AppState, uri: string = null, id: string = null
       else {
         return state_
       }
-    }))
+    })),
   })
 }
 

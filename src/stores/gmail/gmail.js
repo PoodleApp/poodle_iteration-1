@@ -8,6 +8,7 @@ import { tokenGenerator } from './tokenGenerator'
 import { buildThread }    from '../../models/thread'
 
 import type { ReadStream }       from 'fs'
+import type { Stream }           from 'kefir'
 import type { Message }          from '../../models/message'
 import type { Thread }           from '../../models/thread'
 import type { XOAuth2Generator } from './tokenGenerator'

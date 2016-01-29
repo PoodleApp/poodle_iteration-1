@@ -1,7 +1,7 @@
 /* @flow */
 
 import { List, Map, Record }                  from 'immutable'
-import { compose, filtering, getter, lookup } from 'safety-lens'
+import { compose, filtering, getter, lookup, over, set } from 'safety-lens'
 import { field, index }                       from 'safety-lens/immutable'
 import * as CS                                from './composer/state'
 import * as AS                                from './add_account/state'
@@ -42,7 +42,7 @@ class ConversationView {
   id: ?string;
   uri: ?string;
   conversation: ?Conversation;
-  constructor(id: string, uri: string, conv: ?Conversation = null) {
+  constructor(id: ?string, uri: ?string, conv: ?Conversation = null) {
     this.id = id
     this.uri = uri
     this.conversation = conv
@@ -89,9 +89,6 @@ const searchQuery: Fold<any,AppState,string> = compose(view, index('searchQuery'
 const config: Lens_<AppState,?Config> = field('config')
 const config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
 
-const username: Traversal_<AppState,string> = compose(config_, field('name'))
-const useremail: Traversal_<AppState,string> = compose(config_, field('email'))
-
 const useraccount: Traversal_<AppState,Account> =
   compose(compose(config_, field('accounts')), index(0))
 const username: Traversal_<AppState,string> =
@@ -131,10 +128,10 @@ function pushView(view: View, state: AppState): AppState {
   return over(views, vs => vs.unshift(view), state)
 }
 
-function popView(state: AppState): [View, AppState] {
-  const view = lookup(view, state)
+function popView(state: AppState): [?View, AppState] {
+  const v = lookup(view, state)
   const state_ = over(views, vs => vs.count() > 1 ? vs.shift() : vs, state)
-  return [view, state_]
+  return [v, state_]
 }
 
 function replaceView(v: View, state: AppState): AppState {

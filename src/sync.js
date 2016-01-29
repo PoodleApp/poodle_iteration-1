@@ -1,14 +1,19 @@
-/* @flow */
+/*
+ * TODO: This module, and modules under src/sync/, are not used at this time.
+ * They may be returned to active duty at some future time.
+ *
+ * @noflow
+ */
 
 import PouchDB            from 'pouchdb'
 import * as Kefir         from 'kefir'
 import keytar             from 'keytar'
 import * as Config        from './config'
-import * as imap          from './imap'
+import * as imap          from './stores/gmail/google-imap'
 import * as index         from './sync/index'
 import * as views         from './sync/views'
 import { putOrUpdate }    from './sync/util'
-import { tokenGenerator } from './auth/tokenGenerator'
+import { tokenGenerator } from './stores/gmail/tokenGenerator'
 import * as T             from './models/thread'
 import * as M             from './models/message'
 
