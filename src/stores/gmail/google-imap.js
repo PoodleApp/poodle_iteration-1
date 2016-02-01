@@ -57,17 +57,20 @@ function _fetchMessages(criteria: any[], imap: Imap): Stream<Message> {
   .flatMap(messageBodyStream)
 }
 
-function fetchConversations(query: string, imap: Imap): Stream<List<Message>> {
+function fetchConversations(query: string, imap: Imap, limit: number = 0): Stream<List<Message>> {
   const messageIds = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
 
   const threadIds = Kefir.fromPromise(messageIds)
-  .flatMap(uids => fetch(uids, {/* metadata only */}, imap))
+  .flatMap(uids => {
+    const uids_ = limit > 0 ? uids.slice(0, limit) : uids
+    return fetch(uids_, {/* metadata only */}, imap)
+  })
   .flatMap(message => attributes(message))
-  .scan((threadIds, msgAttrs) => (
-    threadIds.add(msgAttrs['x-gm-thrid'])
-  ), Set())
+  .scan(
+    (threadIds, msgAttrs) => threadIds.add(msgAttrs['x-gm-thrid']), Set()
+  )
   .last()
 
   return threadIds.flatMap(ids => {
