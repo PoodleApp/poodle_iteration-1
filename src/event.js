@@ -154,6 +154,7 @@ const reducers: Reducers<AppState> = [
         .last()
         .toPromise()
       })
+      .then(threads => threads.map(threadToConversation))
       .then(convs => asyncUpdate(state_ => {
         const view_ = lookup(State.view, state_)
         if (view_ == view) {
@@ -299,6 +300,7 @@ function viewConversation(state: AppState, uri: ?string = null, id: ?string = nu
       .last()
       .toPromise()
     })
+    .then(threads => threadToConversation(threads.first()))
     .then(convs => asyncUpdate(state_ => {
       const conv  = convs.first()
       const view_ = lookup(State.view, state_)
