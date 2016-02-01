@@ -73,10 +73,10 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
           <ToolbarGroup key={0} float='left'>
             <form onSubmit={this.onSearch.bind(this)}>
               <label>
-              <ToolbarTitle text='Enter notmuch query'/>
+              <ToolbarTitle text='Enter query'/>
               <TextField
-                hintText='date:2days..'
-                defaultValue={this.state.searchQuery || 'date:2days..'}
+                hintText='newer_than:1d'
+                defaultValue={this.state.searchQuery || 'newer_than:1d'}
                 ref='query'
                 />
               </label>
