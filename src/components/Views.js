@@ -48,7 +48,7 @@ type AppComponentState = {
   leftNavOpen:  boolean,
   conversation: ?Conversation,
   editing:      ?DerivedActivity,
-  error:        ?Object,
+  error:        ?string,
   notification: ?string,
   showLink:     ?DerivedActivity,
   username:     ?string,
@@ -177,7 +177,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     )
   }
 
-  showError(error: Object): React.Element {
+  showError(error: string): React.Element {
     const actions = [
       { text: 'Ok', onTouchTap: this.dismissError.bind(this), ref: 'ok' }
     ]
@@ -188,7 +188,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
         actionFocus='ok'
         openImmediately={true}
         >
-        <p style={styles.body}>{String(error)}</p>
+        <p style={styles.body}>{error}</p>
       </Dialog>
     )
   }

@@ -246,11 +246,11 @@ export class ComposeReply extends Sunshine.Component<{},ReplyProps,ReplyState> {
     var message                 = Act.getMessage(activity)
     var { username, useremail } = this.state
     if (!username || !useremail) {
-      this.emit(new Ev.GenericError("Please set your name and email address in 'Settings'"))
+      this.emit(new Error("Please set your name and email address in 'Settings'"))
       return
     }
     if (!message) {
-      this.emit(new Ev.GenericError('Cannot reply to synthetic activity.'))
+      this.emit(new Error('Cannot reply to synthetic activity.'))
       return
     }
 
@@ -303,7 +303,7 @@ export class EditNote extends Sunshine.Component<{},ActivityProps,EditNoteState>
 
     var content = textContent(activity)
     if (!content) {
-      this.emit(new Ev.GenericError('Cannot edit activity with multiple parts, or with no text part.'))
+      this.emit(new Error('Cannot edit activity with multiple parts, or with no text part.'))
       return <p>Cannot edit activity with multiple parts, or with no text part.</p>
     }
 
@@ -340,7 +340,7 @@ export class EditNote extends Sunshine.Component<{},ActivityProps,EditNoteState>
     var message = Act.getMessage(activity)
     var verb = Act.rawVerb(activity)
     if (!message || !verb) {
-      this.emit(new Ev.GenericError('Cannot reply to synthetic activity.'))
+      this.emit(new Error('Cannot reply to synthetic activity.'))
       return
     }
 

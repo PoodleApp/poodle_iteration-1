@@ -21,7 +21,7 @@ export type AppState = Record<{
   loading:          number,
   view:             List<View>,
   routeParams:      Map<string,string>,
-  genericError:     ?Object,
+  genericError:     ?string,
   config?:          Config,
   notification?:    string,
   composerState:    CS.ComposerState,
@@ -84,7 +84,7 @@ const conversation: Fold<any,AppState,Conversation> = compose(view, key('convers
 const loading: Lens_<AppState,number> = field('loading')
 const isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
 const routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
-const genericError: Lens_<AppState,?Object> = field('genericError')
+const genericError: Lens_<AppState,?string> = field('genericError')
 const notification = field('notification')
 const showLink = field('showLink')
 const searchQuery: Fold<any,AppState,string> = compose(view, key('searchQuery'))

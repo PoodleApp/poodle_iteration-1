@@ -63,10 +63,6 @@ class ViewSettings {}
 class ViewAccountSetup {}
 
 class DismissError {}
-class GenericError {
-  err: any;
-  constructor(err: any) { this.err = err }
-}
 
 class LoadConfig {}
 class SaveConfig {
@@ -194,8 +190,8 @@ const reducers: Reducers<AppState> = [
     State.pushView(new State.AddAccountView, state)
   )),
 
-  reduce(GenericError, (state, { err }) => update(
-    set(State.genericError, err, state)
+  reduce(Error, (state, { message }) => update(
+    set(State.genericError, message, state)
   )),
 
   reduce(DismissError, (state, _) => update(
@@ -247,7 +243,7 @@ const reducers: Reducers<AppState> = [
       return sendReply(new SendReply({ reply: like, message, conversation }), state)
     }
     else {
-      return emit(new GenericError('Cannot +1 synthetic activity.'))
+      return emit(new Error('Cannot +1 synthetic activity.'))
     }
   }),
 
@@ -285,7 +281,7 @@ function viewConversation(state: AppState, uri: ?string = null, id: ?string = nu
     id = id || messageIdFromUri(uri)
   }
   if (!id) {
-    return emit(new GenericError(`Unable to parse activity URI: ${uri}`))
+    return emit(new Error(`Unable to parse activity URI: ${uri}`))
   }
 
   const query = `rfc822msgid:${id}`
@@ -307,7 +303,7 @@ function viewConversation(state: AppState, uri: ?string = null, id: ?string = nu
       const conv  = convs.first()
       const view_ = lookup(State.view, state_)
       if (!conv) {
-        return emit(new GenericError(`Could not find activity for given URI: ${uri}`))
+        return emit(new Error(`Could not find activity for given URI: ${uri}`))
       }
       else if (view_ == view) {
         return State.replaceView(new State.ConversationView(id, uri, conv), state_)
@@ -331,7 +327,7 @@ function sendReply({ reply, message, conversation, addPeople }: SendReply, state
   const username  = lookup(State.username, state)
   const useremail = lookup(State.useremail, state)
   if (!username || !useremail) {
-    return emit(new GenericError("Please set your name and email address in 'Settings'"))
+    return emit(new Error("Please set your name and email address in 'Settings'"))
   }
 
   const { to, from, cc } = participants(conversation)
@@ -382,7 +378,6 @@ function without(exclude: Address[], addrs: Address[]): Address[] {
 
 export {
   DismissError,
-  GenericError,
   LeftNavToggle,
   Like,
   LoadConfig,
