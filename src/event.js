@@ -300,9 +300,8 @@ function viewConversation(state: AppState, uri: ?string = null, id: ?string = nu
       .last()
       .toPromise()
     })
-    .then(threads => threadToConversation(threads.first()))
-    .then(convs => asyncUpdate(state_ => {
-      const conv  = convs.first()
+    .then(threads => (console.log('threads', threads.size), threadToConversation(threads.first())))
+    .then(conv => asyncUpdate(state_ => {
       const view_ = lookup(State.view, state_)
       if (!conv) {
         return emit(new Error(`Could not find activity for given URI: ${uri}`))
