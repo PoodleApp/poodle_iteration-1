@@ -1,6 +1,6 @@
 /* @flow */
 
-import { emit, reduce, update } from 'sunshine-framework'
+import { emit, noChange, reduce, update } from 'sunshine-framework'
 import { set }                  from 'safety-lens'
 import keytar                   from 'keytar'
 import { tokenGenerator }       from '../stores/gmail/tokenGenerator'
@@ -38,6 +38,9 @@ const reducers: Reducers<AuthState.AuthState> = [
     creds = creds && JSON.parse(creds)
     if (creds && creds.refresh_token) {
       return emit(new AccessToken(account.email, creds))
+    }
+    else {
+      return noChange
     }
   }),
 
