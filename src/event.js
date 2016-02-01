@@ -146,14 +146,14 @@ const reducers: Reducers<AppState> = [
     return indicateLoading('conversations', {
       state: State.pushView(view, state),
 
-      asyncResult: loadAccount().then(account => (
-        Gmail.search(query, account.email, tokenGenerator).scan(
-          (threads, thread) => threads.push(thread),
-          List()
+      asyncResult: loadAccount().then(account => {
+        const tokenGenerator = AuthState.getTokenGenerator(account)
+        return Gmail.search(query, tokenGenerator).scan(
+          (threads, thread) => threads.push(thread), List()
         )
         .last()
         .toPromise()
-      ))
+      })
       .then(convs => asyncUpdate(state_ => {
         const view_ = lookup(State.view, state_)
         if (view_ == view) {
@@ -286,19 +286,19 @@ function viewConversation(state: AppState, uri: ?string = null, id: ?string = nu
 
   const query = `rfc822msgid:${id}`
   const view = new State.ConversationView(id, uri)
-  const tokenGenerator = get(compose(State.authState, AuthState.tokenGen), state)
 
   return indicateLoading('conversation', {
     state: State.pushView(view, state),
 
-    asyncResult: loadAccount().then(account => (
-      Gmail.search(query, account.email, tokenGenerator).scan(
+    asyncResult: loadAccount().then(account => {
+      const tokenGenerator = AuthState.getTokenGenerator(account)
+      return Gmail.search(query, tokenGenerator).scan(
         (threads, thread) => threads.push(thread),
         List()
       )
       .last()
       .toPromise()
-    ))
+    })
     .then(convs => asyncUpdate(state_ => {
       const conv  = convs.first()
       const view_ = lookup(State.view, state_)
