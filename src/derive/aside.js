@@ -16,7 +16,7 @@ export {
 }
 
 function collapseAsides(thread: Thread): List<DerivedActivity> {
-  return List(thread).flatMap(flatten.bind(null, Set()))
+  return thread.flatMap(flatten.bind(null, Set()))
 }
 
 function flatten(
@@ -29,8 +29,8 @@ function flatten(
 
   var activities = unwrapMessage(message)
   var replies = removed.size > 0 ?
-    List(thread).flatMap(flatten.bind(null, to)) :
-    List(thread).flatMap(flatten.bind(null, ppl.union(to)))
+    thread.flatMap(flatten.bind(null, to)) :
+    thread.flatMap(flatten.bind(null, ppl.union(to)))
   var withReplies = activities.concat(replies)
 
   if (removed.size > 0) {

@@ -73,10 +73,10 @@ function allNames(conv: Conversation): string[] {
 }
 
 function threadToConversation(thread: Thread): Conversation {
-  const id = thread[0][0].messageId
+  const [{ messageId }, _] = thread.first()
   const activities = collapseAsides(thread)
   const conv = new ConversationRecord({
-    id,
+    id:            messageId,
     activities:    derive(activities),
     allActivities: activities,
     subject:       title(activities.first()) || '[no subject]',
