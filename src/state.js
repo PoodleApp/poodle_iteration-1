@@ -2,7 +2,7 @@
 
 import { List, Map, Record }                  from 'immutable'
 import { compose, filtering, getter, lookup, over, set } from 'safety-lens'
-import { prop }                               from 'safety-lens/es2015'
+import { key }                                from 'safety-lens/es2015'
 import { field, index }                       from 'safety-lens/immutable'
 import * as CS                                from './composer/state'
 import * as AS                                from './add_account/state'
@@ -79,15 +79,15 @@ const composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
 
 const view: Traversal_<AppState,View> = compose(field('view'), index(0))
 const views: Lens_<AppState,List<View>> = field('view')
-const conversations: Fold<any,AppState,List<Conversation>> = compose(view, prop('conversations'))
-const conversation: Fold<any,AppState,Conversation> = compose(view, prop('conversation'))
+const conversations: Fold<any,AppState,List<Conversation>> = compose(view, key('conversations'))
+const conversation: Fold<any,AppState,Conversation> = compose(view, key('conversation'))
 const loading: Lens_<AppState,number> = field('loading')
 const isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
 const routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
 const genericError: Lens_<AppState,?Object> = field('genericError')
 const notification = field('notification')
 const showLink = field('showLink')
-const searchQuery: Fold<any,AppState,string> = compose(view, prop('searchQuery'))
+const searchQuery: Fold<any,AppState,string> = compose(view, key('searchQuery'))
 
 const config: Lens_<AppState,?Config> = field('config')
 const config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))

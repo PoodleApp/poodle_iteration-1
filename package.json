@@ -63,7 +63,7 @@
     "react-dom": "0.14.6",
     "react-tap-event-plugin": "0.2.1",
     "repa": "^1.0.0",
-    "safety-lens": "1.2.0",
+    "safety-lens": "1.3.0",
     "string-hash": "^1.1.0",
     "sunshine-framework": "hallettj/sunshine#v2.0",
     "uuid": "^2.0.1",
