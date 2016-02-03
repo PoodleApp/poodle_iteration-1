@@ -23,31 +23,31 @@ const initialState = List.of(RootView())
 /* View constructors */
 
 function RootView(searchQuery: ?string = null, conversations: ?List<Conversation> = null): ViewState {
-  return function<R>(a: *, b: *, c: *, d: *, e: *): R {
+  return function<R>(a, b, c, d, e): R {
     return a(searchQuery, conversations)
   }
 }
 
 function ConversationView(id: ?string, uri: ?string, conversation: ?Conversation = null): ViewState {
-  return function<R>(a: *, b: *, c: *, d: *, e: *): R {
+  return function<R>(a, b, c, d, e): R {
     return b(id, uri, conversation)
   }
 }
 
 function ComposeView(): ViewState {
-  return function<R>(a: *, b: *, c: *, d: *, e: *): R {
+  return function<R>(a, b, c, d, e): R {
     return c()
   }
 }
 
 function SettingsView(): ViewState {
-  return function<R>(a: *, b: *, c: *, d: *, e: *): R {
+  return function<R>(a, b, c, d, e): R {
     return d()
   }
 }
 
 function AddAccountView(): ViewState {
-  return function<R>(a: *, b: *, c: *, d: *, e: *): R {
+  return function<R>(a, b, c, d, e): R {
     return e()
   }
 }
@@ -56,7 +56,7 @@ function AddAccountView(): ViewState {
 /* lenses & helpers */
 
 const view: Lens_<ViewState,View> = lens(
-  vs => vs.shift(),
+  vs => vs.first(),
   (vs, v) => replaceView(v, vs)
 )
 

@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Experimental email client with social features",
   "scripts": {
-    "start": "make run",
-    "test": "make typecheck"
+    "start": "make && electron build",
+    "test": "babel-node node_modules/.bin/_mocha --full-trace --recursive -R spec -C --check-leaks test/"
   },
   "repository": {
     "type": "git",
@@ -35,8 +35,12 @@
     "babel-plugin-transform-runtime": "6.3.13",
     "babel-preset-es2015": "6.3.13",
     "babel-preset-react": "6.3.13",
+    "chai": "3.5.0",
+    "chai-as-promised": "5.2.0",
+    "chai-immutable": "1.5.3",
     "electron-prebuilt": "0.36.4",
-    "flow-bin": "0.20.1"
+    "flow-bin": "0.20.1",
+    "mocha": "2.4.5"
   },
   "dependencies": {
     "babel-runtime": "6.3.19",
