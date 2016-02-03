@@ -14,6 +14,8 @@ import * as Event      from '../event'
 import * as AddAccount from '../add_account/app'
 import * as Auth       from '../auth/app'
 import * as Composer   from '../composer/app'
+import * as ViewState  from '../state/ViewState'
+import * as ViewEvent  from '../event/viewEvent'
 import { App }         from '../components/Views'
 import {}              from './polyfills'
 
@@ -25,31 +27,31 @@ const router = makeRouter()
 
 const routingEvents = Kefir.stream(emitter => {
   router.add('/', params => {
-    emitter.emit(new Event.ViewRoot(params.q))
+    emitter.emit(new ViewEvent.ViewRoot(params.q))
   })
 
   router.add('/compose/:activityType', params => {
-    emitter.emit(new Event.ViewCompose(immutable.fromJS(params)))
+    emitter.emit(new ViewEvent.ViewCompose(immutable.fromJS(params)))
   })
 
   router.add('/conversations/:id', params => {
-    emitter.emit(new Event.ViewConversation(params.id))
+    emitter.emit(new ViewEvent.ViewConversation(params.id))
   })
 
   router.add('/conversations/:id', params => {
-    emitter.emit(new Event.ViewConversation(params.id))
+    emitter.emit(new ViewEvent.ViewConversation(params.id))
   })
 
   router.add('/activities/:uri', params => {
-    emitter.emit(new Event.ViewActivity(decodeURIComponent(params.uri)))
+    emitter.emit(new ViewEvent.ViewActivity(decodeURIComponent(params.uri)))
   })
 
   router.add('/settings', () => {
-    emitter.emit(new Event.ViewSettings())
+    emitter.emit(new ViewEvent.ViewSettings())
   })
 
   router.add('/add_account', params => {
-    emitter.emit(new Event.ViewAccountSetup(decodeURIComponent(params.email)))
+    emitter.emit(new ViewEvent.ViewAccountSetup(decodeURIComponent(params.email)))
   })
 })
 
@@ -64,7 +66,8 @@ const app =
   .include(
     [AddAccount.app, State.addAccountState],
     [Auth.app, State.authState],
-    [Composer.app, State.composerState]
+    [Composer.app, State.composerState],
+    [new Sunshine.App(ViewState.initialState, ViewEvent.reducers), State.views]
   )
   .input(
     routingEvents,

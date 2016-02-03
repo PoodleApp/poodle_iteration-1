@@ -6,6 +6,7 @@ import { compose, get, lookup }            from 'safety-lens'
 import { parseMidUri }                     from '../models/message'
 import * as Act                            from '../derivedActivity'
 import * as State                          from '../state'
+import * as ViewState                      from '../state/ViewState.js'
 import * as CS                             from '../composer/state'
 import * as Ev                             from '../event'
 import { ComposeView }                     from './compose'
@@ -43,10 +44,9 @@ const styles = {
 }
 
 type AppComponentState = {
-  view:         ?State.View,
+  view:         ViewState.View,
   loading:      boolean,
   leftNavOpen:  boolean,
-  conversation: ?Conversation,
   editing:      ?DerivedActivity,
   error:        ?string,
   notification: ?string,
@@ -58,10 +58,9 @@ type AppComponentState = {
 export class App extends Sunshine.Component<{},{},AppComponentState> {
   getState(state: AppState): AppComponentState {
     return {
-      view:         lookup(State.view, state),
+      view:         get(State.view, state),
       loading:      get(State.isLoading, state),
       leftNavOpen:  get(State.leftNavOpen, state),
-      conversation: State.currentConversation(state),
       editing:      get(compose(State.composerState, CS.editing), state),
       error:        get(State.genericError, state),
       notification: get(State.notification, state),
@@ -88,38 +87,42 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
   }
 
   render(): React.Element {
-    const { view, conversation, editing, loading, leftNavOpen, username, useremail } = this.state
-    let content, selected
-    let iconLeft = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
-    let title = 'Activity Stream'
+    const { view, editing, loading, leftNavOpen, username, useremail } = this.state
+    const backButton = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
 
-    if (view instanceof State.RootView) {
-      content  = <Conversations/>
-      selected = 0
-      iconLeft = undefined
-    }
-    else if (view instanceof State.ComposeView) {
-      content = <ComposeView />
-      title = 'New Activity'
-    }
-    else if (view instanceof State.ConversationView) {
-      content = <ConversationView
+    const { content, iconLeft, title } = view(
+      /* RootView */ (searchQuery, conversations) => ({
+        content:  <Conversations />,
+        iconLeft: undefined,
+        title:    'Activity Stream',
+      }),
+      /* ConversationView */ (id, uri, conversation) => ({
+        content: <ConversationView
                   conversation={conversation}
                   editing={editing}
                   username={username}
                   useremail={useremail}
                   loading={loading}
-                  />
-      if (conversation) { title = conversation.subject }
-    }
-    else if (view instanceof State.SettingsView) {
-      content = <Settings />
-      title = 'Settings'
-    }
-    else if (view instanceof State.AddAccountView) {
-      content = <AddAccount />
-      title = 'Set up new account'
-    }
+                  />,
+        iconLeft: backButton,
+        title: conversation ? conversation.subject : '...',
+      }),
+      /* ComposeView */ () => ({
+        content: <ComposeView />,
+        iconLeft: backButton,
+        title: 'New Activity',
+      }),
+      /* SettingsView */ () => ({
+        content: <Settings />,
+        iconLeft: backButton,
+        title: 'Settings',
+      }),
+      /* AddAccountView */ () => ({
+        content: <AddAccount />,
+        iconLeft: backButton,
+        title: 'Set up an account',
+      })
+    )
 
     const styles = this.getStyles()
     const { muiTheme } = (this.context:any)

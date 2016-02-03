@@ -7,27 +7,20 @@ import {
   reduce,
   update,
 } from 'sunshine-framework'
-import { List, Map, fromJS }                from 'immutable'
-import { compose, get, lookup, over, set }  from 'safety-lens'
-import { prop }                             from 'safety-lens/es2015'
-import { field }                            from 'safety-lens/immutable'
-import * as stream                          from 'stream'
-import * as State                           from './state'
-import * as Create                          from './activityTypes'
-import { activityId }                       from './derivedActivity'
-import * as Act                             from './derivedActivity'
-import { parseMidUri }                      from './models/message'
-import { participants, threadToConversation } from './conversation'
-import { loadConfig, saveConfig, loadAccount } from './config'
-import { assemble }                         from './compose'
-import { msmtp }                            from './msmtp'
-import * as AuthState                       from './auth/state'
-import * as AuthEvent                       from './auth/event'
-import { hasEnded }                         from './util/observable'
-import * as Gmail                           from './stores/gmail/gmail'
+import { compose, get, lookup, over, set } from 'safety-lens'
+import { prop }                            from 'safety-lens/es2015'
+import { field }                           from 'safety-lens/immutable'
+import * as stream                         from 'stream'
+import * as State                          from './state'
+import * as Create                         from './activityTypes'
+import { activityId }                      from './derivedActivity'
+import * as Act                            from './derivedActivity'
+import { participants }                    from './conversation'
+import { loadConfig, saveConfig }          from './config'
+import { assemble }                        from './compose'
+import { msmtp }                           from './msmtp'
 
 import type { Reducers, EventResult } from 'sunshine-framework'
-import type { URI }                   from './activity'
 import type { DerivedActivity }       from './derivedActivity'
 import type { Conversation }          from './conversation'
 import type { Address }               from './models/address'
@@ -38,29 +31,6 @@ import type { AppState }              from './state'
 
 class Loading {}
 class DoneLoading {}
-
-class ViewRoot {
-  searchQuery: ?string;
-  constructor(query: ?string) { this.searchQuery = query }
-}
-class ViewCompose {
-  params: Map<string,string>;
-  constructor(params: Map<string,string>) { this.params = params }
-}
-class ViewActivity {
-  uri: URI;
-  constructor(uri: URI) { this.uri = uri }
-}
-class ViewConversation {
-  id: string;
-  activityUri: ?URI;
-  constructor(id: string, activityUri?: URI) {
-    this.id = id
-    this.activityUri = activityUri
-  }
-}
-class ViewSettings {}
-class ViewAccountSetup {}
 
 class DismissError {}
 
@@ -134,63 +104,6 @@ const reducers: Reducers<AppState> = [
     over(State.loading, n => Math.max(0, n - 1), state)
   )),
 
-  reduce(ViewRoot, (state, { searchQuery }) => {
-    const view = new State.RootView(searchQuery)
-    const tokenGenerator = get(compose(State.authState, AuthState.tokenGen), state)
-
-    if (!searchQuery) {
-      return update(State.pushView(view, state))
-    }
-    const query = searchQuery  // To help the typechecker
-
-    return indicateLoading('conversations', {
-      state: State.pushView(view, state),
-
-      asyncResult: loadAccount().then(account => {
-        const tokenGenerator = AuthState.getTokenGenerator(account)
-        return Gmail.search(query, tokenGenerator).scan(
-          (threads, thread) => threads.push(thread), List()
-        )
-        .last()
-        .toPromise()
-      })
-      .then(threads => threads.map(threadToConversation))
-      .then(convs => asyncUpdate(state_ => {
-        const view_ = lookup(State.view, state_)
-        if (view_ == view) {
-          return State.replaceView(new State.RootView(query, convs), state_)
-        }
-        else {
-          return state_
-        }
-      })),
-    })
-  }),
-
-  reduce(ViewCompose, (state, { params }) => update(
-    set(State.routeParams, params,
-        State.pushView(new State.ComposeView, state))
-  )),
-
-  reduce(ViewActivity, (state, { uri }) => viewConversation(state, uri)),
-
-  reduce(ViewConversation, (state, { id, activityUri }) => {
-    const result = viewConversation(state, activityUri, id)
-    return set(
-      compose(prop('state'), State.routeParams),
-      fromJS({ conversationId: id, activityUri }),
-      result
-    )
-  }),
-
-  reduce(ViewSettings, (state, _) => update(
-    State.pushView(new State.SettingsView, state)
-  )),
-
-  reduce(ViewAccountSetup, (state, _) => update(
-    State.pushView(new State.AddAccountView, state)
-  )),
-
   reduce(Error, (state, { message }) => update(
     set(State.genericError, message, state)
   )),
@@ -201,10 +114,9 @@ const reducers: Reducers<AppState> = [
 
   reduce(GotConfig, (state, { config }) => {
     const account = config.accounts.first()
-    return {
-      state: set(State.config, config, state),
-      events: account ? [new AuthEvent.SetAccount(account)] : [],
-    }
+    return update(
+      set(State.config, config, state)
+    )
   }),
 
   reduce(LoadConfig, (_, __) => indicateLoading('config', asyncResult(
@@ -273,57 +185,6 @@ function indicateLoading(label: string, result: EventResult<AppState>): EventRes
   })
 }
 
-function viewConversation(state: AppState, uri: ?string = null, id: ?string = null): EventResult<AppState> {
-  if (!uri && !id) {
-    throw "uri or message id is required"
-  }
-
-  if (uri) {
-    id = id || messageIdFromUri(uri)
-  }
-  if (!id) {
-    return emit(new Error(`Unable to parse activity URI: ${uri}`))
-  }
-
-  const query = `rfc822msgid:${id}`
-  const view = new State.ConversationView(id, uri)
-
-  return indicateLoading('conversation', {
-    state: State.pushView(view, state),
-
-    asyncResult: loadAccount().then(account => {
-      const tokenGenerator = AuthState.getTokenGenerator(account)
-      return Gmail.search(query, tokenGenerator).scan(
-        (threads, thread) => threads.push(thread),
-        List()
-      )
-      .last()
-      .toPromise()
-    })
-    .then(threads => (console.log('threads', threads.size), threadToConversation(threads.first())))
-    .then(conv => asyncUpdate(state_ => {
-      const view_ = lookup(State.view, state_)
-      if (!conv) {
-        return emit(new Error(`Could not find activity for given URI: ${uri}`))
-      }
-      else if (view_ == view) {
-        return State.replaceView(new State.ConversationView(id, uri, conv), state_)
-      }
-      else {
-        return state_
-      }
-    })),
-  })
-}
-
-function messageIdFromUri(uri: string): ?string {
-  const parsed = parseMidUri(uri)
-  const messageId = parsed ? parsed.messageId : null
-  if (parsed && messageId) {
-    return messageId
-  }
-}
-
 function sendReply({ reply, message, conversation, addPeople }: SendReply, state: AppState): EventResult<AppState> {
   const username  = lookup(State.username, state)
   const useremail = lookup(State.useremail, state)
@@ -390,12 +251,6 @@ export {
   Send,
   SendReply,
   ShowLink,
-  ViewAccountSetup,
-  ViewActivity,
-  ViewCompose,
-  ViewConversation,
-  ViewRoot,
-  ViewSettings,
   indicateLoading,
   reducers,
 }
