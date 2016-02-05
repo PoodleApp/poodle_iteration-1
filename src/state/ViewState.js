@@ -7,50 +7,45 @@ import { index } from 'safety-lens/immutable'
 import type { Lens_ }        from 'safety-lens'
 import type { Conversation } from '../conversation'
 
-export type View = <R>(
-  RootView:         (searchQuery: ?string, conversations: ?List<Conversation>) => R,
-  ConversationView: (id: ?string, uri: ?string, conversation: ?Conversation)   => R,
-  ComposeView:      () => R,
-  SettingsView:     () => R,
-  AddAccountView:   () => R
-) => R
+
+/* state types */
+
+export type View = RootView
+                 | ConversationView
+                 | ComposeView
+                 | SettingsView
+                 | AddAccountView
+
+class RootView {
+  searchQuery: ?string;
+  conversations: ?List<Conversation>;
+  constructor(searchQuery: ?string = null, conversations: ?List<Conversation> = null) {
+    this.searchQuery = searchQuery
+    this.conversations = conversations
+  }
+}
+
+class ConversationView {
+  id: ?string;
+  uri: ?string;
+  conversation: ?Conversation;
+  constructor(id: ?string, uri: ?string, conversation: ?Conversation = null) {
+    this.id = id
+    this.uri = uri
+    this.conversation = conversation
+  }
+}
+
+class ComposeView {}
+class SettingsView {}
+class AddAccountView {}
+
+
+/* state */
 
 export type ViewState = List<View>
 
-const initialState = List.of(RootView())
-
-
-/* View constructors */
-
-function RootView(searchQuery: ?string = null, conversations: ?List<Conversation> = null): ViewState {
-  return function<R>(a, b, c, d, e): R {
-    return a(searchQuery, conversations)
-  }
-}
-
-function ConversationView(id: ?string, uri: ?string, conversation: ?Conversation = null): ViewState {
-  return function<R>(a, b, c, d, e): R {
-    return b(id, uri, conversation)
-  }
-}
-
-function ComposeView(): ViewState {
-  return function<R>(a, b, c, d, e): R {
-    return c()
-  }
-}
-
-function SettingsView(): ViewState {
-  return function<R>(a, b, c, d, e): R {
-    return d()
-  }
-}
-
-function AddAccountView(): ViewState {
-  return function<R>(a, b, c, d, e): R {
-    return e()
-  }
-}
+const initialState = List.of(new RootView())
 
 
 /* lenses & helpers */

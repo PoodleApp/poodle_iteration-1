@@ -3,6 +3,7 @@
 import * as Sunshine                       from 'sunshine-framework/react'
 import React                               from 'react'
 import { compose, get, lookup }            from 'safety-lens'
+import { match, $ }                        from '../util/adt'
 import { parseMidUri }                     from '../models/message'
 import * as Act                            from '../derivedActivity'
 import * as State                          from '../state'
@@ -90,13 +91,13 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
     const { view, editing, loading, leftNavOpen, username, useremail } = this.state
     const backButton = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
 
-    const { content, iconLeft, title } = view(
-      /* RootView */ (searchQuery, conversations) => ({
+    const { content, iconLeft, title } = match(
+      $(ViewState.RootView, ({ searchQuery, conversations }) => ({
         content:  <Conversations />,
         iconLeft: undefined,
         title:    'Activity Stream',
-      }),
-      /* ConversationView */ (id, uri, conversation) => ({
+      })),
+      $(ViewState.ConversationView, ({ id, uri, conversation }) => ({
         content: <ConversationView
                   conversation={conversation}
                   editing={editing}
@@ -106,23 +107,23 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
                   />,
         iconLeft: backButton,
         title: conversation ? conversation.subject : '...',
-      }),
-      /* ComposeView */ () => ({
+      })),
+      $(ViewState.ComposeView, () => ({
         content: <ComposeView />,
         iconLeft: backButton,
         title: 'New Activity',
-      }),
-      /* SettingsView */ () => ({
+      })),
+      $(ViewState.SettingsView, () => ({
         content: <Settings />,
         iconLeft: backButton,
         title: 'Settings',
-      }),
-      /* AddAccountView */ () => ({
+      })),
+      $(ViewState.AddAccountView, () => ({
         content: <AddAccount />,
         iconLeft: backButton,
         title: 'Set up an account',
-      })
-    )
+      }))
+    )(view)
 
     const styles = this.getStyles()
     const { muiTheme } = (this.context:any)

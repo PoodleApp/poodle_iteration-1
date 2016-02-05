@@ -54,7 +54,7 @@ class ViewAccountSetup {}
 const reducers: Reducers<ViewState> = [
 
   reduce(ViewRoot, (state, { searchQuery }) => {
-    const view = State.RootView(searchQuery)
+    const view = new State.RootView(searchQuery)
 
     if (!searchQuery) {
       return update(State.pushView(view, state))
@@ -76,7 +76,7 @@ const reducers: Reducers<ViewState> = [
       .then(convs => asyncUpdate(state_ => {
         const view_ = lookup(State.view, state_)
         if (view_ == view) {
-          return State.replaceView(State.RootView(query, convs), state_)
+          return State.replaceView(new State.RootView(query, convs), state_)
         }
         else {
           return state_
@@ -86,7 +86,7 @@ const reducers: Reducers<ViewState> = [
   }),
 
   reduce(ViewCompose, (state, { params }) => update(
-    State.pushView(State.ComposeView, state)
+    State.pushView(new State.ComposeView, state)
   )),
 
   reduce(ViewActivity, (state, { uri }) => viewConversation(state, uri)),
@@ -96,11 +96,11 @@ const reducers: Reducers<ViewState> = [
   )),
 
   reduce(ViewSettings, (state, _) => update(
-    State.pushView(State.SettingsView, state)
+    State.pushView(new State.SettingsView, state)
   )),
 
   reduce(ViewAccountSetup, (state, _) => update(
-    State.pushView(State.AddAccountView, state)
+    State.pushView(new State.AddAccountView, state)
   )),
 
 ]
@@ -118,7 +118,7 @@ function viewConversation(state: ViewState, uri: ?string = null, id: ?string = n
   }
 
   const query = `rfc822msgid:${id}`
-  const view = State.ConversationView(id, uri)
+  const view = new State.ConversationView(id, uri)
 
   return {
     state: State.pushView(view, state),
@@ -139,7 +139,7 @@ function viewConversation(state: ViewState, uri: ?string = null, id: ?string = n
         return emit(new Error(`Could not find activity for given URI: ${uri}`))
       }
       else if (view_ == view) {
-        return State.replaceView(State.ConversationView(id, uri, conv), state_)
+        return State.replaceView(new State.ConversationView(id, uri, conv), state_)
       }
       else {
         return state_
