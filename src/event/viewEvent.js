@@ -91,7 +91,7 @@ const reducers: Reducers<ViewState> = [
 
   reduce(ViewActivity, (state, { uri }) => viewConversation(state, uri)),
 
-  reduce(ViewConversation, (state, { id, activityUri }) => update(
+  reduce(ViewConversation, (state, { id, activityUri }) => (
     viewConversation(state, activityUri, id)
   )),
 
