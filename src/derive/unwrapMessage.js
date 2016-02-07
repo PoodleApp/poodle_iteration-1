@@ -33,14 +33,14 @@ function unwrapMessage(message: Message): List<DerivedActivity> {
 
 // TODO: Should the synthetic note and unknown activities be derived activities?
 function asNote(message: Message): ?DerivedActivity {
-  var from = message.from[0]
-  var author = {
+  const from = message.from[0]
+  const author = {
     objectType: 'person',
     displayName: displayName(from),
     id: mailtoUri(from.address),
   }
   if (message.text || message.html) {
-    var activity = {
+    const activity = {
       title: message.subject,
       verb: (message.inReplyTo && message.inReplyTo.length > 0) ? 'reply' : 'post',
       object: {
@@ -58,7 +58,7 @@ function asNote(message: Message): ?DerivedActivity {
 }
 
 function unknownActivity(message: Message): DerivedActivity {
-  var activity = {
+  const activity = {
     title: message.subject,
     verb: 'unknown',
   }

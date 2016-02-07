@@ -44,7 +44,7 @@ type ConversationsState = {
   useremail: ?string,
 }
 
-var { Colors, Spacing } = Styles
+const { Colors, Spacing } = Styles
 
 export class Conversations extends Sunshine.Component<{},{},ConversationsState> {
   getState(state: State.AppState): ConversationsState {
@@ -58,10 +58,10 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
   }
 
   render(): React.Element {
-    var { conversations, useremail } = this.state
-    var user = useremail ? mailtoUri(useremail) : null
-    var activities = activityStream(user, conversations)
-    var headers = activities.map(([acts, conv], i) => (
+    const { conversations, useremail } = this.state
+    const user = useremail ? mailtoUri(useremail) : null
+    const activities = activityStream(user, conversations)
+    const headers = activities.map(([acts, conv], i) => (
       <div key={acts.map(Act.activityId).join(';')}>
         <ActivityHeader activities={acts} conversation={conv} user={user} />
         {i < activities.size - 1 ?
@@ -123,20 +123,20 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
   }
 
   render(): React.Element {
-    var conversation = this.props.conversation
+    const conversation = this.props.conversation
     if (!conversation) {
       return <p>Loading...</p>
     }
 
-    var styles = this.getStyles()
-    var { subject } = conversation
+    const styles = this.getStyles()
+    const { subject } = conversation
 
-    var activities = conversation.activities.map(act => (
+    const activities = conversation.activities.map(act => (
       <ActivityView activity={act} {...this.props} key={Act.activityId(act)} />
     ))
 
-    var people = flatParticipants(conversation).map(addr => {
-      var disp = displayName(addr)
+    const people = flatParticipants(conversation).map(addr => {
+      const disp = displayName(addr)
       return (
         <ListItem
           leftAvatar={addressAvatar(addr)}
@@ -148,7 +148,7 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
       )
     })
 
-    var doc = getDocument(conversation)
+    const doc = getDocument(conversation)
 
     return (
       <div>
@@ -174,6 +174,6 @@ ConversationView.contextTypes = {
 }
 
 function getDocument(conv: Conversation): ?DerivedActivity {
-  var act = conv.activities.first()
+  const act = conv.activities.first()
   if (Act.objectType(act) === 'document') { return act }
 }
