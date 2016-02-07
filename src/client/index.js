@@ -26,16 +26,12 @@ export {
 const router = makeRouter()
 
 const routingEvents = Kefir.stream(emitter => {
-  router.add('/', params => {
-    emitter.emit(new ViewEvent.ViewRoot(params.q))
-  })
+  // router.add('/', params => {
+  //   emitter.emit(new ViewEvent.ViewRoot(params.q))
+  // })
 
   router.add('/compose/:activityType', params => {
     emitter.emit(new ViewEvent.ViewCompose(immutable.fromJS(params)))
-  })
-
-  router.add('/conversations/:id', params => {
-    emitter.emit(new ViewEvent.ViewConversation(params.id))
   })
 
   router.add('/conversations/:id', params => {
