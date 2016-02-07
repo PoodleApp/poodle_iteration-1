@@ -37,7 +37,7 @@ import type { Conversation }    from '../conversation'
 import type { DerivedActivity } from '../derivedActivity'
 
 type ConversationsState = {
-  conversations: List<Conversation>,
+  conversations: ?List<Conversation>,
   loading: boolean,
   searchQuery: ?string,
   username: ?string,
@@ -48,9 +48,10 @@ const { Colors, Spacing } = Styles
 
 export class Conversations extends Sunshine.Component<{},{},ConversationsState> {
   getState(state: State.AppState): ConversationsState {
+    const conversations = lookup(State.conversations, state)
     return {
-      conversations: lookup(State.conversations, state) || List(),
-      loading:       get(State.isLoading, state),
+      conversations,
+      loading:       !conversations,
       searchQuery:   lookup(State.routeParam('q'), state),
       username:      lookup(State.username, state),
       useremail:     lookup(State.useremail, state),
@@ -60,14 +61,14 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
   render(): React.Element {
     const { conversations, useremail } = this.state
     const user = useremail ? mailtoUri(useremail) : null
-    const activities = activityStream(user, conversations)
+    const activities = conversations ? activityStream(user, conversations) : List()
     const headers = activities.map(([acts, conv], i) => (
       <div key={acts.map(Act.activityId).join(';')}>
         <ActivityHeader activities={acts} conversation={conv} user={user} />
         {i < activities.size - 1 ?
           <ListDivider inset={true} /> : ''}
       </div>
-    ))
+    )).toArray()
     return (
       <div>
         <Toolbar>
