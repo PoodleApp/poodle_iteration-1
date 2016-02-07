@@ -125,7 +125,7 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
   render(): React.Element {
     var conversation = this.props.conversation
     if (!conversation) {
-      return <p>not found</p>
+      return <p>Loading...</p>
     }
 
     var styles = this.getStyles()
