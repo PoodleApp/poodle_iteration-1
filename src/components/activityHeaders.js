@@ -7,6 +7,7 @@ import { uniqBy }      from '../util/immutable'
 import * as Act        from '../derivedActivity'
 import * as C          from '../conversation'
 import * as A          from '../models/address'
+import * as ViewEvent  from '../event/viewEvent'
 import { actorAvatar, addressAvatar } from './avatar'
 import { Avatar
        , ListItem
@@ -44,9 +45,13 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
         leftAvatar={actorAvatar(actors.first())}
         primaryText={`${names} ${verbed} "${conversation.subject}"`}
         secondaryText={<p>{partStr} — {Act.published(activities_.last()).fromNow()}</p>}
-        onTouchTap={() => window.location = `#/conversations/${conversation.id}`}
+        onTouchTap={() => this.onSelect(conversation)}
         />
     )
+  }
+
+  onSelect(conversation: Conversation) {
+    this.emit(new ViewEvent.ViewConversation(conversation.id))
   }
 }
 
@@ -59,9 +64,13 @@ class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
         leftAvatar={<Avatar>!</Avatar>}
         primaryText={`Your edit to "${conversation.subject}" failed due to a conflict with another edit`}
         secondaryText={<p>{Act.published(act).fromNow()}</p>}
-        onTouchTap={() => window.location = `#/conversations/${conversation.id}`}
+        onTouchTap={() => this.onSelect(conversation)}
         />
     )
+  }
+
+  onSelect(conversation: Conversation) {
+    this.emit(new ViewEvent.ViewConversation(conversation.id))
   }
 }
 

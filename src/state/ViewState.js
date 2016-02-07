@@ -56,7 +56,15 @@ const view: Lens_<ViewState,View> = lens(
 )
 
 function pushView(v: View, vs: ViewState): ViewState {
-  return vs.unshift(v)
+  // Under certain conditions, replace the view instead of pushing
+  const prevView = vs.first()
+  if (prevView instanceof RootView && v instanceof RootView &&
+      prevView.searchQuery === v.searchQuery) {
+    return replaceView(v, vs)
+  }
+  else {
+    return vs.unshift(v)
+  }
 }
 
 function popView(vs: ViewState): [?View, ViewState] {

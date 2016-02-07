@@ -40,13 +40,15 @@ class ViewActivity {
 class ViewConversation {
   id: string;
   activityUri: ?URI;
-  constructor(id: string, activityUri?: URI) {
+  constructor(id: string, activityUri: ?URI = null) {
     this.id = id
     this.activityUri = activityUri
   }
 }
 class ViewSettings {}
 class ViewAccountSetup {}
+
+class PopView {}
 
 
 /* reducers */
@@ -103,6 +105,10 @@ const reducers: Reducers<ViewState> = [
     State.pushView(new State.AddAccountView, state)
   )),
 
+  reduce(PopView, (state, _) => {
+    const [__, state_] = State.popView(state)
+    return update(state_)
+  })
 ]
 
 function viewConversation(state: ViewState, uri: ?string = null, id: ?string = null): EventResult<ViewState> {
@@ -157,6 +163,7 @@ function messageIdFromUri(uri: string): ?string {
 }
 
 export {
+  PopView,
   ViewAccountSetup,
   ViewActivity,
   ViewCompose,

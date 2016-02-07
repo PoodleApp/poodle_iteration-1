@@ -10,6 +10,7 @@ import { allNames, flatAsides, flatParticipants, lastActive } from '../conversat
 import { displayName }     from '../models/address'
 import * as State          from '../state'
 import * as Ev             from '../event'
+import * as ViewEvent      from '../event/viewEvent'
 import { activityStream }  from '../stream'
 import { ActivityView }    from './activities'
 import { ActivityHeader }  from './activityHeaders'
@@ -92,7 +93,8 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
 
   onSearch(event: Event) {
     event.preventDefault()
-    window.location = `#/?q=${encodeURIComponent(this.refs.query.getValue())}`
+    const q = this.refs.query.getValue()
+    this.emit(new ViewEvent.ViewRoot(q))
   }
 }
 

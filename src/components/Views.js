@@ -10,6 +10,7 @@ import * as State                          from '../state'
 import * as ViewState                      from '../state/ViewState.js'
 import * as CS                             from '../composer/state'
 import * as Ev                             from '../event'
+import * as ViewEvent                      from '../event/viewEvent'
 import { ComposeView }                     from './compose'
 import Settings                            from './Settings'
 import { Conversations, ConversationView } from './conversation'
@@ -89,7 +90,7 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
 
   render(): React.Element {
     const { view, editing, loading, leftNavOpen, username, useremail } = this.state
-    const backButton = <IconButton onTouchTap={() => window.history.back()}><ArrowBack /></IconButton>
+    const backButton = <IconButton onTouchTap={() => this.emit(new ViewEvent.PopView)}><ArrowBack /></IconButton>
 
     const { content, iconLeft, title } = match(
       $(ViewState.RootView, ({ searchQuery, conversations }) => ({
