@@ -5,6 +5,7 @@
 .*/sunshine-framework/examples/.*
 .*/test/fixtures/.*
 .*/fbjs/.*
+.*/babel.*
 static/.*
 
 [include]
