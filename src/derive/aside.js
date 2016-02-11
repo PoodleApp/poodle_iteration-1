@@ -5,32 +5,35 @@ import { flatParticipants }            from '../activity'
 import { ActivityRecord, syntheticId } from '../derivedActivity'
 import { unwrapMessage }               from './unwrapMessage'
 
-import type { Address }         from '../models/address'
-import type { Message }         from '../models/message'
-import type { Thread }          from '../models/thread'
-import type { DerivedActivity } from '../derivedActivity'
+import type { Map }                from 'immutable'
+import type { Address }            from '../models/address'
+import type { Message, MessageId } from '../models/message'
+import type { Thread }             from '../models/thread'
+import type { Activity }           from '../activity'
+import type { DerivedActivity }    from '../derivedActivity'
 
 export {
   aside,
   collapseAsides,
 }
 
-function collapseAsides(thread: Thread): List<DerivedActivity> {
-  return thread.flatMap(flatten.bind(null, Set()))
+function collapseAsides(thread: Thread, activityMap: Map<MessageId, List<Activity>>): List<DerivedActivity> {
+  return thread.flatMap(flatten.bind(null, Set(), activityMap))
 }
 
 function flatten(
   ppl:               Set<string>,
+  activityMap:       Map<string, List<Activity>>,
   [message, thread]: [Message, Thread]
 ): List<DerivedActivity> {
   var to   = Set(flatParticipants(List.of(message)).map(addr => addr.address))
   var ppl_ = ppl.union(to)
   var removed = ppl.subtract(to)
 
-  var activities = unwrapMessage(message)
+  var activities = unwrapMessage(message, activityMap)
   var replies = removed.size > 0 ?
-    thread.flatMap(flatten.bind(null, to)) :
-    thread.flatMap(flatten.bind(null, ppl.union(to)))
+    thread.flatMap(flatten.bind(null, to,            activityMap)) :
+    thread.flatMap(flatten.bind(null, ppl.union(to), activityMap))
   var withReplies = activities.concat(replies)
 
   if (removed.size > 0) {

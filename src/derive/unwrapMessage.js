@@ -1,21 +1,27 @@
 /* @flow */
 
-import { List }                                        from 'immutable'
-import { mailtoUri }                                   from '../activity'
-import { midUri, midPartUri, parseMidUri, resolveUri } from '../models/message'
-import { ActivityRecord }                              from '../derivedActivity'
-import { displayName }                                 from '../models/address'
+import { List }      from 'immutable'
+import { mailtoUri } from '../activity'
+import {
+  midUri,
+  midPartUri,
+  parseMidUri,
+  resolveUri,
+} from '../models/message'
+import { ActivityRecord } from '../derivedActivity'
+import { displayName }    from '../models/address'
 
-import type { Message }         from '../models/message'
-import type { Zack }            from '../activity'
-import type { DerivedActivity } from '../derivedActivity'
+import type { Map }                from 'immutable'
+import type { Message, MessageId } from '../models/message'
+import type { Activity, Zack }     from '../activity'
+import type { DerivedActivity }    from '../derivedActivity'
 
 export {
   unwrapMessage,
 }
 
-function unwrapMessage(message: Message): List<DerivedActivity> {
-  const activities = List(message.activities)
+function unwrapMessage(message: Message, activityMap: Map<MessageId, List<Activity>>): List<DerivedActivity> {
+  const activities = activityMap.get(message.messageId, List())
   .map(activity => new ActivityRecord({
     id: activity.id,
     activity,
@@ -29,7 +35,6 @@ function unwrapMessage(message: Message): List<DerivedActivity> {
     return List(note ? [note] : [unknownActivity(message)])
   }
 }
-
 
 // TODO: Should the synthetic note and unknown activities be derived activities?
 function asNote(message: Message): ?DerivedActivity {

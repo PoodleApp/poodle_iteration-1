@@ -74,7 +74,10 @@ const reducers: Reducers<ViewState> = [
         .last()
         .toPromise()
       })
-      .then(threads => threads.map(threadToConversation))
+      .then(threads => {
+        const convPromises = threads.map(threadToConversation)
+        return Promise.all(convPromises.toArray()).then(List)
+      })
       .then(convs => asyncUpdate(state_ => {
         const view_ = lookup(State.view, state_)
         if (view_ == view) {

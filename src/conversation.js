@@ -1,7 +1,7 @@
 /* @flow */
 
-import { List, Record, Set, is } from 'immutable'
-import { catMaybes }             from './maybe'
+import { List, Map, Record, Set, is } from 'immutable'
+import { catMaybes }                  from './maybe'
 import { collapseEdits
        , collapseLikes
        , getMessage
@@ -12,20 +12,21 @@ import { collapseEdits
        } from './derivedActivity'
 import { aside, collapseAsides } from './derive/aside'
 import { mailtoUri } from './activity'
+import * as Act      from './activity'
 import { midUri
        , midPartUri
        , parseMidUri
        , resolveUri
        }               from './models/message'
-import * as Act        from './activity'
 import { displayName } from './models/address'
+import { foldrThread } from './models/thread'
 
-import type { Moment }          from 'moment'
-import type { DerivedActivity } from './derivedActivity'
-import type { Activity, Zack }  from './activity'
-import type { Address }         from './models/address'
-import type { Message }         from './models/message'
-import type { Thread }          from './models/thread'
+import type { Moment }             from 'moment'
+import type { DerivedActivity }    from './derivedActivity'
+import type { Activity, Zack }     from './activity'
+import type { Address }            from './models/address'
+import type { Message, MessageId } from './models/message'
+import type { Thread }             from './models/thread'
 
 export {
   allNames,
@@ -44,7 +45,7 @@ export type Conversation = Record & {
   subject?:      string,
 }
 
-var ConversationRecord = Record({
+const ConversationRecord = Record({
   id:            null,
   activities:    null,
   allActivities: null,
@@ -72,16 +73,29 @@ function allNames(conv: Conversation): string[] {
   return flatParticipants(conv).map(displayName)
 }
 
-function threadToConversation(thread: Thread): Conversation {
-  const [{ messageId }, _] = thread.first()
-  const activities = collapseAsides(thread)
-  const conv = new ConversationRecord({
-    id:            messageId,
-    activities:    derive(activities),
-    allActivities: activities,
-    subject:       title(activities.first()) || '[no subject]',
+function threadToConversation(thread: Thread): Promise<Conversation> {
+  return getActivities(thread).then(activityMap => {
+    const [{ messageId }, _] = thread.first()
+    const activities = collapseAsides(thread, activityMap)
+    const conv = new ConversationRecord({
+      id:            messageId,
+      activities:    derive(activities),
+      allActivities: activities,
+      subject:       title(activities.first()) || '[no subject]',
+    })
+    return flatAsides(conv)
   })
-  return flatAsides(conv)
+}
+
+function getActivities(thread: Thread): Promise<Map<MessageId, List<Activity>>> {
+  const activityPromises: List<Promise<[MessageId, List<Activity>]>> = foldrThread((as, msg) => (
+    as.push(
+      Act.getActivities(msg).then(acts => [msg.messageId, acts])
+    )
+  ), List(), thread)
+  return Promise.all(activityPromises.toArray()).then(
+    pairs => pairs.reduce((map, [id, acts]) => map.set(id, acts), Map())
+  )
 }
 
 function derive(activities: List<DerivedActivity>): List<DerivedActivity> {

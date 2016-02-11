@@ -2,10 +2,14 @@
 
 import moment          from 'moment'
 import { List }        from 'immutable'
+import assign          from 'object-assign'
+import getRawBody      from 'raw-body'
 import { uniqBy }      from './util/immutable'
 import { displayName } from './models/address'
-import { parseMidUri
+import { midPartUri
+       , parseMidUri
        , resolveUri
+       , toplevelParts
        } from './models/message'
 
 import type { Moment }  from 'moment'
@@ -18,6 +22,7 @@ import type { Message
 export {
   actor,
   flatParticipants,
+  getActivities,
   mailtoUri,
   objectContent,
   participants,
@@ -71,6 +76,16 @@ export type MediaLink = {
 // }
 
 export type Zack = [Activity, Message]
+
+function getActivities(message: Message): Promise<List<Activity>> {
+  const parts = toplevelParts(part => part.contentType === 'application/activity+json', message)
+  return Promise.all(parts.map(part => (
+    getRawBody(part.stream, { encoding: 'utf8' })
+    .then(JSON.parse)
+    .then(json => assign(json, { id: midPartUri(part, message) }))
+  )))
+  .then(List)
+}
 
 function mailtoUri(email: Email): URI {
   // TODO: Should we normalize? Maybe lowercase?

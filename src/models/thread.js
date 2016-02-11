@@ -9,6 +9,7 @@ export type Thread = List<[Message, Thread]>
 
 export {
   buildThread,
+  foldrThread,
   insertMessage,
   getMessages,
   singleton,
@@ -62,4 +63,11 @@ function hasReferences(message: Message): boolean {
 
 function sortReplies(replies: Thread): Thread {
   return replies.sortBy(([msg, _]) => msg.receivedDate)
+}
+
+function foldrThread<T>(reducer: (accum: T, msg: Message) => T, init: T, thread: Thread): T {
+  return thread.reduceRight((t, [msg, subthread]) => {
+    const accum = reducer(t, msg)
+    return foldrThread(reducer, accum, subthread)
+  }, init)
 }
