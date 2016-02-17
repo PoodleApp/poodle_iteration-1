@@ -21,8 +21,10 @@ export {
 }
 
 function unwrapMessage(message: Message, activityMap: Map<MessageId, List<Activity>>): List<DerivedActivity> {
-  const activities = activityMap.get(message.messageId, List())
-  .map(activity => new ActivityRecord({
+  const as = activityMap.get(message.messageId, List())
+  if (!as) { throw `no activities for message ${message.messageId}` }
+
+  const activities = as.map(activity => new ActivityRecord({
     id: activity.id,
     activity,
     message,

@@ -111,7 +111,8 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
 function fallbackContent(acts: Burger[]): string {
   const contents  = List(acts).flatMap(([_, __, attachments]) => attachments)
   const textParts = contents.filter(c => c.contentType === 'text/plain')
-  const text      = textParts.length > 0 ? textParts.first().contents.toString('utf8') : ''
+  const firstPart = textParts.first()
+  const text      = firstPart ? firstPart.contents.toString('utf8') : ''
   return text
 }
 

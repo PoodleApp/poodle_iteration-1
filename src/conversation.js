@@ -75,13 +75,17 @@ function allNames(conv: Conversation): string[] {
 
 function threadToConversation(thread: Thread): Promise<Conversation> {
   return getActivities(thread).then(activityMap => {
-    const [{ messageId }, _] = thread.first()
+    const first = thread.first()
+    if (!first) { throw "thread may not be empty" }
+    const [{ messageId }, _] = first
     const activities = collapseAsides(thread, activityMap)
+    const firstActivity = activities.first()
+    if (!firstActivity) { throw "no activities found in thread" }
     const conv = new ConversationRecord({
       id:            messageId,
       activities:    derive(activities),
       allActivities: activities,
-      subject:       title(activities.first()) || '[no subject]',
+      subject:       title(firstActivity) || '[no subject]',
     })
     return flatAsides(conv)
   })
