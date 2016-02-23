@@ -176,5 +176,5 @@ ConversationView.contextTypes = {
 
 function getDocument(conv: Conversation): ?DerivedActivity {
   const act = conv.activities.first()
-  if (Act.objectType(act) === 'document') { return act }
+  if (act && Act.objectType(act) === 'document') { return act }
 }

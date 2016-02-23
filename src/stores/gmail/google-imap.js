@@ -28,7 +28,7 @@ export {
   openBox,
 }
 
-export type Message = ReadStream<string>
+export type Message = ReadStream
 
 var Connection: Class<Imap.Connection> = Imap.default
 
@@ -44,11 +44,11 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMessages(query: string, imap: Imap): Stream<Message> {
+function fetchMessages(query: string, imap: Imap): Stream<Message,any> {
   return _fetchMessages([['X-GM-RAW', query]], imap)
 }
 
-function _fetchMessages(criteria: any[], imap: Imap): Stream<Message> {
+function _fetchMessages(criteria: any[], imap: Imap): Stream<Message,any> {
   const uidsPromise = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search(criteria, cb))
   ))
@@ -57,7 +57,7 @@ function _fetchMessages(criteria: any[], imap: Imap): Stream<Message> {
   .flatMap(messageBodyStream)
 }
 
-function fetchConversations(query: string, imap: Imap, limit: number = 0): Stream<List<Message>> {
+function fetchConversations(query: string, imap: Imap, limit: number = 0): Stream<List<Message>,any> {
   const messageIds = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
@@ -85,15 +85,15 @@ function fetchConversations(query: string, imap: Imap, limit: number = 0): Strea
 }
 
 // TODO: Use 'changedsince' option defined by RFC4551
-function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<ImapMessage> {
+function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<ImapMessage,any> {
   return fromEventsWithEnd(imap.fetch(source, opts), 'message', (msg, seqno) => msg)
 }
 
-function attributes(message: ImapMessage): Stream<MessageAttributes> {
+function attributes(message: ImapMessage): Stream<MessageAttributes,any> {
   return fromEventsWithEnd(message, 'attributes')
 }
 
-function messageBodyStream(msg: ImapMessage): Stream<Message> {
+function messageBodyStream(msg: ImapMessage): Stream<Message,any> {
   return fromEventsWithEnd(msg, 'body', (stream, info) => stream)
 }
 
@@ -101,7 +101,7 @@ function fromEventsWithEnd<T>(
   eventSource: EventEmitter,
   eventName: string,
   transform: ?((...values: any) => T) = null
-): Stream<T> {
+): Stream<T,mixed> {
   return Kefir.stream(emitter => {
     eventSource.on(eventName, (...values) => {
       const value = transform ? transform(...values) : values[0]

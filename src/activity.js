@@ -13,6 +13,7 @@ import { midPartUri
        } from './models/message'
 
 import type { Moment }  from 'moment'
+import type { IndexedIterable, IndexedSeq } from 'immutable'
 import type { Address, Email } from './models/address'
 import type { Message
             , MessageId
@@ -92,7 +93,10 @@ function mailtoUri(email: Email): URI {
   return `mailto:${email}`
 }
 
-function participants(messages: List<Message>): { to: List<Address>, from: List<Address>, cc: List<Address> } {
+function participants(messages: IndexedIterable<Message>): { to:   IndexedSeq<Address>
+                                                           , from: IndexedSeq<Address>
+                                                           , cc:   IndexedSeq<Address>
+                                                           } {
   var { to, from, cc } = messages.reduce((ls, message) => ({
     to:   ls.to.concat((message.to || List()).filter(addr => !!addr)),
     from: ls.from.concat((message.from || List()).filter(addr => !!addr)),
@@ -105,7 +109,7 @@ function participants(messages: List<Message>): { to: List<Address>, from: List<
   }
 }
 
-function flatParticipants(messages: List<Message>): List<Address> {
+function flatParticipants(messages: IndexedIterable<Message>): IndexedSeq<Address> {
   var { from, to, cc } = participants(messages)
   return uniqBy(
     addr => addr.address,

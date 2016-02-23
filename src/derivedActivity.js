@@ -2,6 +2,7 @@
 
 import { List, Map, Record, Stack } from 'immutable'
 import { catMaybes, maybeToList }   from './maybe'
+import { constructor }              from './util/record'
 import { resolveUri }               from './models/message'
 import * as Act                     from './activity'
 import * as A                       from './models/address'
@@ -10,8 +11,9 @@ import type { Moment }                              from 'moment'
 import type { Activity, ActivityObject, URI, Zack } from './activity'
 import type { Address }                             from './models/address'
 import type { Message }                             from './models/message'
+import type { Constructor }                         from './util/record'
 
-export type DerivedActivity = Record & {
+export type DerivedActivity = {
   id:        string,
   activity:  ?Activity,  // original, unmutated activity
   actor:     ?Address,
@@ -24,7 +26,7 @@ export type DerivedActivity = Record & {
   attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
-var ActivityRecord = Record({
+const newDerivedActivity: Constructor<*,DerivedActivity> = constructor({
   actor:     undefined,
   activity:  undefined,
   id:        undefined,
@@ -294,7 +296,6 @@ function zack(activity: DerivedActivity): ?Zack {
 }
 
 export {
-  ActivityRecord,
   activityId,
   actor,
   collapseEdits,
@@ -307,6 +308,7 @@ export {
   likes,
   likeCount,
   getMessage,
+  newDerivedActivity,
   object,
   objectContent,
   objectType,

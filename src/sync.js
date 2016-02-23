@@ -22,7 +22,7 @@ import type { XOAuth2Generator } from './auth/tokenGenerator'
 import type { ThreadDoc }        from './sync/types'
 import type { Message, URI }     from './models/message'
 
-function sync(query: string, account: Config.Account): Stream<Object> {
+function sync(query: string, account: Config.Account): Stream<Object,any> {
   return Kefir.fromPromise(
     init(account)
   )
@@ -37,7 +37,7 @@ function init(account: Config.Account): Promise<PouchDB> {
   )
 }
 
-function getMessages(query: string, account: Config.Account, db: PouchDB): Stream<ThreadDoc[]> {
+function getMessages(query: string, account: Config.Account, db: PouchDB): Stream<ThreadDoc[],any> {
   return Kefir.fromPromise(
     getTokenGenerator(account).then(imap.getConnection)
   )

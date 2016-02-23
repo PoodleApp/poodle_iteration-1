@@ -3,43 +3,39 @@
 import * as fs          from 'fs'
 import * as path        from 'path'
 import mkdirp           from 'mkdirp'
-import { List, Record } from 'immutable'
+import { List }         from 'immutable'
+import { constructor }  from './util/record'
 
-export type Config = Record<{
+import type { Constructor } from './util/record'
+
+export type Config = {
   accounts: List<Account>,
   likeMessage: string,
-}>
+}
 
-export type Account = Record<{
+export type Account = {
   displayName: string,
   email: string,
-  databaseName: string,
-  databaseOptions: Object,
-}>
+}
 
-var ConfigRecord = Record({
+const newConfig: Constructor<Config,Config> = constructor({
   accounts: List(),
   likeMessage: '+1',
 })
 
-var AccountRecord = Record({
-  displayName: null,
-  email: null,
-  databaseName: null,
-  databaseOptions: null,
-})
+const newAccount: Constructor<{},Account> = constructor({})
 
 export {
-  ConfigRecord,
-  AccountRecord,
+  newConfig,
+  newAccount,
   loadConfig,
   saveConfig,
   loadAccount,
 }
 
-var home = process.env.HOME
-var configDir  = path.join(home || '', '.config', 'poodle')
-var configPath = path.join(configDir, 'config.json')
+const home = process.env.HOME
+const configDir  = path.join(home || '', '.config', 'poodle')
+const configPath = path.join(configDir, 'config.json')
 
 function loadConfig(): Promise<Config> {
   return new Promise(resolve => fs.exists(configPath, resolve)).then(exists => {
@@ -51,8 +47,8 @@ function loadConfig(): Promise<Config> {
           }
           else {
             const config = JSON.parse(data)
-            if (config.accounts) { config.accounts = List(config.accounts.map(a => new AccountRecord(a))) }
-            resolve(new ConfigRecord(config))
+            if (config.accounts) { config.accounts = List(config.accounts.map(newAccount)) }
+            resolve(newConfig(config))
           }
         })
       })
@@ -64,7 +60,7 @@ function loadConfig(): Promise<Config> {
 }
 
 function saveConfig(conf: Config): Promise<void> {
-  var json = JSON.stringify(conf)
+  const json = JSON.stringify(conf)
   return getConfigDir().then(dir => new Promise((resolve, reject) => {
     fs.writeFile(configPath, json, err => {
       if (err) { reject(err) } else { resolve(undefined) }
@@ -73,9 +69,10 @@ function saveConfig(conf: Config): Promise<void> {
 }
 
 function loadAccount(): Promise<Account> {
-  return loadConfig().then(config => (
-    !config.accounts.isEmpty() ? config.accounts.first() : Promise.reject("Please configure account settings")
-  ))
+  return loadConfig().then(config => {
+    const account = config.accounts.first()
+    return account || Promise.reject("Please configure account settings")
+  })
 }
 
 type Path = string

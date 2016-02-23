@@ -6,7 +6,7 @@ export {
   hasEnded,
 }
 
-function hasEnded<A>(obs: Observable<A>): boolean {
+function hasEnded(obs: Observable): boolean {
   let ended = false
   const cb = () => (ended = true)
   obs.onEnd(cb)

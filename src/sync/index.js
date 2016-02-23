@@ -74,7 +74,7 @@ function findThread(messageId: string, db: PouchDB): Promise<Thread[]> {
   ))
 }
 
-function parseMessage(messageStream: ReadStream): Stream<Object> {
+function parseMessage(messageStream: ReadStream): Stream<Object,any> {
   return Kefir.stream(emitter => {
     const mailparser = new MailParser({
       includeMimeTree:   true,

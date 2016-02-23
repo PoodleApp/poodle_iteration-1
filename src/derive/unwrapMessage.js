@@ -8,7 +8,7 @@ import {
   parseMidUri,
   resolveUri,
 } from '../models/message'
-import { ActivityRecord } from '../derivedActivity'
+import { newDerivedActivity } from '../derivedActivity'
 import { displayName }    from '../models/address'
 
 import type { Map }                from 'immutable'
@@ -24,7 +24,7 @@ function unwrapMessage(message: Message, activityMap: Map<MessageId, List<Activi
   const as = activityMap.get(message.messageId, List())
   if (!as) { throw `no activities for message ${message.messageId}` }
 
-  const activities = as.map(activity => new ActivityRecord({
+  const activities = as.map(activity => newDerivedActivity({
     id: activity.id,
     activity,
     message,
@@ -56,7 +56,7 @@ function asNote(message: Message): ?DerivedActivity {
         uri: midUri(message),
       }
     }
-    return new ActivityRecord({
+    return newDerivedActivity({
       id: midUri(message),
       activity,
       message,
@@ -69,7 +69,7 @@ function unknownActivity(message: Message): DerivedActivity {
     title: message.subject,
     verb: 'unknown',
   }
-  return new ActivityRecord({
+  return newDerivedActivity({
     id: midUri(message),
     activity,
     message,

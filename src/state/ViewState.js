@@ -45,7 +45,7 @@ class AddAccountView {}
 
 export type ViewState = List<View>
 
-const initialState = List.of(new RootView(null, List()))
+const initialState: List<View> = List.of(new RootView(null, List()))
 
 
 /* lenses & helpers */

@@ -1,7 +1,9 @@
 /* @flow */
 
-import { List, Map, Record, Set, is } from 'immutable'
-import { catMaybes }                  from './maybe'
+import { List, Map, Set, is } from 'immutable'
+import { set }                from 'safety-lens'
+import { prop }               from 'safety-lens/es2015'
+import { catMaybes }          from './maybe'
 import { collapseEdits
        , collapseLikes
        , getMessage
@@ -20,13 +22,16 @@ import { midUri
        }               from './models/message'
 import { displayName } from './models/address'
 import { foldrThread } from './models/thread'
+import { constructor } from './util/record'
 
+import type { IndexedSeq }         from 'immutable'
 import type { Moment }             from 'moment'
 import type { DerivedActivity }    from './derivedActivity'
 import type { Activity, Zack }     from './activity'
 import type { Address }            from './models/address'
 import type { Message, MessageId } from './models/message'
 import type { Thread }             from './models/thread'
+import type { Constructor }        from './util/record'
 
 export {
   allNames,
@@ -38,28 +43,27 @@ export {
   threadToConversation,
 }
 
-export type Conversation = Record & {
+export type Conversation = {
   id:            string,
   activities:    List<DerivedActivity>,
   allActivities: List<DerivedActivity>,
-  subject?:      string,
+  subject:       ?string,
 }
 
-const ConversationRecord = Record({
-  id:            null,
-  activities:    null,
-  allActivities: null,
-  subject:       null,
+const newConversation: Constructor<*,Conversation> = constructor({
+  activities:    List(),
+  allActivities: List(),
+  subject:       undefined,
 })
 
 function asideToConversation(activity: DerivedActivity): Conversation {
   if (activity.verb !== 'aside') {
     throw 'Cannot convert non-aside activity to conversation'
   }
-  return new ConversationRecord({
+  return newConversation({
     id: syntheticId(),
-    activities: activity.aside,
-    allActivities: activity.allActivities,
+    activities: activity.aside || List(),
+    allActivities: activity.allActivities || List(),
     subject: 'private aside',
   })
 }
@@ -81,7 +85,7 @@ function threadToConversation(thread: Thread): Promise<Conversation> {
     const activities = collapseAsides(thread, activityMap)
     const firstActivity = activities.first()
     if (!firstActivity) { throw "no activities found in thread" }
-    const conv = new ConversationRecord({
+    const conv = newConversation({
       id:            messageId,
       activities:    derive(activities),
       allActivities: activities,
@@ -103,15 +107,15 @@ function getActivities(thread: Thread): Promise<Map<MessageId, List<Activity>>> 
 }
 
 function derive(activities: List<DerivedActivity>): List<DerivedActivity> {
-  var context = activities.sortBy(published)
-  var withJoins = activities
+  const context = activities.sortBy(published)
+  const withJoins = activities
     .flatMap(insertJoins.bind(null, context))
-  var collapsed = withJoins
+  const collapsed = withJoins
     .flatMap(collapseLikes.bind(null, context))
     .flatMap(collapseEdits.bind(null, context))
   return collapsed.map(act => {
     if (act.aside) {
-      return act.set('aside', derive(act.aside))
+      return set(prop('aside'), derive(act.aside), act)
     }
     else {
       return act
@@ -119,13 +123,16 @@ function derive(activities: List<DerivedActivity>): List<DerivedActivity> {
   })
 }
 
-function participants(conv: Conversation): { to: Address[], from: Address[], cc: Address[] } {
-  var acts = conv.allActivities || List()
+function participants(conv: Conversation): { to:   IndexedSeq<Address>
+                                           , from: IndexedSeq<Address>
+                                           , cc:   IndexedSeq<Address>
+                                           } {
+  const acts = conv.allActivities || List()
   return Act.participants(catMaybes(acts.map(getMessage)))
 }
 
-function flatParticipants(conv: Conversation): Address[] {
-  var acts = conv.allActivities || List()
+function flatParticipants(conv: Conversation): IndexedSeq<Address> {
+  const acts = conv.allActivities || List()
   return Act.flatParticipants(catMaybes(acts.map(getMessage)))
 }
 
@@ -138,13 +145,13 @@ type FlatActivity = {
 type AsideId = Set<String>
 
 function flatAsides(conv: Conversation): Conversation {
-  var activities = conv.activities.flatMap(flatHelper.bind(null, Set(), conv)).sortBy(act => (
+  const activities = conv.activities.flatMap(flatHelper.bind(null, Set(), conv)).sortBy(act => (
     published(act.activity)
   ))
   // Combine adjacent activities with same asideId into groups
   .reduce((groups, act) => {
-    var group = groups.last() || null
-    var lastAsideId = group ? group.first().asideId : null
+    const group = groups.last()
+    const lastAsideId = group ? group.first().asideId : null
     if (group && is(lastAsideId, act.asideId)) {
       return groups.butLast().push(group.push(act))
     }
@@ -153,12 +160,12 @@ function flatAsides(conv: Conversation): Conversation {
     }
   }, List())
   .flatMap(group => {
-    var asideId = group.first().asideId
+    const asideId = group.first().asideId
     if (asideId.size === 0) {
       return group.map(a => a.activity)
     }
     else {
-      var conv = group.first().conversation
+      const conv = group.first().conversation
       return List.of(aside(group.map(a => a.activity), conv.allActivities))
     }
   })
@@ -167,8 +174,8 @@ function flatAsides(conv: Conversation): Conversation {
 
 function flatHelper(asideId: AsideId, conversation: Conversation, activity: DerivedActivity): List<FlatActivity> {
   if (activity.verb === 'aside') {
-    var conv = asideToConversation(activity)
-    var id = Set(flatParticipants(conv).map(addr => addr.address))
+    const conv = asideToConversation(activity)
+    const id = Set(flatParticipants(conv).map(addr => addr.address))
     return activity.aside.flatMap(flatHelper.bind(null, id, conv))
   }
   else {

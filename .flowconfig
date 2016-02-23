@@ -12,7 +12,5 @@ static/.*
 
 [libs]
 ./types/
-./node_modules/sunshine-framework/types/
-./node_modules/safety-lens/types/
 
 [options]

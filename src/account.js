@@ -3,6 +3,8 @@
 import { List } from 'immutable'
 import keytar from 'keytar'
 import google from 'googleapis'
+import { set } from 'safety-lens'
+import { prop } from 'safety-lens/es2015'
 import { getAccessToken, oauthClient } from './stores/gmail/google-oauth'
 import * as Config from './config'
 
@@ -41,20 +43,20 @@ export type Profile = {
 type Email = string
 type URL   = string
 
-var scopes = [
+const scopes = [
   'email',  // get user's email address
   'https://mail.google.com/',  // IMAP and SMTP access
   'https://www.googleapis.com/auth/contacts.readonly',  // contacts, read-only
 ]
-var client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
-var client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
+const client_id = '550977579314-ot07bt4ljs7pqenefen7c26nr80e492p.apps.googleusercontent.com'
+const client_secret = 'ltQpgi6ce3VbWgxCXzCgKEEG'
 
 function setupGoogle(email: string): Promise<Config.Account> {
   return getAccessToken({
     client_id, client_secret, scopes, login_hint: email
   }).then(creds => {
-    var plus = google.plus('v1')
-    var oauth = oauthClient(client_id, client_secret)
+    const plus = google.plus('v1')
+    const oauth = oauthClient(client_id, client_secret)
     oauth.setCredentials(creds)
     return new Promise((resolve, reject) => {
       plus.people.get({ userId: 'me', auth: oauth }, (err, resp) => {
@@ -62,8 +64,8 @@ function setupGoogle(email: string): Promise<Config.Account> {
       })
     })
     .then(profile => {
-      var json = JSON.stringify(creds)
-      var addedPassword = accountEmails(profile.emails).reduce((success, e) => {
+      const json = JSON.stringify(creds)
+      const addedPassword = accountEmails(profile.emails).reduce((success, e) => {
         return success && keytar.addPassword('Poodle', e, json)
       }, true)
       if (addedPassword) {
@@ -75,17 +77,17 @@ function setupGoogle(email: string): Promise<Config.Account> {
     })
   })
   .then(({ displayName, emails }) => {
-    var email = accountEmails(emails)[0]
+    const email = accountEmails(emails)[0]
     return Config.loadConfig().then(config => {
-      var account = new Config.AccountRecord({ displayName, email })
-      var config_ = config.set('accounts', List.of(account))
+      const account = Config.newAccount({ displayName, email })
+      const config_ = set(prop('accounts'), List.of(account), config)
       return Config.saveConfig(config_).then(() => account)
     })
   })
 }
 
 function getGoogleCredentials(email: Email): ?OauthCredentials {
-  var json = keytar.getPassword('Poodle', email)
+  const json = keytar.getPassword('Poodle', email)
   if (json) { return JSON.parse(json) }
 }
 

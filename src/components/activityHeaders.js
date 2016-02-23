@@ -13,6 +13,7 @@ import { Avatar
        , ListItem
        } from 'material-ui'
 
+import type { IndexedIterable, IndexedSeq } from 'immutable'
 import type { DerivedActivity }     from '../derivedActivity'
 import type { Conversation }        from '../conversation'
 import type { ActivityObject, URI } from '../activity'
@@ -25,26 +26,27 @@ export type HeaderProps = {
 
 export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
   render(): React.Element {
-    var { conversation, user } = this.props
-    var activities  = getActivities(user, this.props.activities)
-    var verb        = primeVerb(activities)
-    var activities_ = activities.filter(act => Act.verb(act) === verb)
+    const { conversation, user } = this.props
+    const activities  = getActivities(user, this.props.activities)
+    const verb        = primeVerb(activities)
+    const activities_ = activities.filter(act => Act.verb(act) === verb)
 
     if (primeVerb === 'conflict') {
       return <ConflictHeader {...this.props} activities={activities_} />
     }
 
-    var actors  = getActors(user, activities_)
-    var names   = joinNames(user, actors)
-    var verbed  = displayVerb(verb, actors)
-    var ppl     = C.flatParticipants(conversation)
-    var partStr = ppl.map(A.displayName).join(', ')
+    const actors  = getActors(user, activities_)
+    const names   = joinNames(user, actors)
+    const verbed  = displayVerb(verb, actors)
+    const ppl     = C.flatParticipants(conversation)
+    const partStr = ppl.map(A.displayName).join(', ')
+    const last    = activities_.last() || Act.derivedActivity()
 
     return (
       <ListItem
         leftAvatar={actorAvatar(actors.first())}
         primaryText={`${names} ${verbed} "${conversation.subject}"`}
-        secondaryText={<p>{partStr} — {Act.published(activities_.last()).fromNow()}</p>}
+        secondaryText={<p>{partStr} — {Act.published(last).fromNow()}</p>}
         onTouchTap={() => this.onSelect(conversation)}
         />
     )
@@ -57,8 +59,8 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
 
 class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
   render(): React.Element {
-    var { activities, conversation } = this.props
-    var act = activities.last()
+    const { activities, conversation } = this.props
+    const act = activities.last()
     return (
       <ListItem
         leftAvatar={<Avatar>!</Avatar>}
@@ -75,31 +77,33 @@ class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
 }
 
 function primeVerb(activities: List<DerivedActivity>): string {
-  var verb = ['conflict', 'post', 'reply', 'edit', 'like'].find(v => (
+  const verb = ['conflict', 'post', 'reply', 'edit', 'like'].find(v => (
     activities.some(act => Act.verb(act) === v)
   ))
-  return verb || Act.verb(activities.first())
+  const first = activities.first()
+  if (!first) { throw "no activities" }
+  return verb || Act.verb(first)
 }
 
 function getActivities(user: ?URI, activities: List<DerivedActivity>): List<DerivedActivity> {
-  var othersActivities = activities.filter(act => {
-    var p = Act.actor(act)
+  const othersActivities = activities.filter(act => {
+    const p = Act.actor(act)
     return !p || !user || (p.uri !== user)
   })
   return othersActivities.size > 0 ? othersActivities : activities
 }
 
-function getActors(user: ?URI, activities: List<DerivedActivity>): List<ActivityObject> {
-  var actors = activities.map(act => Act.actor(act)).filter(p => !!p)
+function getActors(user: ?URI, activities: IndexedIterable<DerivedActivity>): IndexedSeq<ActivityObject> {
+  const actors = activities.map(act => Act.actor(act)).filter(p => !!p)
   return uniqBy(a => a.uri, actors)
 }
 
-function joinNames(user: ?URI, actors: List<ActivityObject>): string {
-  var ns = actors.map((a, i) => displayName(user, a, i))
-  if (ns.size === 2) {
+function joinNames(user: ?URI, actors: IndexedIterable<ActivityObject>): string {
+  const ns = actors.map((a, i) => displayName(user, a, i))
+  if (ns.count() === 2) {
     return ns.join(' and ')
   }
-  else if (ns.size > 2) {
+  else if (ns.count() > 2) {
     return `${ns.butLast().join(', ')}, and ${ns.last()}`
   }
   else {
@@ -119,7 +123,7 @@ function displayName(user: ?URI, actor: ?ActivityObject, idx: number): string {
   }
 }
 
-function displayVerb(v: string, actors: List<ActivityObject>): string {
+function displayVerb(v: string, actors: IndexedIterable<ActivityObject>): string {
   if (v === 'reply') {
     return 'commented on'
   }
@@ -127,7 +131,7 @@ function displayVerb(v: string, actors: List<ActivityObject>): string {
     return 'edited'
   }
   else if (v === 'like') {
-    return actors.size > 1 ? 'like' : 'likes'
+    return actors.count() > 1 ? 'like' : 'likes'
   }
   else {
     return v+'ed'

@@ -2,7 +2,7 @@
 
 import { List, Set }                   from 'immutable'
 import { flatParticipants }            from '../activity'
-import { ActivityRecord, syntheticId } from '../derivedActivity'
+import { newDerivedActivity, syntheticId } from '../derivedActivity'
 import { unwrapMessage }               from './unwrapMessage'
 
 import type { Map }                from 'immutable'
@@ -45,7 +45,7 @@ function flatten(
 }
 
 function aside(activities: List<DerivedActivity>, allActivities: List<DerivedActivity>): DerivedActivity {
-  return new ActivityRecord({
+  return newDerivedActivity({
     id:    syntheticId(),
     aside: activities,
     allActivities,

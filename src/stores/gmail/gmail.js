@@ -13,7 +13,7 @@ import type { Message }          from '../../models/message'
 import type { Thread }           from '../../models/thread'
 import type { XOAuth2Generator } from './tokenGenerator'
 
-function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread> {
+function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread,any> {
   return Kefir.fromPromise(
     imap.getConnection(tokenGenerator)
   )
@@ -28,7 +28,7 @@ function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread>
   })
 }
 
-function parseMessage(messageStream: ReadStream): Stream<Message> {
+function parseMessage(messageStream: ReadStream): Stream<Message,any> {
   return Kefir.stream(emitter => {
     const mailparser = new MailParser({
       includeMimeTree:   true,

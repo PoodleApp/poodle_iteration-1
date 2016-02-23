@@ -82,7 +82,6 @@ const useremail: Traversal_<AppState,string> =
   compose(useraccount, field('email'))
 
 const likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
-const notmuchCmd: Traversal_<AppState,string> = compose(config_, field('notmuchCmd'))
 
 const leftNavOpen: Lens_<AppState,boolean> = field('leftNavOpen')
 

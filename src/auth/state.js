@@ -5,13 +5,15 @@ import xoauth2    from 'xoauth2'
 import { field }  from 'safety-lens/immutable'
 import { lift1 }  from '../util/promises'
 
-export type AuthState = Record<{
+type AuthStateSpec = {
   tokenGen: ?Object,
-}>
+}
 
-var AuthStateRecord = Record({
+export type AuthState = AuthStateSpec & Record<AuthStateSpec>
+
+var AuthStateRecord = Record(({
   tokenGen: null,
-})
+}: AuthStateSpec))
 
 var initialState = new AuthStateRecord()
 
@@ -20,7 +22,8 @@ var tokenGen = field('tokenGen')
 function getToken(state: AuthState): Promise<string> {
   var { tokenGen } = state
   if (!tokenGen) { return Promise.reject("No token generator is available") }
-  return lift1(cb => tokenGen.getToken(cb))
+  const gen = tokenGen
+  return lift1(cb => gen.getToken(cb))
 }
 
 
