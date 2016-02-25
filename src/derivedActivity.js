@@ -28,13 +28,7 @@ export type DerivedActivity = {
   attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
-type DerivedActivityDefaults = {
-  likes:     Map<URI, ActivityObject>,
-  revisions: Stack<DerivedActivity>,
-  attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
-}
-
-const newDerivedActivity: Constructor<DerivedActivityDefaults,DerivedActivity> = constructor({
+const newDerivedActivity: Constructor<{ id: string },DerivedActivity> = constructor({
   likes:     Map(),
   revisions: Stack(),
   attachments: List(),

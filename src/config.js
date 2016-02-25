@@ -18,12 +18,12 @@ export type Account = {
   email: string,
 }
 
-const newConfig: Constructor<Config,Config> = constructor({
+const newConfig: Constructor<{},Config> = constructor({
   accounts: List(),
   likeMessage: '+1',
 })
 
-const newAccount: Constructor<{},Account> = constructor({})
+const newAccount: Constructor<Account,Account> = constructor({})
 
 export {
   newConfig,
