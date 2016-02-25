@@ -31,7 +31,7 @@ function conversationActivities(user: ?URI, conv: Conversation): List<Presentati
 // Like flatAsides, but lifts activities into top-level conversation instead of
 // producing flattened aside activities.
 function promoteAsides(act: DerivedActivity): List<DerivedActivity> {
-  if (Act.verb(act) === 'aside') {
+  if (Act.verb(act) === 'aside' && act.aside) {
     return act.aside.flatMap(promoteAsides)
   }
   else {

@@ -72,7 +72,7 @@ const showLink = field('showLink')
 const searchQuery: Fold<any,AppState,string> = compose(view, key('searchQuery'))
 
 const config: Lens_<AppState,?Config> = field('config')
-const config_: Traversal_<AppState,Config> = compose(config, filtering(c => !!c))
+const config_: Traversal_<AppState,Config> = compose(field('config'), filtering(c => !!c))
 
 const useraccount: Traversal_<AppState,Account> =
   compose(compose(config_, field('accounts')), index(0))
@@ -129,7 +129,6 @@ export {
   // lookupUri,
   leftNavOpen,
   notification,
-  notmuchCmd,
   routeParam,
   routeParams,
   searchQuery,

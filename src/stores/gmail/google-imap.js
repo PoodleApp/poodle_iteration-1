@@ -1,7 +1,7 @@
 /* @flow */
 
 import { List, Seq, Set } from 'immutable'
-import * as Imap          from 'imap'
+import Connection         from 'imap'
 import * as Kefir         from 'kefir'
 import { inspect }        from 'util'
 import { lift1, lift0 }   from '../../util/promises'
@@ -9,7 +9,6 @@ import { lift1, lift0 }   from '../../util/promises'
 import type { Box, ImapMessage, ImapOpts, MessageAttributes } from 'imap'
 import type { Stream }           from 'kefir'
 import type { ReadStream }       from 'fs'
-import type { EventEmitter }     from 'events'
 import type { OauthCredentials } from './google-oauth'
 import type { XOAuth2Generator } from './tokenGenerator'
 
@@ -30,9 +29,7 @@ export {
 
 export type Message = ReadStream
 
-var Connection: Class<Imap.Connection> = Imap.default
-
-function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
+function getConnection(tokenGen: XOAuth2Generator): Promise<Connection> {
   return lift1(cb => tokenGen.getToken(cb))
   .then(auth => initImap({
     xoauth2: auth,
@@ -44,11 +41,11 @@ function getConnection(tokenGen: XOAuth2Generator): Promise<Imap> {
 
 // query is a Gmail search query.
 // E.g.: newer_than:2d
-function fetchMessages(query: string, imap: Imap): Stream<Message,any> {
+function fetchMessages(query: string, imap: Connection): Stream<Message,any> {
   return _fetchMessages([['X-GM-RAW', query]], imap)
 }
 
-function _fetchMessages(criteria: any[], imap: Imap): Stream<Message,any> {
+function _fetchMessages(criteria: any[], imap: Connection): Stream<Message,any> {
   const uidsPromise = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search(criteria, cb))
   ))
@@ -57,7 +54,7 @@ function _fetchMessages(criteria: any[], imap: Imap): Stream<Message,any> {
   .flatMap(messageBodyStream)
 }
 
-function fetchConversations(query: string, imap: Imap, limit: number = 0): Stream<List<Message>,any> {
+function fetchConversations(query: string, imap: Connection, limit: number = 0): Stream<List<Message>,any> {
   const messageIds = openAllMail(true, imap).then(box => (
     lift1(cb => imap.search([['X-GM-RAW', query]], cb))
   ))
@@ -85,7 +82,7 @@ function fetchConversations(query: string, imap: Imap, limit: number = 0): Strea
 }
 
 // TODO: Use 'changedsince' option defined by RFC4551
-function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Imap): Stream<ImapMessage,any> {
+function fetch(source: imap$MessageSource, opts: imap$FetchOptions, imap: Connection): Stream<ImapMessage,any> {
   return fromEventsWithEnd(imap.fetch(source, opts), 'message', (msg, seqno) => msg)
 }
 
@@ -97,8 +94,8 @@ function messageBodyStream(msg: ImapMessage): Stream<Message,any> {
   return fromEventsWithEnd(msg, 'body', (stream, info) => stream)
 }
 
-function fromEventsWithEnd<T>(
-  eventSource: EventEmitter,
+function fromEventsWithEnd<T,S:events$EventEmitter>(
+  eventSource: S,
   eventName: string,
   transform: ?((...values: any) => T) = null
 ): Stream<T,mixed> {
@@ -151,7 +148,7 @@ function fromEventsWithEnd<T>(
 //   'x-gm-msgid': '1512928130170660058',
 //   'x-gm-thrid': '1512928130170660058' }
 
-function initImap(opts: ImapOpts): Promise<Imap> {
+function initImap(opts: ImapOpts): Promise<Connection> {
   var imap = new Connection(opts)
   var p = new Promise((resolve, reject) => {
     imap.once('ready', () => resolve(imap))
@@ -161,31 +158,31 @@ function initImap(opts: ImapOpts): Promise<Imap> {
   return p
 }
 
-function openInbox(readonly: boolean, imap: Imap): Promise<Box> {
+function openInbox(readonly: boolean, imap: Connection): Promise<Box> {
   return lift1(cb => imap.openBox('INBOX', readonly, cb))
 }
 
-function openAllMail(readonly: boolean, imap: Imap): Promise<Box> {
+function openAllMail(readonly: boolean, imap: Connection): Promise<Box> {
   return openBox(boxByAttribute('\\All'), readonly, imap)
 }
 
-function openDrafts(readonly: boolean, imap: Imap): Promise<Box> {
+function openDrafts(readonly: boolean, imap: Connection): Promise<Box> {
   return openBox(boxByAttribute('\\Drafts'), readonly, imap)
 }
 
-function openImportant(readonly: boolean, imap: Imap): Promise<Box> {
+function openImportant(readonly: boolean, imap: Connection): Promise<Box> {
   return openBox(boxByAttribute('\\Important'), readonly, imap)
 }
 
-function openSent(readonly: boolean, imap: Imap): Promise<Box> {
+function openSent(readonly: boolean, imap: Connection): Promise<Box> {
   return openBox(boxByAttribute('\\Sent'), readonly, imap)
 }
 
-function openFlagged(readonly: boolean, imap: Imap): Promise<Box> {
+function openFlagged(readonly: boolean, imap: Connection): Promise<Box> {
   return openBox(boxByAttribute('\\Flagged'), readonly, imap)
 }
 
-function openTrash(readonly: boolean, imap: Imap): Promise<Box> {
+function openTrash(readonly: boolean, imap: Connection): Promise<Box> {
   return openBox(boxByAttribute('\\Trash'), readonly, imap)
 }
 
@@ -193,7 +190,7 @@ function boxByAttribute(attribute: string): (box: Box) => boolean {
   return box => box.attribs.some(a => a === attribute)
 }
 
-function openBox(p: (box: imap$Box) => boolean, readonly: boolean, imap: Imap): Promise<Box> {
+function openBox(p: (box: imap$Box) => boolean, readonly: boolean, imap: Connection): Promise<Box> {
   return lift1(cb => imap.getBoxes(cb)).then(boxes => {
     var match = findBox(p, boxes)
     if (match) {

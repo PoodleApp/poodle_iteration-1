@@ -18,7 +18,7 @@ import type { Constructor }                         from './util/record'
 export type DerivedActivity = {
   id:        string,
   activity?: Activity,  // original, unmutated activity
-  actor?:    Address,
+  actor?:    ActivityObject,
   aside?:    List<DerivedActivity>,
   likes:     Map<URI, ActivityObject>,
   message?:  Message,   // message containing original activity, for context
@@ -206,9 +206,6 @@ function objectContent(activity: DerivedActivity): { contentType: string, conten
 
   const z = zack(activity)
   const uri = z ? Act.objectContent(z) : null
-  if (!activity.attachments) {
-    console.log(activity.toJSON())
-  }
   return activity.attachments.filter(a => a.uri === uri)
 }
 
@@ -224,8 +221,10 @@ function published(activity: DerivedActivity): Moment {
   var { activity: act, message: msg } = activity
   if (act && msg) {
     return Act.published([act, msg])
-  } else {
-    return published(activity.aside.first())
+  } else if (activity.aside) {
+    const first = activity.aside.first()
+    if (!first) { throw "no first activity in aside" } // TODO
+    return published(first)
   }
 }
 

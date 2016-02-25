@@ -83,6 +83,7 @@ type imap$FetchOptions = {
 }
 
 type imap$MessageSource = string | string[]
+type imap$UID = string
 
 declare class imap$ImapFetch extends events$EventEmitter {}
 // ImapFetch events:
@@ -113,6 +114,7 @@ declare class imap$ConnectionSeq {
 }
 
 declare module "imap" {
+
   declare class Connection extends events$EventEmitter {
     state:     string;  // eg. 'disconnected', 'connected', 'authenticated'
     delimiter: ?string; // folder hierarchy delimiter
@@ -128,6 +130,10 @@ declare module "imap" {
     destroy(): void;
     openBox(mailboxName: string, openReadOnly?: boolean, modifiers?: Object,
             cb: (err: Error, mailbox: imap$Box) => void): void;
+    openBox(mailboxName: string, openReadOnly?: boolean,
+            cb: (err: Error, mailbox: imap$Box) => void): void;
+    openBox(mailboxName: string,
+            cb: (err: Error, mailbox: imap$Box) => void): void;
     closeBox(autoExpunge?: boolean, cb: (err: Error) => void): void;
     addBox(mailboxName: string, cb: (err: Error) => void): void;
     delBox(mailboxName: string, cb: (err: Error) => void): void;
@@ -135,8 +141,11 @@ declare module "imap" {
     subscribeBox(mailboxName: string, cb: (err: Error) => void): void;
     unsubscribeBox(mailboxName: string, cb: (err: Error) => void): void;
     status(mailboxName: string, cb: (err: Error, box: imap$Box) => void): void;
-    getBoxes(nsPrefix?: string, cb: (err: Error, boxes: imap$Boxes) => void): void;
+    getBoxes(nsPrefix: string, cb: (err: Error, boxes: imap$Boxes) => void): void;
+    getBoxes(cb: (err: Error, boxes: imap$Boxes) => void): void;
     getSubscribedBoxes(nsPrefix?: string, cb: (err: Error, boxes: imap$Boxes) => void): void;
+
+    search(criteria: any[], cb: (err: Error, uids: imap$UID[]) => any): void;
 
     // All of these methods have sequence-based counterparts. Those are declared
     // in `imap$ConnectionSeq`.
@@ -154,5 +163,10 @@ declare module "imap" {
   // - 'close' : (hadError: boolean)
   // - 'end' : ()
 
-  declare type ImapOpts = imap$ImapOpts;
+  declare var exports: typeof Connection
+
+  declare type Box               = imap$Box
+  declare type ImapMessage       = imap$ImapMessage
+  declare type ImapOpts          = imap$ImapOpts
+  declare type MessageAttributes = imap$MessageAttributes
 }
