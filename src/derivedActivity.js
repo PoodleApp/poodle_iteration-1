@@ -1,6 +1,8 @@
 /* @flow */
 
 import { List, Map, Record, Stack } from 'immutable'
+import { set }                      from 'safety-lens'
+import { prop }                     from 'safety-lens/es2015'
 import { catMaybes, maybeToList }   from './maybe'
 import { constructor }              from './util/record'
 import { resolveUri }               from './models/message'
@@ -15,27 +17,26 @@ import type { Constructor }                         from './util/record'
 
 export type DerivedActivity = {
   id:        string,
-  activity:  ?Activity,  // original, unmutated activity
-  actor:     ?Address,
-  aside:     ?List<DerivedActivity>,
+  activity?: Activity,  // original, unmutated activity
+  actor?:    Address,
+  aside?:    List<DerivedActivity>,
   likes:     Map<URI, ActivityObject>,
-  message:   ?Message,   // message containing original activity, for context
+  message?:  Message,   // message containing original activity, for context
   revisions: Stack<DerivedActivity>,
-  verb:      ?DerivedVerb,
-  allActivities: ?List<DerivedActivity>,
+  verb?:     DerivedVerb,
+  allActivities?: List<DerivedActivity>,
   attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
-const newDerivedActivity: Constructor<*,DerivedActivity> = constructor({
-  actor:     undefined,
-  activity:  undefined,
-  id:        undefined,
-  message:   undefined,
+type DerivedActivityDefaults = {
+  likes:     Map<URI, ActivityObject>,
+  revisions: Stack<DerivedActivity>,
+  attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
+}
+
+const newDerivedActivity: Constructor<DerivedActivityDefaults,DerivedActivity> = constructor({
   likes:     Map(),
   revisions: Stack(),
-  verb:      null,
-  aside:     null,
-  allActivities: null,
   attachments: List(),
 })
 
@@ -65,7 +66,7 @@ function collapseLikes(
   }, Map())
 
   return List.of(
-    activity.set('likes', likes)
+    set(prop('likes'), likes, activity)
   )
 }
 
@@ -94,7 +95,7 @@ function collapseEdits(
   }, [Stack.of(activity), List()])
 
   return conflicts.unshift(
-    activity.set('revisions', revisions.filter(r => r !== activity))
+    set(prop('revisions'), revisions.filter(r => r !== activity), activity)
   )
 }
 
@@ -125,10 +126,10 @@ function insertJoins(
     return List.of(activity)
   }
   var addedActs = added.map(p => (
-    activity
-    .set('actor', { uri: Act.mailtoUri(p.address), objectType: 'person', displayName: A.displayName(p) })
-    .set('verb', 'join')
-    .set('id', syntheticId())
+    set(prop('actor'), { uri: Act.mailtoUri(p.address), objectType: 'person', displayName: A.displayName(p) },
+    set(prop('verb'), 'join',
+    set(prop('id'), syntheticId(),
+    activity)))
   ))
   return List(addedActs).push(activity)
 }
@@ -145,7 +146,7 @@ function sameActor(x: DerivedActivity, y: DerivedActivity): boolean {
 }
 
 function conflict(activity: DerivedActivity): DerivedActivity {
-  return activity.set('verb', 'conflict')
+  return set(prop('verb'), 'conflict', activity)
 }
 
 function activityId(activity: DerivedActivity): URI {

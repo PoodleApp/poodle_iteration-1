@@ -74,7 +74,7 @@ setTimeout(() => {
   router.evaluateCurrent('/')
 }, 0)
 
-class ContextWrapper extends React.Component<{},{},{}> {
+class ContextWrapper extends React.Component<void,{},void> {
   getChildContext(): Object {
     return {
       _sunshineApp: app.run(),

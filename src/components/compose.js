@@ -35,9 +35,9 @@ type ComposeState = {
   useremail:    ?string,
 }
 
-var { Colors } = Styles
+const { Colors } = Styles
 
-var styles = {
+const styles = {
   body: {
     padding: '16px',
   },
@@ -57,7 +57,7 @@ export class ComposeView extends Sunshine.Component<{},{},ComposeState> {
   }
 
   render(): React.Element {
-    var { activityType } = this.state
+    const { activityType } = this.state
     if (activityType === 'note') {
       return <ComposeNote {...this.state} />
     }
@@ -79,7 +79,7 @@ export class ComposeView extends Sunshine.Component<{},{},ComposeState> {
 
 class ComposeNote extends Sunshine.Component<{},ComposeState,{}> {
   render(): React.Element {
-    var { username, useremail, loading } = this.props
+    const { username, useremail, loading } = this.props
     return (
       <Paper>
         <form style={styles.body} onSubmit={this.onSend.bind(this)}>
@@ -136,18 +136,19 @@ class ComposeNote extends Sunshine.Component<{},ComposeState,{}> {
   // TODO: validate required inputs
   onSend(event: Event) {
     event.preventDefault()
-    var { activityType, username, useremail } = this.props
+    const { activityType, username, useremail } = this.props
+    if (!useremail) { return }
 
-    var to      = this.refs.to.getValue()
-    var subject = this.refs.subject.getValue()
-    var body    = this.refs.body.getValue()
+    const to      = this.refs.to.getValue()
+    const subject = this.refs.subject.getValue()
+    const body    = this.refs.body.getValue()
 
-    var author = { name: username, address: useremail }
-    var activity = activityType === 'document' ?
+    const author = { name: username, address: useremail }
+    const activity = activityType === 'document' ?
       Create.document({ verb: 'post', author, subject, body }) :
       Create.note({ verb: 'post', author, subject, body })
 
-    var draft: Draft = {
+    const draft: Draft = {
       activities: [activity],
       from:       author,
       to:         parseAddressList(to),
@@ -196,8 +197,8 @@ export class ComposeReply extends Sunshine.Component<{},ReplyProps,ReplyState> {
   }
 
   render(): React.Element {
-    var { showAddPeople, username, useremail, loading } = this.state
-    var sty = this.getStyles()
+    const { showAddPeople, username, useremail, loading } = this.state
+    const sty = this.getStyles()
     return (
       <div style={styles.activityCard}>
       <Paper>
@@ -241,10 +242,10 @@ export class ComposeReply extends Sunshine.Component<{},ReplyProps,ReplyState> {
   // TODO: validate required inputs
   onSend(event: Event) {
     event.preventDefault()
-    var conversation            = this.props.inReplyTo
-    var activity                = conversation.activities.findLast(a => !Act.isSynthetic(a))
-    var message                 = Act.getMessage(activity)
-    var { username, useremail } = this.state
+    const conversation            = this.props.inReplyTo
+    const activity                = conversation.activities.findLast(a => !Act.isSynthetic(a))
+    const message                 = Act.getMessage(activity)
+    const { username, useremail } = this.state
     if (!username || !useremail) {
       this.emit(new Error("Please set your name and email address in 'Settings'"))
       return
@@ -254,16 +255,16 @@ export class ComposeReply extends Sunshine.Component<{},ReplyProps,ReplyState> {
       return
     }
 
-    var subject = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`
-    var body    = this.refs.body.getValue()
-    var author  = { name: username, address: useremail }
-    var reply   = Create.note({ verb: 'reply', author, subject, body, target: {
+    const subject = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`
+    const body    = this.refs.body.getValue()
+    const author  = { name: username, address: useremail }
+    const reply   = Create.note({ verb: 'reply', author, subject, body, target: {
       objectType: 'activity',
       uri: Act.activityId(activity),
       // TODO: include activity inline, add relevant attachments
     } })
 
-    var addPeople = this.state.showAddPeople ? parseAddressList(this.refs.to.getValue()) || [] : []
+    const addPeople = this.state.showAddPeople ? parseAddressList(this.refs.to.getValue()) || [] : []
 
     this.emit(new Ev.SendReply({ reply, message, conversation, addPeople }))
 
@@ -297,11 +298,11 @@ export class EditNote extends Sunshine.Component<{},ActivityProps,EditNoteState>
   }
 
   render(): React.Element {
-    var activity = this.props.activity
-    var { loading } = this.state
-    var sty = this.getStyles()
+    const activity = this.props.activity
+    const { loading } = this.state
+    const sty = this.getStyles()
 
-    var content = textContent(activity)
+    const content = textContent(activity)
     if (!content) {
       this.emit(new Error('Cannot edit activity with multiple parts, or with no text part.'))
       return <p>Cannot edit activity with multiple parts, or with no text part.</p>
@@ -336,23 +337,23 @@ export class EditNote extends Sunshine.Component<{},ActivityProps,EditNoteState>
   // TODO: validate required inputs
   onSend(event: Event) {
     event.preventDefault()
-    var { activity, conversation } = this.props
-    var message = Act.getMessage(activity)
-    var verb = Act.rawVerb(activity)
+    const { activity, conversation } = this.props
+    const message = Act.getMessage(activity)
+    const verb = Act.rawVerb(activity)
     if (!message || !verb) {
       this.emit(new Error('Cannot reply to synthetic activity.'))
       return
     }
 
-    var constructor = Act.objectType(activity) === 'document' ? Create.document : Create.note
-    var amended = constructor({
+    const constructor = Act.objectType(activity) === 'document' ? Create.document : Create.note
+    const amended = constructor({
       verb,
       author:  (Act.object(activity): any).author,
       subject: Act.title(activity) || '[no subject]',
       body:    this.refs.body.getValue(),
       target:  Act.target(activity),
     })
-    var edit = Create.edit({ amended, target: Act.latestRevision(activity) })
+    const edit = Create.edit({ amended, target: Act.latestRevision(activity) })
 
     this.emit(new Ev.SendReply({ reply: edit, message, conversation }))
 
@@ -392,7 +393,7 @@ class ComposeOptsMenu extends Sunshine.Component<{},{ showAddPeople: boolean },{
 }
 
 function textContent(activity: DerivedActivity): ?string {
-  var part = Act.objectContent(activity)[0]
+  const part = Act.objectContent(activity)[0]
   if (part && part.contentType.startsWith('text/')) {
     return part.content.toString('utf8')
   }

@@ -98,17 +98,20 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
         iconLeft: undefined,
         title:    'Activity Stream',
       })),
-      $(ViewState.ConversationView, ({ id, uri, conversation }) => ({
-        content: <ConversationView
-                  conversation={conversation}
-                  editing={editing}
-                  username={username}
-                  useremail={useremail}
-                  loading={loading}
-                  />,
-        iconLeft: backButton,
-        title: conversation ? conversation.subject : '...',
-      })),
+      $(ViewState.ConversationView, ({ id, uri, conversation }) => {
+        if (!useremail) { throw "email address is required" }  // TODO
+        return {
+          content: <ConversationView
+                    conversation={conversation}
+                    editing={editing}
+                    username={username || '<no name>'}
+                    useremail={useremail}
+                    loading={loading}
+                    />,
+          iconLeft: backButton,
+          title: conversation ? conversation.subject : '...',
+        }
+      }),
       $(ViewState.ComposeView, () => ({
         content: <ComposeView />,
         iconLeft: backButton,

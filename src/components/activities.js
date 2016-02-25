@@ -43,7 +43,7 @@ export type ActivityProps = {
   loading:      boolean,
   username:     string,
   useremail:    string,
-  nestLevel:    ?number,
+  nestLevel?:   number,
 }
 
 var { Colors } = Styles
@@ -124,11 +124,11 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
 
   editingThis(): boolean {
     var { activity, editing } = this.props
-    return editing && activityId(editing) === activityId(activity)
+    return !!editing && activityId(editing) === activityId(activity)
   }
 }
 
-class ActivityCard extends Sunshine.Component<{},{ nestLevel: ?number, children: React.Element },{}> {
+class ActivityCard extends Sunshine.Component<{},{ nestLevel: ?number, children?: any },{}> {
   render(): React.Element {
     return (
       <div style={styles.activityCard}>

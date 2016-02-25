@@ -99,7 +99,15 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
   }
 }
 
-export class ConversationView extends Sunshine.Component<{},{ conversation: ?Conversation },{}> {
+type ConversationViewProps = {
+  conversation: ?Conversation,
+  editing:      ?DerivedActivity,
+  loading:      boolean,
+  username:     string,
+  useremail:    string,
+}
+
+export class ConversationView extends Sunshine.Component<void,ConversationViewProps,{}> {
   getStyles(): Object {
     const participantListWidth = Spacing.desktopKeylineIncrement * 4 + 'px'
     const { palette } = (this.context: any).muiTheme.rawTheme
@@ -133,7 +141,15 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
     const { subject } = conversation
 
     const activities = conversation.activities.map(act => (
-      <ActivityView activity={act} {...this.props} key={Act.activityId(act)} />
+      <ActivityView
+        activity={act}
+        conversation={conversation}
+        editing={this.props.editing}
+        loading={this.props.loading}
+        username={this.props.username}
+        useremail={this.props.useremail}
+        key={Act.activityId(act)}
+        />
     ))
 
     const people = flatParticipants(conversation).map(addr => {
@@ -159,7 +175,14 @@ export class ConversationView extends Sunshine.Component<{},{ conversation: ?Con
           <ComposeReply inReplyTo={conversation} />
         </div>
         <div style={styles.participantList}>
-          {doc ? <ActivityActions activity={doc} {...this.props} /> : ''}
+          {doc ? <ActivityActions
+                   activity={doc}
+                   editing={this.props.editing}
+                   loading={this.props.loading}
+                   username={this.props.username}
+                   useremail={this.props.useremail}
+                   conversation={conversation}
+                   /> : ''}
           <ListWidget subheader='Who can see this discussion'>
             {people}
           </ListWidget>

@@ -1,11 +1,12 @@
 [ignore]
-.*/flow-bin/.*
-.*/es6-promise/.*
-.*/webpack/.*
-.*/sunshine-framework/examples/.*
-.*/test/fixtures/.*
-.*/fbjs/.*
-.*/babel.*
+.*/node_modules/flow-bin/.*
+.*/node_modules/es6-promise/.*
+.*/node_modules/webpack/.*
+.*/node_modules/sunshine-framework/examples/.*
+.*/node_modules/fbjs/.*
+.*/node_modules/babel.*
+.*[^e].json
+.*mappingTable.json
 static/.*
 
 [include]

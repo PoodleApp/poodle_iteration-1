@@ -84,7 +84,7 @@ export class ActivityOptsMenu extends Sunshine.Component<{},ActivityProps,{}> {
 
   editingThis(): boolean {
     var { activity, editing } = this.props
-    return editing && Act.activityId(editing) === Act.activityId(activity)
+    return !!editing && Act.activityId(editing) === Act.activityId(activity)
   }
 }
 
@@ -125,7 +125,7 @@ export class ActivityActions extends Sunshine.Component<{},ActivityProps,{}> {
 
   editingThis(): boolean {
     var { activity, editing } = this.props
-    return editing && Act.activityId(editing) === Act.activityId(activity)
+    return !!editing && Act.activityId(editing) === Act.activityId(activity)
   }
 }
 

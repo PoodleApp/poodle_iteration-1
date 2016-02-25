@@ -24,7 +24,7 @@ import { displayName } from './models/address'
 import { foldrThread } from './models/thread'
 import { constructor } from './util/record'
 
-import type { IndexedSeq }         from 'immutable'
+import type { IndexedIterable, IndexedSeq } from 'immutable'
 import type { Moment }             from 'moment'
 import type { DerivedActivity }    from './derivedActivity'
 import type { Activity, Zack }     from './activity'
@@ -53,7 +53,6 @@ export type Conversation = {
 const newConversation: Constructor<*,Conversation> = constructor({
   activities:    List(),
   allActivities: List(),
-  subject:       undefined,
 })
 
 function asideToConversation(activity: DerivedActivity): Conversation {
@@ -73,7 +72,7 @@ function lastActive(conv: Conversation): Moment {
   // TODO: How well does sorting Moment values work?
 }
 
-function allNames(conv: Conversation): string[] {
+function allNames(conv: Conversation): IndexedIterable<string> {
   return flatParticipants(conv).map(displayName)
 }
 
@@ -142,7 +141,7 @@ type FlatActivity = {
   asideId:      AsideId,
 }
 
-type AsideId = Set<String>
+type AsideId = Set<string>
 
 function flatAsides(conv: Conversation): Conversation {
   const activities = conv.activities.flatMap(flatHelper.bind(null, Set(), conv)).sortBy(act => (
@@ -169,14 +168,15 @@ function flatAsides(conv: Conversation): Conversation {
       return List.of(aside(group.map(a => a.activity), conv.allActivities))
     }
   })
-  return conv.set('activities', activities)
+  return set(prop('activities'), activities, conv)
 }
 
 function flatHelper(asideId: AsideId, conversation: Conversation, activity: DerivedActivity): List<FlatActivity> {
-  if (activity.verb === 'aside') {
+  const { aside, verb } = activity
+  if (verb === 'aside' && aside) {
     const conv = asideToConversation(activity)
     const id = Set(flatParticipants(conv).map(addr => addr.address))
-    return activity.aside.flatMap(flatHelper.bind(null, id, conv))
+    return aside.flatMap(flatHelper.bind(null, id, conv))
   }
   else {
     return List.of({ asideId, activity, conversation })

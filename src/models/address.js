@@ -2,7 +2,7 @@
 
 export type Address = {
   address: Email,
-  name: string,
+  name: ?string,
 }
 
 export type Email = string

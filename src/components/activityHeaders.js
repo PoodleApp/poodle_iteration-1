@@ -40,7 +40,9 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
     const verbed  = displayVerb(verb, actors)
     const ppl     = C.flatParticipants(conversation)
     const partStr = ppl.map(A.displayName).join(', ')
-    const last    = activities_.last() || Act.derivedActivity()
+    const last    = activities_.last()
+
+    if (!last) { throw "no last activity" }
 
     return (
       <ListItem
