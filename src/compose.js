@@ -9,6 +9,7 @@ import objectAssign      from 'object-assign'
 import { objectContent } from './activity'
 import { parseMidUri }   from './models/message'
 
+import type { IndexedIterable }    from 'immutable'
 import type { ReadStream }         from 'fs'
 import type { Content }            from 'mailcomposer'
 import type { Activity }           from './activity'
@@ -29,8 +30,8 @@ export type ActivityId = string
 export type Draft = {
   activities:  Burger[],
   from:        Address,
-  to:          Address[],
-  cc?:         Address[],
+  to:          IndexedIterable<Address>,
+  cc?:         IndexedIterable<Address>,
   inReplyTo?:  MessageId,
   references?: MessageId[],
   subject?:    string,

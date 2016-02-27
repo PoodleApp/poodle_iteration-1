@@ -2,7 +2,7 @@
 
 import { List, Map } from 'immutable'
 
-import type { IndexedIterable, IndexedSeq, Iterable } from 'immutable'
+import type { IndexedIterable, IndexedSeq } from 'immutable'
 
 export {
   partition,

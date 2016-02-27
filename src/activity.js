@@ -84,7 +84,7 @@ function getActivities(message: Message): Promise<List<Activity>> {
     getRawBody(part.stream, { encoding: 'utf8' })
     .then(JSON.parse)
     .then(json => assign(json, { id: midPartUri(part, message) }))
-  )))
+  )).toArray())
   .then(List)
 }
 

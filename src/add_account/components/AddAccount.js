@@ -3,7 +3,6 @@
 import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
 import { compose, get, lookup }  from 'safety-lens'
-import { field }        from 'safety-lens/immutable'
 import * as State       from '../../state'
 import * as AS          from '../state'
 import * as AE          from '../event'

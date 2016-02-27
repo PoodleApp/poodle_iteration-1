@@ -1,26 +1,24 @@
 /* @flow */
 
-import { Record } from 'immutable'
-import xoauth2    from 'xoauth2'
-import { field }  from 'safety-lens/immutable'
-import { lift1 }  from '../util/promises'
+import xoauth2         from 'xoauth2'
+import { prop }        from 'safety-lens/es2015'
+import { lift1 }       from '../util/promises'
+import { constructor } from '../util/record'
 
-type AuthStateSpec = {
-  tokenGen: ?Object,
+import type { Constructor } from '../util/record'
+
+export type AuthState = {
+  tokenGen?: Object,
 }
 
-export type AuthState = AuthStateSpec & Record<AuthStateSpec>
+const newAuthState: Constructor<{},AuthState> = constructor({})
 
-var AuthStateRecord = Record(({
-  tokenGen: null,
-}: AuthStateSpec))
+const initialState = newAuthState({})
 
-var initialState = new AuthStateRecord()
-
-var tokenGen = field('tokenGen')
+const tokenGen = prop('tokenGen')
 
 function getToken(state: AuthState): Promise<string> {
-  var { tokenGen } = state
+  const { tokenGen } = state
   if (!tokenGen) { return Promise.reject("No token generator is available") }
   const gen = tokenGen
   return lift1(cb => gen.getToken(cb))

@@ -244,10 +244,14 @@ export class ComposeReply extends Sunshine.Component<{},ReplyProps,ReplyState> {
     event.preventDefault()
     const conversation            = this.props.inReplyTo
     const activity                = conversation.activities.findLast(a => !Act.isSynthetic(a))
-    const message                 = Act.getMessage(activity)
+    const message                 = activity ? Act.getMessage(activity) : null
     const { username, useremail } = this.state
     if (!username || !useremail) {
       this.emit(new Error("Please set your name and email address in 'Settings'"))
+      return
+    }
+    if (!activity) {
+      this.emit(new Error("No activity to reply to."))
       return
     }
     if (!message) {
@@ -393,7 +397,7 @@ class ComposeOptsMenu extends Sunshine.Component<{},{ showAddPeople: boolean },{
 }
 
 function textContent(activity: DerivedActivity): ?string {
-  const part = Act.objectContent(activity)[0]
+  const part = Act.objectContent(activity).first()
   if (part && part.contentType.startsWith('text/')) {
     return part.content.toString('utf8')
   }

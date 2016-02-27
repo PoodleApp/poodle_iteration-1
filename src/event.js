@@ -9,7 +9,6 @@ import {
 } from 'sunshine-framework'
 import { compose, get, lookup, over, set } from 'safety-lens'
 import { prop }                            from 'safety-lens/es2015'
-import { field }                           from 'safety-lens/immutable'
 import * as stream                         from 'stream'
 import * as State                          from './state'
 import * as Create                         from './activityTypes'
@@ -21,6 +20,7 @@ import { assemble }                        from './compose'
 import { msmtp }                           from './msmtp'
 
 import type { Reducers, EventResult } from 'sunshine-framework'
+import type { IndexedIterable }       from 'immutable'
 import type { DerivedActivity }       from './derivedActivity'
 import type { Conversation }          from './conversation'
 import type { Address }               from './models/address'
@@ -170,7 +170,7 @@ const reducers: Reducers<AppState> = [
 
 ]
 
-function indicateLoading(label: string, result: EventResult<AppState>): EventResult<AppState> {
+function indicateLoading<S>(label: string, result: EventResult<S>): EventResult<S> {
   return Object.assign({}, result, {
     events: Array.from(result.events || []).concat(new Loading(label)),
     asyncResult: (result.asyncResult || Promise.resolve()).then(
@@ -198,7 +198,7 @@ function sendReply({ reply, message, conversation, addPeople }: SendReply, state
 
   const recipients    = to.concat(from).concat(addPeople)
   const toWithoutSelf = withoutSelf(author, recipients)
-  const recipients_   = toWithoutSelf.length > 0 ? toWithoutSelf : recipients
+  const recipients_   = toWithoutSelf.isEmpty() ? recipients : toWithoutSelf
 
   const draft: Draft = {
     activities: [reply],
@@ -220,7 +220,7 @@ function sendReply({ reply, message, conversation, addPeople }: SendReply, state
 
 function send(draft: Draft, state: AppState): EventResult<AppState> {
   const msg     = assemble(draft)
-  const sentDir = lookup(compose(State.config_, field('sentDir')), state)
+  const sentDir = lookup(compose(State.config_, prop('sentDir')), state)
   const msg_    = new (stream:any).PassThrough()
   msg.pipe(msg_)  // Grabs a duplicate of the msg stream
   return indicateLoading('send', asyncResult(
@@ -229,11 +229,11 @@ function send(draft: Draft, state: AppState): EventResult<AppState> {
   ))
 }
 
-function withoutSelf(self: Address, addrs: Address[]): Address[] {
+function withoutSelf<AS: IndexedIterable<Address>>(self: Address, addrs: AS): AS {
   return addrs.filter(a => a.address !== self.address)
 }
 
-function without(exclude: Address[], addrs: Address[]): Address[] {
+function without<AS: IndexedIterable<Address>>(exclude: AS, addrs: AS): AS {
   return addrs.filter(a => !exclude.some(e => e.address === a.address))
 }
 

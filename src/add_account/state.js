@@ -1,18 +1,16 @@
 /* @flow */
 
-import { Record }                     from 'immutable'
-import { compose, filtering, getter } from 'safety-lens'
-import { field }                      from 'safety-lens/immutable'
+import { constructor } from '../util/record'
 
-import type { Lens_ } from 'safety-lens'
+import type { Lens_ }       from 'safety-lens'
+import type { Constructor } from '../util/record'
 
-export type AddAccountState = Record & {
+export type AddAccountState =  {
 }
 
-var AddAccountStateRecord = Record({
-})
+const newAddAccountState: Constructor<{},AddAccountState> = constructor({});
 
-var initialState = new AddAccountStateRecord()
+const initialState = newAddAccountState({})
 
 export {
   initialState,

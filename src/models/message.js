@@ -82,16 +82,16 @@ export {
   toplevelParts,
 }
 
-function flatParts(msg: Message): MessagePart[] {
+function flatParts(msg: Message): List<MessagePart> {
   const subparts = part => !!part.mimeMultipart ? List(part.childNodes).flatMap(subparts) : List.of(part)
   return subparts(msg.mimeTree)
 }
 
-function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): MessagePart[] {
+function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): List<MessagePart> {
   return toplevelRec(predicate, msg.mimeTree)
 }
 
-function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): MessagePart[] {
+function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): List<MessagePart> {
   const multi = part.mimeMultipart
   const children = List(part.childNodes)
   if (!multi) {
@@ -107,15 +107,15 @@ function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): Me
   }
   // related: get the first part
   else if (multi === 'related') {
-    return children.length > 0 ?
-      toplevelRec(predicate, children.first()) :
-      List()
+    return children.isEmpty() ?
+      List() :
+      toplevelRec(predicate, children.first())
   }
   // signed: get the first part
   else if (multi.indexOf('signature') > -1) {
-    return children.length > 0 ?
-      toplevelRec(predicate, children.first()) :
-      List()
+    return children.isEmpty() ?
+      List() :
+      toplevelRec(predicate, children.first())
   }
   else {
     // TODO: What to do when encountering unknown multipart subtype?
@@ -123,11 +123,11 @@ function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): Me
   }
 }
 
-function textParts(msg: Message): MessagePart[] {
+function textParts(msg: Message): List<MessagePart> {
   return flatParts(msg).filter(part => part.contentType.match(/text\/plain/i))
 }
 
-function htmlParts(msg: Message): MessagePart[] {
+function htmlParts(msg: Message): List<MessagePart> {
   return flatParts(msg).filter(part => part.contentType.match(/text\/html/i))
 }
 

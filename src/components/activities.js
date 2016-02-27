@@ -324,7 +324,7 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
 }
 
 function displayContent(activity: DerivedActivity, style?: Object): React.Element {
-  var content = objectContent(activity)
+  const content = objectContent(activity)
   .sort((a,b) => {
     // prefer text/plain
     if (a.contentType === 'text/plain' && b.contentType !== 'text/plain') {
@@ -338,7 +338,7 @@ function displayContent(activity: DerivedActivity, style?: Object): React.Elemen
     }
   })
   .filter(({ contentType }) => contentType === 'text/plain' || contentType === 'text/html')  // TODO: support other content types
-  [0]
+  .first()
   if (content && content.contentType === 'text/plain') {
     return displayText(content.content, style)
   }

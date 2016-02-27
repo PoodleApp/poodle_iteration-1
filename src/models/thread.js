@@ -3,9 +3,10 @@
 import { List, Map }         from 'immutable'
 import { partition, uniqBy } from '../util/immutable'
 
-import type { Message } from './message'
+import type { IndexedIterable } from 'immutable'
+import type { Message }         from './message'
 
-export type Thread = List<[Message, Thread]>
+export type Thread = IndexedIterable<[Message, Thread]>
 
 export {
   buildThread,
@@ -28,8 +29,8 @@ function singleton(message: Message): Thread {
 function insertMessage(thread: Thread, message: Message): Thread {
   const msgs = uniqBy(
     m => m.messageId,
-    List(thread).flatMap(getMessages).push(message)
-  ).toList()
+    thread.flatMap(getMessages).push(message)
+  )
   let [toplevel, replies] = partition(msg => (
     !msgs.some(m => ancestorOf(msg, m))
   ), msgs)

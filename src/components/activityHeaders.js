@@ -4,6 +4,7 @@ import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import { List }        from 'immutable'
 import { uniqBy }      from '../util/immutable'
+import { catMaybes }   from '../util/maybe'
 import * as Act        from '../derivedActivity'
 import * as C          from '../conversation'
 import * as A          from '../models/address'
@@ -63,11 +64,12 @@ class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
   render(): React.Element {
     const { activities, conversation } = this.props
     const act = activities.last()
+    const published = act ? Act.published(act).fromNow() : ''
     return (
       <ListItem
         leftAvatar={<Avatar>!</Avatar>}
         primaryText={`Your edit to "${conversation.subject}" failed due to a conflict with another edit`}
-        secondaryText={<p>{Act.published(act).fromNow()}</p>}
+        secondaryText={<p>{published}</p>}
         onTouchTap={() => this.onSelect(conversation)}
         />
     )
@@ -96,7 +98,7 @@ function getActivities(user: ?URI, activities: List<DerivedActivity>): List<Deri
 }
 
 function getActors(user: ?URI, activities: IndexedIterable<DerivedActivity>): IndexedSeq<ActivityObject> {
-  const actors = activities.map(act => Act.actor(act)).filter(p => !!p)
+  const actors = catMaybes(activities.map(act => Act.actor(act)))
   return uniqBy(a => a.uri, actors)
 }
 

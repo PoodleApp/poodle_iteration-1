@@ -3,7 +3,7 @@
 import { List, Map, Record, Stack } from 'immutable'
 import { set }                      from 'safety-lens'
 import { prop }                     from 'safety-lens/es2015'
-import { catMaybes, maybeToList }   from './maybe'
+import { catMaybes, maybeToList }   from './util/maybe'
 import { constructor }              from './util/record'
 import { resolveUri }               from './models/message'
 import * as Act                     from './activity'
@@ -110,12 +110,12 @@ function insertJoins(
   var added = Act.flatParticipants(maybeToList(getMessage(activity))).filter(p => (
     !ppl.some(p_ => p.address === p_.address)
   ))
-  if (added.size <= 0 || prev.size <= 0) {
+  if (added.isEmpty() || prev.isEmpty()) {
     return List.of(activity)
   }
   else if (added.every(p => {
-    var a = actor(activity)
-    return a && (Act.mailtoUri(p.address) === a.uri)
+    const a = actor(activity)
+    return !!a && (Act.mailtoUri(p.address) === a.uri)
   })) {
     return List.of(activity)
   }
@@ -184,7 +184,7 @@ function object(activity: DerivedActivity): ?ActivityObject {
   return act ? act.object : undefined
 }
 
-function objectContent(activity: DerivedActivity): { contentType: string, content: Buffer }[] {
+function objectContent(activity: DerivedActivity): List<{ contentType: string, content: Buffer, uri: URI }> {
   const act = getActivity(activity)
   const obj = act ? act.object : undefined
   const msg = getMessage(activity)

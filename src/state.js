@@ -1,9 +1,10 @@
 /* @flow */
 
 import { compose, filtering, getter, lookup, over, set } from 'safety-lens'
-import { List, Map, Record } from 'immutable'
+import { List, Map}          from 'immutable'
 import { key }               from 'safety-lens/es2015'
-import { field, index }      from 'safety-lens/immutable'
+import { prop }              from 'safety-lens/es2015'
+import { index }             from 'safety-lens/immutable'
 import * as CS               from './composer/state'
 import * as AS               from './add_account/state'
 import * as AuthState        from './auth/state'
@@ -11,79 +12,77 @@ import * as ViewState        from './state/ViewState'
 import { published }         from './activity'
 import { parseMidUri }       from './models/message'
 import * as Act              from './derivedActivity'
+import { constructor }       from './util/record'
 
 import type { Fold, Getter, Lens_, Traversal_ } from 'safety-lens'
 import type { URI }                             from './activity'
 import type { DerivedActivity }                 from './derivedActivity'
 import type { Conversation }                    from './conversation'
 import type { Config, Account }                 from './config'
+import type { Constructor }                     from './util/record'
 
-export type AppState = Record<{
+export type AppState = {
   loading:          number,
   view:             ViewState.ViewState,
   routeParams:      Map<string,string>,
-  genericError:     ?string,
+  genericError?:    string,
   config?:          Config,
   notification?:    string,
   composerState:    CS.ComposerState,
   addAccountState   : AS.AddAccountState,
   authState:        AuthState.AuthState,
-  showLink:         ?DerivedActivity,
+  showLink?:        DerivedActivity,
   leftNavOpen:      boolean,
-}>
+}
 
-const AppStateRecord = Record({
-  loading:       0,
-  view:          ViewState.initialState,
-  routeParams:   Map(),
-  genericError:  null,
-  config:        null,
-  notification:  null,
-  composerState: CS.initialState,
+const newAppState: Constructor<*,AppState> = constructor({
+  loading:         0,
+  view:            ViewState.initialState,
+  routeParams:     Map(),
+  composerState:   CS.initialState,
   addAccountState: AS.initialState,
-  authState:     AuthState.initialState,
-  showLink:      null,
-  leftNavOpen:   false,
+  authState:       AuthState.initialState,
+  leftNavOpen:     false,
 })
 
-const initialState: AppState = new AppStateRecord()
+const initialState: AppState = newAppState()
 
 
 /* ViewState lenses */
 
-const views: Lens_<AppState,ViewState.ViewState> = field('view')
+const views: Lens_<AppState,ViewState.ViewState> = prop('view')
 const view:  Lens_<AppState,ViewState.View> = compose(views, ViewState.view)
 
 
 /* lenses & helpers */
 
-const addAccountState: Lens_<AppState,AS.AddAccountState> = field('addAccountState')
-const authState: Lens_<AppState,AuthState.AuthState> = field('authState')
-const composerState: Lens_<AppState,CS.ComposerState> = field('composerState')
+const addAccountState: Lens_<AppState,AS.AddAccountState> = prop('addAccountState')
+const authState: Lens_<AppState,AuthState.AuthState> = prop('authState')
+const composerState: Lens_<AppState,CS.ComposerState> = prop('composerState')
 
 const conversations: Fold<any,AppState,List<Conversation>> = compose(view, key('conversations'))
 const conversation: Fold<any,AppState,Conversation> = compose(view, key('conversation'))
-const loading: Lens_<AppState,number> = field('loading')
+const loading: Lens_<AppState,number> = prop('loading')
 const isLoading: Getter<AppState,boolean> = getter(state => state.loading > 0)
-const routeParams: Lens_<AppState,Map<string,string>> = field('routeParams')
-const genericError: Lens_<AppState,?string> = field('genericError')
-const notification = field('notification')
-const showLink = field('showLink')
+const routeParams: Lens_<AppState,Map<string,string>> = prop('routeParams')
+const genericError: Lens_<AppState,?string> = prop('genericError')
+const notification = prop('notification')
+const showLink = prop('showLink')
 const searchQuery: Fold<any,AppState,string> = compose(view, key('searchQuery'))
 
-const config: Lens_<AppState,?Config> = field('config')
-const config_: Traversal_<AppState,Config> = compose(field('config'), filtering(c => !!c))
+const config: Lens_<AppState,?Config> = prop('config')
+const config_: Traversal_<AppState,Config> = compose(prop('config'), filtering(c => !!c))
 
 const useraccount: Traversal_<AppState,Account> =
-  compose(compose(config_, field('accounts')), index(0))
+  compose(compose(config_, prop('accounts')), index(0))
 const username: Traversal_<AppState,string> =
-  compose(useraccount, field('displayName'))
+  compose(useraccount, prop('displayName'))
 const useremail: Traversal_<AppState,string> =
-  compose(useraccount, field('email'))
+  compose(useraccount, prop('email'))
 
-const likeMessage: Traversal_<AppState,string> = compose(config_, field('likeMessage'))
+const likeMessage: Traversal_<AppState,string> = compose(config_, prop('likeMessage'))
 
-const leftNavOpen: Lens_<AppState,boolean> = field('leftNavOpen')
+const leftNavOpen: Lens_<AppState,boolean> = prop('leftNavOpen')
 
 function routeParam(key: string): Traversal_<AppState,string> {
   return compose(routeParams, index(key))

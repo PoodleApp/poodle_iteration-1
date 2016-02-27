@@ -1,12 +1,11 @@
 /* @flow */
 
-import * as Sunshine    from 'sunshine-framework/react'
-import React            from 'react'
+import * as Sunshine             from 'sunshine-framework/react'
+import React                     from 'react'
 import { compose, get, lookup }  from 'safety-lens'
-import { field }        from 'safety-lens/immutable'
-import { List }         from 'immutable'
-import * as Ev          from '../event'
-import * as State       from '../state'
+import { List }                  from 'immutable'
+import * as Ev                   from '../event'
+import * as State                from '../state'
 import { newAccount, newConfig } from '../config'
 import { FlatButton
        , Paper

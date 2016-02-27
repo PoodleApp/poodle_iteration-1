@@ -3,7 +3,7 @@
 import { List, Map, Set, is } from 'immutable'
 import { set }                from 'safety-lens'
 import { prop }               from 'safety-lens/es2015'
-import { catMaybes }          from './maybe'
+import { catMaybes }          from './util/maybe'
 import { collapseEdits
        , collapseLikes
        , getMessage
@@ -45,7 +45,7 @@ export {
 
 export type Conversation = {
   id:            string,
-  activities:    List<DerivedActivity>,
+  activities:    IndexedIterable<DerivedActivity>,
   allActivities: List<DerivedActivity>,
   subject:       ?string,
 }
@@ -105,7 +105,7 @@ function getActivities(thread: Thread): Promise<Map<MessageId, List<Activity>>> 
   )
 }
 
-function derive(activities: List<DerivedActivity>): List<DerivedActivity> {
+function derive(activities: IndexedIterable<DerivedActivity>): IndexedIterable<DerivedActivity> {
   const context = activities.sortBy(published)
   const withJoins = activities
     .flatMap(insertJoins.bind(null, context))
@@ -113,8 +113,9 @@ function derive(activities: List<DerivedActivity>): List<DerivedActivity> {
     .flatMap(collapseLikes.bind(null, context))
     .flatMap(collapseEdits.bind(null, context))
   return collapsed.map(act => {
-    if (act.aside) {
-      return set(prop('aside'), derive(act.aside), act)
+    const aside = act.aside
+    if (aside) {
+      return set(prop('aside'), derive(aside), act)
     }
     else {
       return act

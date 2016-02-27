@@ -5,19 +5,19 @@ import { flatParticipants }            from '../activity'
 import { newDerivedActivity, syntheticId } from '../derivedActivity'
 import { unwrapMessage }               from './unwrapMessage'
 
-import type { Map }                from 'immutable'
-import type { Address }            from '../models/address'
-import type { Message, MessageId } from '../models/message'
-import type { Thread }             from '../models/thread'
-import type { Activity }           from '../activity'
-import type { DerivedActivity }    from '../derivedActivity'
+import type { IndexedIterable, Map } from 'immutable'
+import type { Address }              from '../models/address'
+import type { Message, MessageId }   from '../models/message'
+import type { Thread }               from '../models/thread'
+import type { Activity }             from '../activity'
+import type { DerivedActivity }      from '../derivedActivity'
 
 export {
   aside,
   collapseAsides,
 }
 
-function collapseAsides(thread: Thread, activityMap: Map<MessageId, List<Activity>>): List<DerivedActivity> {
+function collapseAsides(thread: Thread, activityMap: Map<MessageId, List<Activity>>): IndexedIterable<DerivedActivity> {
   return thread.flatMap(flatten.bind(null, Set(), activityMap))
 }
 

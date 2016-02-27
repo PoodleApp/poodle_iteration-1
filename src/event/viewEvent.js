@@ -142,18 +142,20 @@ function viewConversation(state: ViewState, uri: ?string = null, id: ?string = n
       .toPromise()
     })
     .then(threads => threadToConversation(threads.first()))
-    .then(conv => asyncUpdate(state_ => {
-      const view_ = lookup(State.view, state_)
+    .then(conv => {
       if (!conv) {
         return emit(new Error(`Could not find activity for given URI: ${uri}`))
       }
-      else if (view_ == view) {
-        return State.replaceView(new State.ConversationView(id, uri, conv), state_)
-      }
-      else {
-        return state_
-      }
-    })),
+      return asyncUpdate(state_ => {
+        const view_ = lookup(State.view, state_)
+        if (view_ == view) {
+          return State.replaceView(new State.ConversationView(id, uri, conv), state_)
+        }
+        else {
+          return state_
+        }
+      })
+    }),
   }
 }
 
