@@ -1,6 +1,6 @@
 /* @flow */
 
-import { List }      from 'immutable'
+import * as m        from 'mori'
 import { mailtoUri } from '../activity'
 import {
   midUri,
@@ -11,7 +11,7 @@ import {
 import { newDerivedActivity } from '../derivedActivity'
 import { displayName }    from '../models/address'
 
-import type { Map }                from 'immutable'
+import type { Map, Seq, Seqable }  from 'mori'
 import type { Message, MessageId } from '../models/message'
 import type { Activity, Zack }     from '../activity'
 import type { DerivedActivity }    from '../derivedActivity'
@@ -20,21 +20,19 @@ export {
   unwrapMessage,
 }
 
-function unwrapMessage(message: Message, activityMap: Map<MessageId, List<Activity>>): List<DerivedActivity> {
-  const as = activityMap.get(message.messageId, List())
-  if (!as) { throw `no activities for message ${message.messageId}` }
-
-  const activities = as.map(activity => newDerivedActivity({
+function unwrapMessage(message: Message, activityMap: Map<MessageId, Seqable<Activity>>): Seq<DerivedActivity> {
+  const as = m.get(activityMap, message.messageId, m.list())
+  const activities = m.map(activity => newDerivedActivity({
     id: activity.id,
     activity,
     message,
-  }))
-  if (!activities.isEmpty()) {
+  }), as)
+  if (!m.isEmpty(activities)) {
     return activities
   }
   else {
     const note = asNote(message)
-    return List(note ? [note] : [unknownActivity(message)])
+    return m.list(note ? note : unknownActivity(message))
   }
 }
 

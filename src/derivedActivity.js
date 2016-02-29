@@ -1,6 +1,7 @@
 /* @flow */
 
-import { List, Map, Record, Stack } from 'immutable'
+import * as m                       from 'mori'
+import { List, Map, Record, }       from 'immutable'
 import { set }                      from 'safety-lens'
 import { prop }                     from 'safety-lens/es2015'
 import { catMaybes, maybeToList }   from './util/maybe'
@@ -9,6 +10,7 @@ import { resolveUri }               from './models/message'
 import * as Act                     from './activity'
 import * as A                       from './models/address'
 
+import type { Seq, Seqable, Stack }                 from 'mori'
 import type { Moment }                              from 'moment'
 import type { Activity, ActivityObject, URI, Zack } from './activity'
 import type { Address }                             from './models/address'
@@ -24,7 +26,7 @@ export type DerivedActivity = {
   message?:  Message,   // message containing original activity, for context
   revisions: Stack<DerivedActivity>,
   verb?:     DerivedVerb,
-  allActivities?: List<DerivedActivity>,
+  allActivities?: Seqable<DerivedActivity>,
   attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
@@ -43,7 +45,7 @@ export type DerivedVerb = 'post' | 'reply' | 'share' | 'edit' | 'like' | 'unknow
 // }
 
 function collapseLikes(
-  context: List<DerivedActivity>,
+  context: Seqable<DerivedActivity>,
   activity: DerivedActivity
 ): List<DerivedActivity> {
   if (verb(activity) === 'like') {
@@ -65,7 +67,7 @@ function collapseLikes(
 }
 
 function collapseEdits(
-  context: List<DerivedActivity>,
+  context: Seqable<DerivedActivity>,
   activity: DerivedActivity
 ): List<DerivedActivity> {
   if (verb(activity) === 'edit') {
@@ -100,7 +102,7 @@ function syntheticId(): URI {
 
 // Assumes context is ordered
 function insertJoins(
-  context:  List<DerivedActivity>,
+  context:  Seqable<DerivedActivity>,
   activity: DerivedActivity,
   idx:      number
 ): List<DerivedActivity> {

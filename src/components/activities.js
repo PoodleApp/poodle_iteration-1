@@ -1,19 +1,21 @@
 /* @flow */
 
 import { List, is }  from 'immutable'
+import * as m        from 'mori'
 import * as Sunshine from 'sunshine-framework/react'
 import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'
 import marked        from 'marked'
 import { mailtoUri } from '../activity'
-import { asideToConversation, flatParticipants } from '../conversation'
+import { allNames, asideToConversation, flatParticipants } from '../conversation'
 import { displayName } from '../models/address'
 import * as Ev       from '../event'
 import * as State    from '../state'
 import { ComposeReply, EditNote }  from './compose'
 import { ActivityOptsMenu } from './activityMenu'
 import { actorAvatar } from './avatar'
+import { join } from '../util/mori'
 import * as Act from '../derivedActivity'
 import { activityId
        , actor
@@ -233,18 +235,18 @@ JoinView.contextTypes = contextTypes
 
 class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
   render(): React.Element {
-    var nestLevel = this.props.nestLevel || 1
-    var { activity, conversation } = this.props
+    const nestLevel = this.props.nestLevel || 1
+    const { activity, conversation } = this.props
 
-    var conv = asideToConversation(activity)
-    var ppl = flatParticipants(conv).map(p => displayName(p)).join(', ')
+    const conv = asideToConversation(activity)
+    const ppl = join(', ', allNames(conv))
 
     // TODO: a bit hackish
-    var showReplyForm = is(activity, conversation.activities.findLast(act => (
-      act.verb === 'aside' && is(act.allActivities, activity.allActivities)
-    )))
+    const showReplyForm = m.equals(activity, m.last(m.filter(act => (
+      act.verb === 'aside' && m.equals(act.allActivities, activity.allActivities)
+    ), conversation.activities)))
 
-    var activities = (activity.aside || List()).map(act => (
+    const activities = (activity.aside || List()).map(act => (
       <ActivityView
         {...this.props}
         activity={act}
@@ -254,7 +256,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         />
     ))
 
-    var { palette } = (this.context: any).muiTheme.baseTheme
+    const { palette } = (this.context: any).muiTheme.baseTheme
 
     return (
       <ActivityCard nestLevel={nestLevel} style={{backgroundColor: palette.primary3Color}}>

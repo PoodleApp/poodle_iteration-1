@@ -3,10 +3,10 @@
 import { List, Map }         from 'immutable'
 import { partition, uniqBy } from '../util/immutable'
 
-import type { IndexedIterable } from 'immutable'
-import type { Message }         from './message'
+import type { Seqable } from 'mori'
+import type { Message } from './message'
 
-export type Thread = IndexedIterable<[Message, Thread]>
+export type Thread = Seqable<[Message, Thread]>
 
 export {
   buildThread,

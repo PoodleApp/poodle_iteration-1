@@ -1,10 +1,11 @@
 /* @flow */
 
 import moment          from 'moment'
+import * as m          from 'mori'
 import { List }        from 'immutable'
 import assign          from 'object-assign'
 import getRawBody      from 'raw-body'
-import { uniqBy }      from './util/immutable'
+import { uniqBy }      from './util/mori'
 import { displayName } from './models/address'
 import { midPartUri
        , parseMidUri
@@ -12,8 +13,8 @@ import { midPartUri
        , toplevelParts
        } from './models/message'
 
-import type { Moment }  from 'moment'
-import type { IndexedIterable, IndexedSeq } from 'immutable'
+import type { Moment }         from 'moment'
+import type { Seq, Seqable }   from 'mori'
 import type { Address, Email } from './models/address'
 import type { Message
             , MessageId
@@ -93,27 +94,29 @@ function mailtoUri(email: Email): URI {
   return `mailto:${email}`
 }
 
-function participants(messages: IndexedIterable<Message>): { to:   IndexedSeq<Address>
-                                                           , from: IndexedSeq<Address>
-                                                           , cc:   IndexedSeq<Address>
-                                                           } {
-  var { to, from, cc } = messages.reduce((ls, message) => ({
-    to:   ls.to.concat((message.to || List()).filter(addr => !!addr)),
-    from: ls.from.concat((message.from || List()).filter(addr => !!addr)),
-    cc:   ls.cc.concat((message.cc || List()).filter(addr => !!addr)),
-  }), { to: List(), from: List(), cc: List() })
+function participants(messages: Seqable<Message>): { to:   Seq<Address>
+                                                   , from: Seq<Address>
+                                                   , cc:   Seq<Address>
+                                                   } {
+  const { to, from, cc } = m.reduce((ls, message) => ({
+    to:   m.filter(addr => !!addr, m.concat(ls.to,   message.to)),
+    from: m.filter(addr => !!addr, m.concat(ls.from, message.from)),
+    cc:   m.filter(addr => !!addr, m.concat(ls.cc,   message.cc)),
+  })
+  , { to: m.vector(), from: m.vector(), cc: m.vector() }
+  , messages)
   return {
     to:   uniqBy(addr => addr.address, to),
     from: uniqBy(addr => addr.address, from),
-    cc:   uniqBy(addr => addr.address, cc)
+    cc:   uniqBy(addr => addr.address, cc),
   }
 }
 
-function flatParticipants(messages: IndexedIterable<Message>): IndexedSeq<Address> {
+function flatParticipants(messages: Seqable<Message>): Seq<Address> {
   var { from, to, cc } = participants(messages)
   return uniqBy(
     addr => addr.address,
-    from.reverse().concat(to.reverse()).concat(cc.reverse())
+    m.concat(m.reverse(from), m.reverse(to), m.reverse(cc)),
   )
 }
 

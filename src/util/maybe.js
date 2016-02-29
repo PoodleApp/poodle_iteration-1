@@ -1,18 +1,18 @@
 /* @flow */
 
-import { List } from 'immutable'
+import * as m   from 'mori'
 
-import type { IndexedIterable, IndexedSeq } from 'immutable'
+import type { Seq, Seqable } from 'mori'
+
+function catMaybes<T>(maybes: Seqable<?T>): Seq<T> {
+  return m.filter(x => !!x, maybes)
+}
+
+function maybeToSeqable<T>(x: ?T): T[] {
+  return x ? [x] : []
+}
 
 export {
   catMaybes,
-  maybeToList,
-}
-
-function catMaybes<T>(maybes: IndexedIterable<?T>): IndexedSeq<T> {
-  return maybes.filter(x => !!x)
-}
-
-function maybeToList<T>(x: ?T): List<T> {
-  return x ? List.of(x) : List()
+  maybeToSeqable,
 }

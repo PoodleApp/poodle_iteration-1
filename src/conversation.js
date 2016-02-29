@@ -1,6 +1,7 @@
 /* @flow */
 
 import { List, Map, Set, is } from 'immutable'
+import * as m                 from 'mori'
 import { set }                from 'safety-lens'
 import { prop }               from 'safety-lens/es2015'
 import { catMaybes }          from './util/maybe'
@@ -24,7 +25,7 @@ import { displayName } from './models/address'
 import { foldrThread } from './models/thread'
 import { constructor } from './util/record'
 
-import type { IndexedIterable, IndexedSeq } from 'immutable'
+import type { Seq, Seqable }       from 'mori'
 import type { Moment }             from 'moment'
 import type { DerivedActivity }    from './derivedActivity'
 import type { Activity, Zack }     from './activity'
@@ -45,14 +46,14 @@ export {
 
 export type Conversation = {
   id:            string,
-  activities:    IndexedIterable<DerivedActivity>,
-  allActivities: List<DerivedActivity>,
+  activities:    Seqable<DerivedActivity>,
+  allActivities: Seqable<DerivedActivity>,
   subject:       ?string,
 }
 
 const newConversation: Constructor<*,Conversation> = constructor({
-  activities:    List(),
-  allActivities: List(),
+  activities:    m.list(),
+  allActivities: m.list(),
 })
 
 function asideToConversation(activity: DerivedActivity): Conversation {
@@ -61,19 +62,19 @@ function asideToConversation(activity: DerivedActivity): Conversation {
   }
   return newConversation({
     id: syntheticId(),
-    activities: activity.aside || List(),
-    allActivities: activity.allActivities || List(),
+    activities: activity.aside || m.list(),
+    allActivities: activity.allActivities || m.list(),
     subject: 'private aside',
   })
 }
 
 function lastActive(conv: Conversation): Moment {
-  return conv.activities.map(published).sort().first()
+  return m.first(m.sort(m.map(published, conv.activities)))
   // TODO: How well does sorting Moment values work?
 }
 
-function allNames(conv: Conversation): IndexedIterable<string> {
-  return flatParticipants(conv).map(displayName)
+function allNames(conv: Conversation): Seq<string> {
+  return m.map(displayName, flatParticipants(conv))
 }
 
 function threadToConversation(thread: Thread): Promise<Conversation> {
@@ -105,14 +106,15 @@ function getActivities(thread: Thread): Promise<Map<MessageId, List<Activity>>> 
   )
 }
 
-function derive(activities: IndexedIterable<DerivedActivity>): IndexedIterable<DerivedActivity> {
-  const context = activities.sortBy(published)
-  const withJoins = activities
-    .flatMap(insertJoins.bind(null, context))
-  const collapsed = withJoins
-    .flatMap(collapseLikes.bind(null, context))
-    .flatMap(collapseEdits.bind(null, context))
-  return collapsed.map(act => {
+function derive(activities: Seq<DerivedActivity>): Seq<DerivedActivity> {
+  const context = m.sortBy(published, activities)
+  const withJoins = m.mapcat(insertJoins.bind(null, context), activities)
+  const collapsed = m.pipeline(
+    withJoins,
+    acts => m.mapcat(collapseLikes.bind(null, context), acts),
+    acts => m.mapcat(collapseEdits.bind(null, context), acts)
+  )
+  return m.map(act => {
     const aside = act.aside
     if (aside) {
       return set(prop('aside'), derive(aside), act)
@@ -120,18 +122,19 @@ function derive(activities: IndexedIterable<DerivedActivity>): IndexedIterable<D
     else {
       return act
     }
-  })
+  }
+  , collapsed)
 }
 
-function participants(conv: Conversation): { to:   IndexedSeq<Address>
-                                           , from: IndexedSeq<Address>
-                                           , cc:   IndexedSeq<Address>
+function participants(conv: Conversation): { to:   Seq<Address>
+                                           , from: Seq<Address>
+                                           , cc:   Seq<Address>
                                            } {
   const acts = conv.allActivities || List()
   return Act.participants(catMaybes(acts.map(getMessage)))
 }
 
-function flatParticipants(conv: Conversation): IndexedSeq<Address> {
+function flatParticipants(conv: Conversation): Seq<Address> {
   const acts = conv.allActivities || List()
   return Act.flatParticipants(catMaybes(acts.map(getMessage)))
 }

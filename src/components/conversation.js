@@ -3,6 +3,7 @@
 import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
 import { List }         from 'immutable'
+import * as m           from 'mori'
 import { get, lookup }  from 'safety-lens'
 import { mailtoUri }    from '../activity'
 import * as Act         from '../derivedActivity'
@@ -140,7 +141,7 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
     const styles = this.getStyles()
     const { subject } = conversation
 
-    const activities = conversation.activities.map(act => (
+    const activities = m.map(act => (
       <ActivityView
         activity={act}
         conversation={conversation}
@@ -150,9 +151,10 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
         useremail={this.props.useremail}
         key={Act.activityId(act)}
         />
-    ))
+    )
+    , conversation.activities)
 
-    const people = flatParticipants(conversation).map(addr => {
+    const people = m.map(addr => {
       const disp = displayName(addr)
       return (
         <ListItem
@@ -163,7 +165,8 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
           key={addr.address}
           />
       )
-    })
+    }
+    , flatParticipants(conversation))
 
     const doc = getDocument(conversation)
 
@@ -198,6 +201,6 @@ ConversationView.contextTypes = {
 }
 
 function getDocument(conv: Conversation): ?DerivedActivity {
-  const act = conv.activities.first()
+  const act = m.first(conv.activities)
   if (act && Act.objectType(act) === 'document') { return act }
 }

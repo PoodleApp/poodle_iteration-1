@@ -1,40 +1,40 @@
 /* @flow */
 
-import { List, Set }                   from 'immutable'
-import { flatParticipants }            from '../activity'
+import * as m                              from 'mori'
+import { flatParticipants }                from '../activity'
 import { newDerivedActivity, syntheticId } from '../derivedActivity'
-import { unwrapMessage }               from './unwrapMessage'
+import { unwrapMessage }                   from './unwrapMessage'
 
-import type { IndexedIterable, Map } from 'immutable'
-import type { Address }              from '../models/address'
-import type { Message, MessageId }   from '../models/message'
-import type { Thread }               from '../models/thread'
-import type { Activity }             from '../activity'
-import type { DerivedActivity }      from '../derivedActivity'
+import type { Map, Seq, Seqable, Set } from 'mori'
+import type { Address }                from '../models/address'
+import type { Message, MessageId }     from '../models/message'
+import type { Thread }                 from '../models/thread'
+import type { Activity }               from '../activity'
+import type { DerivedActivity }        from '../derivedActivity'
 
 export {
   aside,
   collapseAsides,
 }
 
-function collapseAsides(thread: Thread, activityMap: Map<MessageId, List<Activity>>): IndexedIterable<DerivedActivity> {
-  return thread.flatMap(flatten.bind(null, Set(), activityMap))
+function collapseAsides(thread: Thread, activityMap: Map<MessageId, Seqable<Activity>>): Seq<DerivedActivity> {
+  return m.mapcat(flatten.bind(null, m.set(), activityMap), thread)
 }
 
 function flatten(
   ppl:               Set<string>,
-  activityMap:       Map<string, List<Activity>>,
+  activityMap:       Map<MessageId, Seqable<Activity>>,
   [message, thread]: [Message, Thread]
-): List<DerivedActivity> {
-  var to   = Set(flatParticipants(List.of(message)).map(addr => addr.address))
-  var ppl_ = ppl.union(to)
-  var removed = ppl.subtract(to)
+): Seq<DerivedActivity> {
+  const to   = Set(flatParticipants(List.of(message)).map(addr => addr.address))
+  const ppl_ = ppl.union(to)
+  const removed = ppl.subtract(to)
 
-  var activities = unwrapMessage(message, activityMap)
-  var replies = removed.size > 0 ?
+  const activities = unwrapMessage(message, activityMap)
+  const replies = removed.size > 0 ?
     thread.flatMap(flatten.bind(null, to,            activityMap)) :
     thread.flatMap(flatten.bind(null, ppl.union(to), activityMap))
-  var withReplies = activities.concat(replies)
+  const withReplies = activities.concat(replies)
 
   if (removed.size > 0) {
     return List.of(aside(withReplies, withReplies))
