@@ -1,7 +1,6 @@
 /* @flow */
 
 import * as m                       from 'mori'
-import { List, Map, Record, }       from 'immutable'
 import { set }                      from 'safety-lens'
 import { prop }                     from 'safety-lens/es2015'
 import { catMaybes, maybeToList }   from './util/maybe'
@@ -10,7 +9,7 @@ import { resolveUri }               from './models/message'
 import * as Act                     from './activity'
 import * as A                       from './models/address'
 
-import type { Seq, Seqable, Stack }                 from 'mori'
+import type { List, Map, Seq, Seqable, Vector }     from 'mori'
 import type { Moment }                              from 'moment'
 import type { Activity, ActivityObject, URI, Zack } from './activity'
 import type { Address }                             from './models/address'
@@ -24,16 +23,16 @@ export type DerivedActivity = {
   aside?:    List<DerivedActivity>,
   likes:     Map<URI, ActivityObject>,
   message?:  Message,   // message containing original activity, for context
-  revisions: Stack<DerivedActivity>,
+  revisions: List<DerivedActivity>,
   verb?:     DerivedVerb,
   allActivities?: Seqable<DerivedActivity>,
   attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
 const newDerivedActivity: Constructor<{ id: string },DerivedActivity> = constructor({
-  likes:     Map(),
-  revisions: Stack(),
-  attachments: List(),
+  likes:       m.hashMap(),
+  revisions:   m.list(),
+  attachments: m.list(),
 })
 
 // Some derived activities are synthetic, and use verbs that are not available
@@ -47,21 +46,24 @@ export type DerivedVerb = 'post' | 'reply' | 'share' | 'edit' | 'like' | 'unknow
 function collapseLikes(
   context: Seqable<DerivedActivity>,
   activity: DerivedActivity
-): List<DerivedActivity> {
+): Vector<DerivedActivity> {
   if (verb(activity) === 'like') {
-    return List()  // likes are not directly visible
+    return m.vector()  // likes are not directly visible
   }
 
-  var thisId = activityId(activity)
-  var likes  = context.reduce((ppl, otherAct) => {
+  const thisId = activityId(activity)
+  const likes = m.reduce((ppl, otherAct) => {
     if (verb(otherAct) === 'like' && targetUri(otherAct) === thisId) {
-      var p = actor(otherAct)
-      return p ? ppl.set(p.uri, p) : ppl
+      const p = actor(otherAct)
+      return p ? m.assoc(ppl, p.uri, p) : ppl
     }
-    return ppl
-  }, Map())
+    else {
+      return ppl
+    }
+  }
+  , m.hashMap(), context)
 
-  return List.of(
+  return m.vector(
     set(prop('likes'), likes, activity)
   )
 }
@@ -69,33 +71,38 @@ function collapseLikes(
 function collapseEdits(
   context: Seqable<DerivedActivity>,
   activity: DerivedActivity
-): List<DerivedActivity> {
+): Vector<DerivedActivity> {
   if (verb(activity) === 'edit') {
-    return List()
+    return m.vector()
   }
 
-  var thisId = activityId(activity)
-  var [revisions, conflicts] = context.reduce((accum, other) => {
-    var [rs, cs] = accum
-    var uri      = targetUri(other)
-    if (verb(other) === 'edit' && uri && canEdit(activity, other)) {
-      var i = rs.findIndex(a => activityId(a) === uri)
-      if (i === 0) {
-        return [rs.unshift(other), cs]
+  const thisId = activityId(activity)
+  const [revisions, conflicts] = m.reduce(([rs, cs], otherAct) => {
+    const uri = targetUri(otherAct)
+    if (verb(other) === 'edit' && uri && canEdit(activity, otherAct)) {
+      const idx = m.first(
+        m.keepIndexed((i, act) => activityId(act) === uri ? i : undefined)
+      )
+      if (idx === 0) {
+        return [m.conj(rs, other), cs]
       }
       else if (i >= 1) {
-        return [rs, cs.push(conflict(other))]
+        return [rs, m.conj(cs, conflict(other))]
+      }
+      else {
+        return [rs, cs]
       }
     }
-    return accum
-  }, [Stack.of(activity), List()])
+  }
+  , [m.list(activity), m.vector()], context)
+  // `conj` puts items on the front of a list, and at the end of a vector.
 
-  return conflicts.unshift(
-    set(prop('revisions'), revisions.filter(r => r !== activity), activity)
-  )
+  return m.conj(conflicts, (
+    set(prop('revisions'), m.filter(r => r !== activity, revisions), activity)
+  ))
 }
 
-var _syntheticId = 0
+let _syntheticId = 0
 function syntheticId(): URI {
   return `synthetic:${_syntheticId++}`
 }
@@ -103,31 +110,32 @@ function syntheticId(): URI {
 // Assumes context is ordered
 function insertJoins(
   context:  Seqable<DerivedActivity>,
-  activity: DerivedActivity,
-  idx:      number
-): List<DerivedActivity> {
-  var prev  = context.takeUntil(a => activityId(a) === activityId(activity))
-  var ppl   = Act.flatParticipants(catMaybes(prev.map(getMessage)))
-
-  var added = Act.flatParticipants(maybeToList(getMessage(activity))).filter(p => (
+  activity: DerivedActivity
+): Vector<DerivedActivity> {
+  const prev  = m.takeWhile(a => activityId(a) !== activityId(activity), context)
+  const ppl   = Act.flatParticipants(catMaybes(m.map(getMessage, prev)))
+  const added = m.filter(p => {
     !ppl.some(p_ => p.address === p_.address)
-  ))
-  if (added.isEmpty() || prev.isEmpty()) {
-    return List.of(activity)
   }
-  else if (added.every(p => {
+  , Act.flatParticipants(maybeToSeqable(getMessage(activity))))
+
+  if (m.isEmpty(added) || m.isEmpty(prev)) {
+    return m.vector(activity)
+  }
+  else if (m.every(p => {
     const a = actor(activity)
     return !!a && (Act.mailtoUri(p.address) === a.uri)
-  })) {
-    return List.of(activity)
+  }, added)) {
+    return m.vector(activity)
   }
-  var addedActs = added.map(p => (
+
+  const addedActs = m.map(p => (
     set(prop('actor'), { uri: Act.mailtoUri(p.address), objectType: 'person', displayName: A.displayName(p) },
     set(prop('verb'), 'join',
     set(prop('id'), syntheticId(),
     activity)))
-  ))
-  return List(addedActs).push(activity)
+  ), added)
+  return m.conj(m.into(m.vector(), addedActs), activity)
 }
 
 function canEdit(x: DerivedActivity, y: DerivedActivity): boolean {
@@ -160,7 +168,7 @@ function isSynthetic(activity: DerivedActivity): boolean {
 }
 
 function likes({ likes }: DerivedActivity): Map<URI, ActivityObject> {
-  return likes || Map()
+  return likes
 }
 
 function likeCount(activity: DerivedActivity): number {

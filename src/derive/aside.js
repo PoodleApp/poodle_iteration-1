@@ -5,12 +5,12 @@ import { flatParticipants }                from '../activity'
 import { newDerivedActivity, syntheticId } from '../derivedActivity'
 import { unwrapMessage }                   from './unwrapMessage'
 
-import type { Map, Seq, Seqable, Set } from 'mori'
-import type { Address }                from '../models/address'
-import type { Message, MessageId }     from '../models/message'
-import type { Thread }                 from '../models/thread'
-import type { Activity }               from '../activity'
-import type { DerivedActivity }        from '../derivedActivity'
+import type { List, Map, Seq, Seqable, Set } from 'mori'
+import type { Address }                      from '../models/address'
+import type { Message, MessageId }           from '../models/message'
+import type { Thread }                       from '../models/thread'
+import type { Activity }                     from '../activity'
+import type { DerivedActivity }              from '../derivedActivity'
 
 export {
   aside,

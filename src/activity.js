@@ -2,7 +2,6 @@
 
 import moment          from 'moment'
 import * as m          from 'mori'
-import { List }        from 'immutable'
 import assign          from 'object-assign'
 import getRawBody      from 'raw-body'
 import { uniqBy }      from './util/mori'
@@ -79,14 +78,13 @@ export type MediaLink = {
 
 export type Zack = [Activity, Message]
 
-function getActivities(message: Message): Promise<List<Activity>> {
+function getActivities(message: Message): Promise<Seqable<Activity>> {
   const parts = toplevelParts(part => part.contentType === 'application/activity+json', message)
-  return Promise.all(parts.map(part => (
+  return Promise.all(m.intoArray(m.map(part => (
     getRawBody(part.stream, { encoding: 'utf8' })
     .then(JSON.parse)
     .then(json => assign(json, { id: midPartUri(part, message) }))
-  )).toArray())
-  .then(List)
+  ), parts)))
 }
 
 function mailtoUri(email: Email): URI {

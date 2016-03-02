@@ -104,7 +104,7 @@ function getActors(user: ?URI, activities: Seqable<DerivedActivity>): Seq<Activi
 }
 
 function joinNames(user: ?URI, actors: Seqable<ActivityObject>): string {
-  const ns = m.mapIndexed((a, idx) => displayName(user, a, idx), actors)
+  const ns = m.mapIndexed((idx, a) => displayName(user, a, idx), actors)
   const count = m.count(ns)
   if (count === 2) {
     return join(' and ', ns)

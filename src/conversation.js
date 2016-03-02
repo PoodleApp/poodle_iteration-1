@@ -1,10 +1,9 @@
 /* @flow */
 
-import { List, Map, Set, is } from 'immutable'
-import * as m                 from 'mori'
-import { set }                from 'safety-lens'
-import { prop }               from 'safety-lens/es2015'
-import { catMaybes }          from './util/maybe'
+import * as m        from 'mori'
+import { set }       from 'safety-lens'
+import { prop }      from 'safety-lens/es2015'
+import { catMaybes } from './util/maybe'
 import { collapseEdits
        , collapseLikes
        , getMessage
@@ -24,15 +23,16 @@ import { midUri
 import { displayName } from './models/address'
 import { foldrThread } from './models/thread'
 import { constructor } from './util/record'
+import { pair }        from './util/mori'
 
-import type { Seq, Seqable }       from 'mori'
-import type { Moment }             from 'moment'
-import type { DerivedActivity }    from './derivedActivity'
-import type { Activity, Zack }     from './activity'
-import type { Address }            from './models/address'
-import type { Message, MessageId } from './models/message'
-import type { Thread }             from './models/thread'
-import type { Constructor }        from './util/record'
+import type { List, Map, Pair, Seq, Seqable, Vector } from 'mori'
+import type { Moment }                                from 'moment'
+import type { DerivedActivity }                       from './derivedActivity'
+import type { Activity, Zack }                        from './activity'
+import type { Address }                               from './models/address'
+import type { Message, MessageId }                    from './models/message'
+import type { Thread }                                from './models/thread'
+import type { Constructor }                           from './util/record'
 
 export {
   allNames,
@@ -79,12 +79,9 @@ function allNames(conv: Conversation): Seq<string> {
 
 function threadToConversation(thread: Thread): Promise<Conversation> {
   return getActivities(thread).then(activityMap => {
-    const first = thread.first()
-    if (!first) { throw "thread may not be empty" }
-    const [{ messageId }, _] = first
+    const [{ messageId }, _] = m.first(thread)
     const activities = collapseAsides(thread, activityMap)
-    const firstActivity = activities.first()
-    if (!firstActivity) { throw "no activities found in thread" }
+    const firstActivity = m.first(activities)
     const conv = newConversation({
       id:            messageId,
       activities:    derive(activities),
@@ -95,20 +92,19 @@ function threadToConversation(thread: Thread): Promise<Conversation> {
   })
 }
 
-function getActivities(thread: Thread): Promise<Map<MessageId, List<Activity>>> {
-  const activityPromises: List<Promise<[MessageId, List<Activity>]>> = foldrThread((as, msg) => (
-    as.push(
-      Act.getActivities(msg).then(acts => [msg.messageId, acts])
-    )
-  ), List(), thread)
-  return Promise.all(activityPromises.toArray()).then(
-    pairs => pairs.reduce((map, [id, acts]) => map.set(id, acts), Map())
+function getActivities(thread: Thread): Promise<Map<MessageId, Seqable<Activity>>> {
+  const activityPromises: List<Promise<Pair<MessageId, Seqable<Activity>>>> =
+    foldrThread((as, msg) => (
+      m.conj(as, Act.getActivities(msg).then(acts => pair(msg.messageId, acts)))
+    ), m.list(), thread)
+  return Promise.all(m.intoArray(activityPromises)).then(
+    pairs => m.into(m.hashMap(), pairs)
   )
 }
 
 function derive(activities: Seq<DerivedActivity>): Seq<DerivedActivity> {
   const context = m.sortBy(published, activities)
-  const withJoins = m.mapcat(insertJoins.bind(null, context), activities)
+  const withJoins = m.mapcat(act => insertJoins(context, act), activities)
   const collapsed = m.pipeline(
     withJoins,
     acts => m.mapcat(collapseLikes.bind(null, context), acts),
@@ -130,13 +126,13 @@ function participants(conv: Conversation): { to:   Seq<Address>
                                            , from: Seq<Address>
                                            , cc:   Seq<Address>
                                            } {
-  const acts = conv.allActivities || List()
-  return Act.participants(catMaybes(acts.map(getMessage)))
+  const acts = conv.allActivities || m.list()
+  return Act.participants(catMaybes(m.map(getMessage, acts)))
 }
 
 function flatParticipants(conv: Conversation): Seq<Address> {
-  const acts = conv.allActivities || List()
-  return Act.flatParticipants(catMaybes(acts.map(getMessage)))
+  const acts = conv.allActivities || m.list()
+  return Act.flatParticipants(catMaybes(m.map(getMessage, acts)))
 }
 
 type FlatActivity = {
@@ -146,43 +142,49 @@ type FlatActivity = {
 }
 
 type AsideId = Set<string>
+const emptyId: AsideId = m.set()
 
 function flatAsides(conv: Conversation): Conversation {
-  const activities = conv.activities.flatMap(flatHelper.bind(null, Set(), conv)).sortBy(act => (
-    published(act.activity)
-  ))
+  const flatActivities: Seq<FlatActivity> = m.sortBy(
+    act => published(act.activity),
+    m.mapcat(act => flatHelper(emptyId, conv, act))
+  )
+
   // Combine adjacent activities with same asideId into groups
-  .reduce((groups, act) => {
-    const group = groups.last()
-    const lastAsideId = group ? group.first().asideId : null
-    if (group && is(lastAsideId, act.asideId)) {
-      return groups.butLast().push(group.push(act))
+  const activityGroups: Vector<Vector<FlatActivity>> = m.reduce((groups, act) => {
+    const group = m.last(groups)
+    const lastAsideId = group ? m.first(group).asideId : null
+    if (group && m.equals(lastAsideId, act.asideId)) {
+      const updatedGroup = m.conj(group, act)
+      return m.assoc(groups, m.count(groups) - 1, updatedGroup)
     }
     else {
-      return groups.push(List.of(act))
+      return m.conj(groups, m.vector(act))
     }
-  }, List())
-  .flatMap(group => {
-    const asideId = group.first().asideId
+  }, m.vector(), flatActivities)
+
+  const activities = m.mapcat(group => {
+    const asideId = m.first(group).asideId
     if (asideId.size === 0) {
       return group.map(a => a.activity)
     }
     else {
-      const conv = group.first().conversation
-      return List.of(aside(group.map(a => a.activity), conv.allActivities))
+      const conv = m.first(group).conversation
+      return aside(m.map(a => a.activity, group), conv.allActivities)
     }
-  })
+  }, activityGroups)
+
   return set(prop('activities'), activities, conv)
 }
 
-function flatHelper(asideId: AsideId, conversation: Conversation, activity: DerivedActivity): List<FlatActivity> {
+function flatHelper(asideId: AsideId, conversation: Conversation, activity: DerivedActivity): Seq<FlatActivity> {
   const { aside, verb } = activity
   if (verb === 'aside' && aside) {
     const conv = asideToConversation(activity)
-    const id = Set(flatParticipants(conv).map(addr => addr.address))
+    const id = m.into(m.set(), m.map(addr => addr.address, flatParticipants(conv)))
     return aside.flatMap(flatHelper.bind(null, id, conv))
   }
   else {
-    return List.of({ asideId, activity, conversation })
+    return m.seq([{ asideId, activity, conversation }])
   }
 }

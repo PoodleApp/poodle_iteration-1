@@ -1,6 +1,5 @@
 /* @flow */
 
-import { List, is }  from 'immutable'
 import * as m        from 'mori'
 import * as Sunshine from 'sunshine-framework/react'
 import React         from 'react'
@@ -246,7 +245,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
       act.verb === 'aside' && m.equals(act.allActivities, activity.allActivities)
     ), conversation.activities)))
 
-    const activities = (activity.aside || List()).map(act => (
+    const activities = m.map(act => (
       <ActivityView
         {...this.props}
         activity={act}
@@ -254,7 +253,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         key={activityId(act)}
         nestLevel={nestLevel+1}
         />
-    ))
+    ), activity.aside || m.list())
 
     const { palette } = (this.context: any).muiTheme.baseTheme
 
@@ -308,7 +307,7 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   render(): React.Element {
     var { activity, loading, useremail, style } = this.props
     var me           = mailtoUri(useremail)
-    var alreadyLiked = likes(activity).some(l => l.uri === me)
+    var alreadyLiked = !!m.some((uri, _) => uri === me, likes(activity))
     var mine         = myContent(activity, useremail)
     return (
       <FlatButton
@@ -326,21 +325,25 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
 }
 
 function displayContent(activity: DerivedActivity, style?: Object): React.Element {
-  const content = objectContent(activity)
-  .sort((a,b) => {
-    // prefer text/plain
-    if (a.contentType === 'text/plain' && b.contentType !== 'text/plain') {
-      return -1
-    }
-    else if (a.contentType !== 'text/plain' && b.contentType === 'text/plain') {
-      return 1
-    }
-    else {
-      return 0
-    }
-  })
-  .filter(({ contentType }) => contentType === 'text/plain' || contentType === 'text/html')  // TODO: support other content types
-  .first()
+  const content = m.first(
+    m.filter(
+      // TODO: support other content types
+      ({ contentType }) => contentType === 'text/plain' || contentType === 'text/html'
+    , m.sort((a, b) => {
+      // prefer text/plain
+      if (a.contentType === 'text/plain' && b.contentType !== 'text/plain') {
+        return -1
+      }
+      else if (a.contentType !== 'text/plain' && b.contentType === 'text/plain') {
+        return 1
+      }
+      else {
+        return 0
+      }
+    })
+    , objectContent(activity)
+    )
+  )
   if (content && content.contentType === 'text/plain') {
     return displayText(content.content, style)
   }

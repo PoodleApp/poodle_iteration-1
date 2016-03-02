@@ -398,7 +398,7 @@ class ComposeOptsMenu extends Sunshine.Component<{},{ showAddPeople: boolean },{
 }
 
 function textContent(activity: DerivedActivity): ?string {
-  const part = Act.objectContent(activity).first()
+  const part = m.first(Act.objectContent(activity))
   if (part && part.contentType.startsWith('text/')) {
     return part.content.toString('utf8')
   }
