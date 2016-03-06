@@ -88,43 +88,43 @@ function flatParts(msg: Message): Seq<MessagePart> {
   return subparts(msg.mimeTree)
 }
 
-function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): Seqable<MessagePart> {
+function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): Seq<MessagePart> {
   return toplevelRec(predicate, msg.mimeTree)
 }
 
-function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): Seqable<MessagePart> {
+function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): Seq<MessagePart> {
   const multi = part.mimeMultipart
   const children = part.childNodes
   if (!multi) {
-    return predicate(part) ? m.list(part) : m.list()
+    return predicate(part) ? m.seq([(part: MessagePart)]) : m.seq([])
   }
   // mixed: get all parts
   else if (multi === 'mixed') {
-    return m.mapcat(part => topLevelRec(predicate, part), children)
+    return m.mapcat(part => toplevelRec(predicate, part), children)
   }
   // alternative: get the last matching part
   else if (multi === 'alternative') {
     return m.last(
-      m.filter(parts => m.some(predicate),
-      m.map(part => topLevelRec(predicate, part)
-      , children))) || m.list()
+      m.filter(parts => m.some(predicate, parts),
+      m.map(part => toplevelRec(predicate, part)
+      , children))) || m.seq([])
   }
   // related: get the first part
   else if (multi === 'related') {
     return m.isEmpty(children) ?
-      m.list() :
+      m.seq([]) :
       toplevelRec(predicate, m.first(children))
   }
   // signed: get the first part
   else if (multi.indexOf('signature') > -1) {
     return m.isEmpty(children) ?
-      m.list() :
+      m.seq([]) :
       toplevelRec(predicate, m.first(children))
   }
   else {
     // TODO: What to do when encountering unknown multipart subtype?
     console.log(`Unhandled multipart subtype: multipart/${multi}`)
-    return m.list()
+    return m.seq([])
   }
 }
 

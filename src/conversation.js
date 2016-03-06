@@ -21,18 +21,18 @@ import { midUri
        , resolveUri
        }               from './models/message'
 import { displayName } from './models/address'
-import { foldrThread } from './models/thread'
+import { foldThread }  from './models/thread'
 import { constructor } from './util/record'
 import { pair }        from './util/mori'
 
-import type { List, Map, Pair, Seq, Seqable, Vector } from 'mori'
-import type { Moment }                                from 'moment'
-import type { DerivedActivity }                       from './derivedActivity'
-import type { Activity, Zack }                        from './activity'
-import type { Address }                               from './models/address'
-import type { Message, MessageId }                    from './models/message'
-import type { Thread }                                from './models/thread'
-import type { Constructor }                           from './util/record'
+import type { List, Map, Pair, Seq, Seqable, Set, Vector } from 'mori'
+import type { Moment }             from 'moment'
+import type { DerivedActivity }    from './derivedActivity'
+import type { Activity, Zack }     from './activity'
+import type { Address }            from './models/address'
+import type { Message, MessageId } from './models/message'
+import type { Thread }             from './models/thread'
+import type { Constructor }        from './util/record'
 
 export {
   allNames,
@@ -94,7 +94,7 @@ function threadToConversation(thread: Thread): Promise<Conversation> {
 
 function getActivities(thread: Thread): Promise<Map<MessageId, Seqable<Activity>>> {
   const activityPromises: List<Promise<Pair<MessageId, Seqable<Activity>>>> =
-    foldrThread((as, msg) => (
+    foldThread((as, msg) => (
       m.conj(as, Act.getActivities(msg).then(acts => pair(msg.messageId, acts)))
     ), m.list(), thread)
   return Promise.all(m.intoArray(activityPromises)).then(
@@ -102,7 +102,7 @@ function getActivities(thread: Thread): Promise<Map<MessageId, Seqable<Activity>
   )
 }
 
-function derive(activities: Seq<DerivedActivity>): Seq<DerivedActivity> {
+function derive(activities: Seqable<DerivedActivity>): Seq<DerivedActivity> {
   const context = m.sortBy(published, activities)
   const withJoins = m.mapcat(act => insertJoins(context, act), activities)
   const collapsed = m.pipeline(
@@ -142,12 +142,11 @@ type FlatActivity = {
 }
 
 type AsideId = Set<string>
-const emptyId: AsideId = m.set()
 
 function flatAsides(conv: Conversation): Conversation {
   const flatActivities: Seq<FlatActivity> = m.sortBy(
     act => published(act.activity),
-    m.mapcat(act => flatHelper(emptyId, conv, act))
+    m.mapcat(act => flatHelper(m.set(), conv, act), conv.activities)
   )
 
   // Combine adjacent activities with same asideId into groups
@@ -165,12 +164,12 @@ function flatAsides(conv: Conversation): Conversation {
 
   const activities = m.mapcat(group => {
     const asideId = m.first(group).asideId
-    if (asideId.size === 0) {
-      return group.map(a => a.activity)
+    if (m.isEmpty(asideId)) {
+      return m.map(a => a.activity, group)
     }
     else {
       const conv = m.first(group).conversation
-      return aside(m.map(a => a.activity, group), conv.allActivities)
+      return m.seq([aside(m.map(a => a.activity, group), conv.allActivities)])
     }
   }, activityGroups)
 
@@ -182,7 +181,7 @@ function flatHelper(asideId: AsideId, conversation: Conversation, activity: Deri
   if (verb === 'aside' && aside) {
     const conv = asideToConversation(activity)
     const id = m.into(m.set(), m.map(addr => addr.address, flatParticipants(conv)))
-    return aside.flatMap(flatHelper.bind(null, id, conv))
+    return m.mapcat(act => flatHelper(id, conv, act), aside)
   }
   else {
     return m.seq([{ asideId, activity, conversation }])

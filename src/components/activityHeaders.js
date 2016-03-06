@@ -2,7 +2,6 @@
 
 import * as Sunshine                  from 'sunshine-framework/react'
 import React                          from 'react'
-import { List }                       from 'immutable'
 import * as m                         from 'mori'
 import { join, uniqBy }               from '../util/mori'
 import { catMaybes }                  from '../util/maybe'
@@ -15,13 +14,13 @@ import { Avatar
        , ListItem
        } from 'material-ui'
 
-import type { Seq, Seqable }        from 'mori'
-import type { DerivedActivity }     from '../derivedActivity'
-import type { Conversation }        from '../conversation'
-import type { ActivityObject, URI } from '../activity'
+import type { Seq, Seqable, Vector } from 'mori'
+import type { DerivedActivity }      from '../derivedActivity'
+import type { Conversation }         from '../conversation'
+import type { ActivityObject, URI }  from '../activity'
 
 export type HeaderProps = {
-  activities: List<DerivedActivity>,
+  activities: Seqable<DerivedActivity>,
   conversation: Conversation,
   user: ?URI,
 }
@@ -31,7 +30,7 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
     const { conversation, user } = this.props
     const activities  = getActivities(user, this.props.activities)
     const verb        = primeVerb(activities)
-    const activities_ = activities.filter(act => Act.verb(act) === verb)
+    const activities_ = m.filter(act => Act.verb(act) === verb, activities)
 
     if (primeVerb === 'conflict') {
       return <ConflictHeader {...this.props} activities={activities_} />
@@ -42,7 +41,7 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
     const verbed  = displayVerb(verb, actors)
     const ppl     = C.flatParticipants(conversation)
     const partStr = join(', ', m.map(A.displayName, ppl))
-    const last    = activities_.last()
+    const last    = m.last(activities_)
 
     if (!last) { throw "no last activity" }
 
@@ -64,7 +63,7 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
 class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
   render(): React.Element {
     const { activities, conversation } = this.props
-    const act = activities.last()
+    const act = m.last(activities)
     const published = act ? Act.published(act).fromNow() : ''
     return (
       <ListItem
@@ -81,21 +80,21 @@ class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
   }
 }
 
-function primeVerb(activities: List<DerivedActivity>): string {
+function primeVerb(activities: Seqable<DerivedActivity>): string {
   const verb = ['conflict', 'post', 'reply', 'edit', 'like'].find(v => (
-    activities.some(act => Act.verb(act) === v)
+    m.some(act => Act.verb(act) === v, activities)
   ))
-  const first = activities.first()
+  const first = m.first(activities)
   if (!first) { throw "no activities" }
   return verb || Act.verb(first)
 }
 
-function getActivities(user: ?URI, activities: List<DerivedActivity>): List<DerivedActivity> {
-  const othersActivities = activities.filter(act => {
+function getActivities(user: ?URI, activities: Seqable<DerivedActivity>): Seqable<DerivedActivity> {
+  const othersActivities = m.filter(act => {
     const p = Act.actor(act)
     return !p || !user || (p.uri !== user)
-  })
-  return othersActivities.size > 0 ? othersActivities : activities
+  }, activities)
+  return !m.isEmpty(othersActivities) ? othersActivities : activities
 }
 
 function getActors(user: ?URI, activities: Seqable<DerivedActivity>): Seq<ActivityObject> {

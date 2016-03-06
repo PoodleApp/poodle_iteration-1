@@ -340,9 +340,8 @@ function displayContent(activity: DerivedActivity, style?: Object): React.Elemen
       else {
         return 0
       }
-    })
-    , objectContent(activity)
-    )
+    }
+    , objectContent(activity)))
   )
   if (content && content.contentType === 'text/plain') {
     return displayText(content.content, style)

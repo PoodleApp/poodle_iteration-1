@@ -7,6 +7,7 @@ import {
   reduce,
   update,
 } from 'sunshine-framework'
+import * as m                              from 'mori'
 import { compose, get, lookup, over, set } from 'safety-lens'
 import { prop }                            from 'safety-lens/es2015'
 import * as stream                         from 'stream'
@@ -20,7 +21,7 @@ import { assemble }                        from './compose'
 import { msmtp }                           from './msmtp'
 
 import type { Reducers, EventResult } from 'sunshine-framework'
-import type { IndexedIterable }       from 'immutable'
+import type { Seq, Seqable }          from 'mori'
 import type { DerivedActivity }       from './derivedActivity'
 import type { Conversation }          from './conversation'
 import type { Address }               from './models/address'
@@ -196,9 +197,9 @@ function sendReply({ reply, message, conversation, addPeople }: SendReply, state
   const subject          = message.subject.startsWith('Re:') ? message.subject : `Re: ${message.subject}`
   const author           = { name: username, address: useremail }
 
-  const recipients    = to.concat(from).concat(addPeople)
+  const recipients    = m.concat(to, from, addPeople)
   const toWithoutSelf = withoutSelf(author, recipients)
-  const recipients_   = toWithoutSelf.isEmpty() ? recipients : toWithoutSelf
+  const recipients_   = m.isEmpty(toWithoutSelf) ? recipients : toWithoutSelf
 
   const draft: Draft = {
     activities: [reply],
@@ -229,12 +230,12 @@ function send(draft: Draft, state: AppState): EventResult<AppState> {
   ))
 }
 
-function withoutSelf<AS: IndexedIterable<Address>>(self: Address, addrs: AS): AS {
-  return addrs.filter(a => a.address !== self.address)
+function withoutSelf(self: Address, addrs: Seqable<Address>): Seq<Address> {
+  return m.filter(a => a.address !== self.address, addrs)
 }
 
-function without<AS: IndexedIterable<Address>>(exclude: AS, addrs: AS): AS {
-  return addrs.filter(a => !exclude.some(e => e.address === a.address))
+function without(exclude: Seqable<Address>, addrs: Seqable<Address>): Seq<Address> {
+  return m.filter(a => !m.some(e => e.address === a.address, exclude), addrs)
 }
 
 

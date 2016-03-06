@@ -1,11 +1,13 @@
 /* @flow */
 
-import { List } from 'immutable'
-import * as Act from './derivedActivity'
+import * as m      from 'mori'
+import * as Act    from './derivedActivity'
+import { butLast } from './util/mori'
 
-import type { DerivedActivity }     from './derivedActivity'
-import type { Conversation }        from './conversation'
-import type { ActivityObject, URI } from './activity'
+import type { Seq, Seqable, Vector } from 'mori'
+import type { DerivedActivity }      from './derivedActivity'
+import type { Conversation }         from './conversation'
+import type { ActivityObject, URI }  from './activity'
 
 export {
   activityStream,
@@ -13,29 +15,30 @@ export {
 
 type Presentation = [DerivedActivity, Conversation]
 
-function activityStream(user: ?URI, convs: List<Conversation>): List<[List<DerivedActivity>, Conversation]> {
-  var activities = convs.flatMap(conversationActivities.bind(null, user))
-  .sortBy(([act, _]) => Act.published(act))
-  .reverse()
+function activityStream(user: ?URI, convs: Seqable<Conversation>): Vector<[Vector<DerivedActivity>, Conversation]> {
+  const activities = m.reverse(
+                     m.sortBy(([act, _]) => Act.published(act),
+                     m.mapcat(conversationActivities.bind(null, user),
+                     convs)))
   return rollup(user, activities)
 }
 
-function conversationActivities(user: ?URI, conv: Conversation): List<Presentation> {
-  return conv.allActivities
-  .flatMap(promoteAsides)
-  .filter(act => true)       // TODO: cut off activities past certain age
-  .filter(nonNotification.bind(null, user))
-  .map(act => [act, conv])
+function conversationActivities(user: ?URI, conv: Conversation): Seq<Presentation> {
+  return m.map(act => [act, conv],
+         m.filter(nonNotification.bind(null, user),
+         m.filter(act => true,  // TODO: cut off activities past certain age
+         m.mapcat(promoteAsides,
+         conv.allActivities))))
 }
 
 // Like flatAsides, but lifts activities into top-level conversation instead of
 // producing flattened aside activities.
-function promoteAsides(act: DerivedActivity): List<DerivedActivity> {
+function promoteAsides(act: DerivedActivity): Seq<DerivedActivity> {
   if (Act.verb(act) === 'aside' && act.aside) {
-    return act.aside.flatMap(promoteAsides)
+    return m.mapcat(promoteAsides, act.aside)
   }
   else {
-    return List.of(act)
+    return m.seq([])
   }
 }
 
@@ -61,16 +64,15 @@ function nonNotification(user: ?URI, act: DerivedActivity): boolean {
   }
 }
 
-function rollup(user: ?URI, activities: List<Presentation>): List<[List<DerivedActivity>, Conversation]> {
-  return activities.reduce((as, pres) => {
-    var [act, conv] = pres
-    var last = as.last()
+function rollup(user: ?URI, activities: Seqable<Presentation>): Vector<[Vector<DerivedActivity>, Conversation]> {
+  return m.reduce((as, [act, conv]) => {
+    const last = m.last(as)
     if (last) {
-      var [acts, conv_] = last
+      const [acts, conv_] = last
       if (conv === conv_) {
-        return as.pop().push([acts.push(act), conv])
+        return m.conj(butLast(as), [m.conj(acts, act), conv])
       }
     }
-    return as.push([List.of(act), conv])
-  }, List())
+    return m.conj(as, [m.vector(act), conv])
+  }, m.vector(), activities)
 }

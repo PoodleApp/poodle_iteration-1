@@ -1,6 +1,7 @@
 /* @flow */
 
 import { compose, filtering, getter, lookup, over, set } from 'safety-lens'
+import * as m                from 'mori'
 import { List, Map}          from 'immutable'
 import { key }               from 'safety-lens/es2015'
 import { prop }              from 'safety-lens/es2015'
@@ -105,7 +106,7 @@ function currentActivity(state: AppState): ?Conversation {
   const conv = currentConversation(state)
   const uri = state.routeParams.get('activityUri')
   if (conv && uri) {
-    return conv.activities.find(a => Act.activityId(a) === uri)
+    return m.first(m.filter(a => Act.activityId(a) === uri, conv.activities))
   }
 }
 

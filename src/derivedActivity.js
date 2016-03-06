@@ -1,13 +1,13 @@
 /* @flow */
 
-import * as m                       from 'mori'
-import { set }                      from 'safety-lens'
-import { prop }                     from 'safety-lens/es2015'
-import { catMaybes, maybeToList }   from './util/maybe'
-import { constructor }              from './util/record'
-import { resolveUri }               from './models/message'
-import * as Act                     from './activity'
-import * as A                       from './models/address'
+import * as m                        from 'mori'
+import { set }                       from 'safety-lens'
+import { prop }                      from 'safety-lens/es2015'
+import { catMaybes, maybeToSeqable } from './util/maybe'
+import { constructor }               from './util/record'
+import { resolveUri }                from './models/message'
+import * as Act                      from './activity'
+import * as A                        from './models/address'
 
 import type { List, Map, Seq, Seqable, Vector }     from 'mori'
 import type { Moment }                              from 'moment'
@@ -20,7 +20,7 @@ export type DerivedActivity = {
   id:        string,
   activity?: Activity,  // original, unmutated activity
   actor?:    ActivityObject,
-  aside?:    List<DerivedActivity>,
+  aside?:    Seqable<DerivedActivity>,
   likes:     Map<URI, ActivityObject>,
   message?:  Message,   // message containing original activity, for context
   revisions: List<DerivedActivity>,
@@ -79,20 +79,21 @@ function collapseEdits(
   const thisId = activityId(activity)
   const [revisions, conflicts] = m.reduce(([rs, cs], otherAct) => {
     const uri = targetUri(otherAct)
-    if (verb(other) === 'edit' && uri && canEdit(activity, otherAct)) {
+    if (verb(otherAct) === 'edit' && uri && canEdit(activity, otherAct)) {
       const idx = m.first(
-        m.keepIndexed((i, act) => activityId(act) === uri ? i : undefined)
+        m.keepIndexed((i, act) => activityId(act) === uri ? i : undefined, rs)
       )
       if (idx === 0) {
-        return [m.conj(rs, other), cs]
+        return [m.conj(rs, otherAct), cs]
       }
-      else if (i >= 1) {
-        return [rs, m.conj(cs, conflict(other))]
+      else if (idx >= 1) {
+        return [rs, m.conj(cs, conflict(otherAct))]
       }
       else {
         return [rs, cs]
       }
     }
+    return [rs, cs]
   }
   , [m.list(activity), m.vector()], context)
   // `conj` puts items on the front of a list, and at the end of a vector.
@@ -114,9 +115,9 @@ function insertJoins(
 ): Vector<DerivedActivity> {
   const prev  = m.takeWhile(a => activityId(a) !== activityId(activity), context)
   const ppl   = Act.flatParticipants(catMaybes(m.map(getMessage, prev)))
-  const added = m.filter(p => {
-    !ppl.some(p_ => p.address === p_.address)
-  }
+  const added = m.filter(p => (
+    !m.some(p_ => p.address === p_.address, ppl)
+  )
   , Act.flatParticipants(maybeToSeqable(getMessage(activity))))
 
   if (m.isEmpty(added) || m.isEmpty(prev)) {
@@ -172,7 +173,7 @@ function likes({ likes }: DerivedActivity): Map<URI, ActivityObject> {
 }
 
 function likeCount(activity: DerivedActivity): number {
-  return likes(activity).size
+  return m.count(likes(activity))
 }
 
 function getActivity(activity: DerivedActivity): ?Activity {
@@ -181,7 +182,7 @@ function getActivity(activity: DerivedActivity): ?Activity {
 }
 
 function latestRevision(activity: DerivedActivity): DerivedActivity {
-  return activity.revisions.first() || activity
+  return m.first(activity.revisions) || activity
 }
 
 function getMessage(activity: DerivedActivity): ?Message {
@@ -194,7 +195,7 @@ function object(activity: DerivedActivity): ?ActivityObject {
   return act ? act.object : undefined
 }
 
-function objectContent(activity: DerivedActivity): List<{ contentType: string, content: Buffer, uri: URI }> {
+function objectContent(activity: DerivedActivity): Seq<{ contentType: string, content: Buffer, uri: URI }> {
   const act = getActivity(activity)
   const obj = act ? act.object : undefined
   const msg = getMessage(activity)
@@ -210,7 +211,7 @@ function objectContent(activity: DerivedActivity): List<{ contentType: string, c
 
   const z = zack(activity)
   const uri = z ? Act.objectContent(z) : null
-  return activity.attachments.filter(a => a.uri === uri)
+  return m.filter(a => a.uri === uri, activity.attachments)
 }
 
 function objectType(activity: DerivedActivity): ?string {
@@ -226,7 +227,7 @@ function published(activity: DerivedActivity): Moment {
   if (act && msg) {
     return Act.published([act, msg])
   } else if (activity.aside) {
-    const first = activity.aside.first()
+    const first = m.first(activity.aside)
     if (!first) { throw "no first activity in aside" } // TODO
     return published(first)
   }
@@ -238,7 +239,7 @@ function lastEdited(activity: DerivedActivity): Moment {
 }
 
 function edited(activity: DerivedActivity): boolean {
-  return activity.revisions.size > 0
+  return !m.isEmpty(activity.revisions)
 }
 
 function target(activity: DerivedActivity): ?ActivityObject {
@@ -281,7 +282,7 @@ function rawVerb(activity: DerivedActivity): ?Act.Verb {
 }
 
 function zack(activity: DerivedActivity): ?Zack {
-  var rev = activity.revisions.first()
+  const rev = m.first(activity.revisions)
   if (!rev) {
     var { activity: act, message: msg } = activity
     if (act && msg) {

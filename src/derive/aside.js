@@ -4,13 +4,14 @@ import * as m                              from 'mori'
 import { flatParticipants }                from '../activity'
 import { newDerivedActivity, syntheticId } from '../derivedActivity'
 import { unwrapMessage }                   from './unwrapMessage'
+import { subtract }                        from '../util/mori'
 
-import type { List, Map, Seq, Seqable, Set } from 'mori'
-import type { Address }                      from '../models/address'
-import type { Message, MessageId }           from '../models/message'
-import type { Thread }                       from '../models/thread'
-import type { Activity }                     from '../activity'
-import type { DerivedActivity }              from '../derivedActivity'
+import type { Map, Seq, Seqable, Set } from 'mori'
+import type { Address }                from '../models/address'
+import type { Message, MessageId }     from '../models/message'
+import type { Thread }                 from '../models/thread'
+import type { Activity }               from '../activity'
+import type { DerivedActivity }        from '../derivedActivity'
 
 export {
   aside,
@@ -26,25 +27,25 @@ function flatten(
   activityMap:       Map<MessageId, Seqable<Activity>>,
   [message, thread]: [Message, Thread]
 ): Seq<DerivedActivity> {
-  const to   = Set(flatParticipants(List.of(message)).map(addr => addr.address))
-  const ppl_ = ppl.union(to)
-  const removed = ppl.subtract(to)
+  const to   = m.set(m.map(addr => addr.address, flatParticipants(m.list(message))))
+  const ppl_ = m.union(ppl, to)
+  const removed = subtract(ppl, to)
 
   const activities = unwrapMessage(message, activityMap)
-  const replies = removed.size > 0 ?
-    thread.flatMap(flatten.bind(null, to,            activityMap)) :
-    thread.flatMap(flatten.bind(null, ppl.union(to), activityMap))
-  const withReplies = activities.concat(replies)
+  const replies = !m.isEmpty(removed) ?
+    m.mapcat(flatten.bind(null, to,               activityMap), thread) :
+    m.mapcat(flatten.bind(null, m.union(ppl, to), activityMap), thread)
+  const withReplies = m.concat(activities, replies)
 
-  if (removed.size > 0) {
-    return List.of(aside(withReplies, withReplies))
+  if (!m.isEmpty(removed)) {
+    return m.seq([aside(withReplies, withReplies)])
   }
   else {
     return withReplies
   }
 }
 
-function aside(activities: List<DerivedActivity>, allActivities: List<DerivedActivity>): DerivedActivity {
+function aside(activities: Seqable<DerivedActivity>, allActivities: Seqable<DerivedActivity>): DerivedActivity {
   return newDerivedActivity({
     id:    syntheticId(),
     aside: activities,

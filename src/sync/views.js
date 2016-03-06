@@ -1,5 +1,7 @@
 /* @flow */
 
+import * as m from 'mori'
+
 import type { Message }   from '../models/message'
 import type { Thread }    from '../models/thread'
 import type { ThreadDoc } from './types'
@@ -13,7 +15,7 @@ const indexes = {
     byLatestActivity: {
       map: function(doc: ThreadDoc | Object) {
         function eachMessage(fn: (_: Message) => any, thread: Thread) {
-          thread.forEach(node => {
+          m.each(thread, node => {
             const message = node[0]
             const replies = node[1]
             fn(message)
@@ -36,7 +38,7 @@ const indexes = {
     byMessageId: {
       map: function(doc: ThreadDoc | Object) {
         function recMessage(nodes: Thread) {
-          nodes.forEach(node => {
+          m.each(nodes, node => {
             const message = node[0]
             const thread  = node[1]
             emit(message.messageId, 1)
@@ -52,7 +54,7 @@ const indexes = {
     byDanglingReference: {
       map: function(doc: ThreadDoc | Object) {
         function eachMessage(fn: (_: Message) => any, thread: Thread) {
-          thread.forEach(node => {
+          m.each(thread, node => {
             const message = node[0]
             const replies = node[1]
             fn(message)
