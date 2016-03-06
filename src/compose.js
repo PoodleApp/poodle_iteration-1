@@ -1,6 +1,7 @@
 /* @flow */
 
-import { List }          from 'immutable'
+import * as m            from 'mori'
+import { join }          from './util/mori'
 import { MailComposer }  from 'mailcomposer'
 import randomstring      from 'randomstring'
 import uuid              from 'uuid'
@@ -9,7 +10,7 @@ import objectAssign      from 'object-assign'
 import { objectContent } from './activity'
 import { parseMidUri }   from './models/message'
 
-import type { IndexedIterable }    from 'immutable'
+import type { Seqable }            from 'mori'
 import type { ReadStream }         from 'fs'
 import type { Content }            from 'mailcomposer'
 import type { Activity }           from './activity'
@@ -30,8 +31,8 @@ export type ActivityId = string
 export type Draft = {
   activities:  Burger[],
   from:        Address,
-  to:          IndexedIterable<Address>,
-  cc?:         IndexedIterable<Address>,
+  to:          Seqable<Address>,
+  cc?:         Seqable<Address>,
   inReplyTo?:  MessageId,
   references?: MessageId[],
   subject?:    string,
@@ -46,13 +47,13 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   const comp = new MailComposer()
   comp.setMessageOption({
     from: convertAddress(comp, from),
-    to:   to.map(convertAddress.bind(null, comp)).join(', '),
+    to:   join(', ', m.map(convertAddress.bind(null, comp), to)),
   })
   if (subject) {
     comp.setMessageOption({ subject })
   }
   if (cc) {
-    comp.setMessageOption({ cc: cc.map(convertAddress.bind(null, comp)).join(', ') })
+    comp.setMessageOption({ cc: join(', ', m.map(convertAddress.bind(null, comp), cc)) })
   }
   if (inReplyTo) {
     comp.setMessageOption({ inReplyTo })
@@ -87,7 +88,7 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
   })
 
   const jsonParts = jsonAndAttachments.map(([json, _]) => json)
-  const attachments = List(jsonAndAttachments).flatMap(([_, as]) => as).toArray()
+  const attachments = m.intoArray(m.mapcat(([_, as]) => as, jsonAndAttachments))
 
   const combinedJsonParts = jsonParts.length > 0 ?
     { multipart: 'mixed', childNodes: jsonParts } : jsonParts[0]
@@ -110,9 +111,9 @@ function assemble({ activities, from, to, cc, inReplyTo, references, subject, fa
 
 // TODO: specific fallback behavior for each verb and object type
 function fallbackContent(acts: Burger[]): string {
-  const contents  = List(acts).flatMap(([_, __, attachments]) => attachments)
-  const textParts = contents.filter(c => c.contentType === 'text/plain')
-  const firstPart = textParts.first()
+  const contents  = m.mapcat(([_, __, attachments]) => attachments, acts)
+  const textParts = m.filter(c => c.contentType === 'text/plain', contents)
+  const firstPart = m.first(textParts)
   const text      = firstPart ? firstPart.contents.toString('utf8') : ''
   return text
 }

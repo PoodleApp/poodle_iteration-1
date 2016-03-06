@@ -1,74 +1,70 @@
 /* @flow */
 
-import { List, Map }         from 'immutable'
-import { partition, uniqBy } from '../util/immutable'
+import * as m                from 'mori'
+import { partition, uniqBy } from '../util/mori'
 
-import type { IndexedIterable } from 'immutable'
-import type { Message }         from './message'
+import type { Seq, Seqable, Vector } from 'mori'
+import type { Message } from './message'
 
-export type Thread = IndexedIterable<[Message, Thread]>
+export type Thread = Seqable<[Message, Thread]>
 
 export {
   buildThread,
-  foldrThread,
+  foldThread,
   insertMessage,
   getMessages,
   singleton,
 }
 
-function buildThread(messages: List<Message>): Thread {
-  if (messages.isEmpty()) { throw "Cannot build thread from empty message list" }
-  const first = messages.first()
-  return messages.shift().reduce(insertMessage, singleton(first))
+function buildThread(messages: Seqable<Message>): Thread {
+  return m.reduce(insertMessage, singleton(m.first(messages)), m.rest(messages))
 }
 
 function singleton(message: Message): Thread {
-  return List.of([message, List()])
+  return m.vector([message, m.vector()])
 }
 
 function insertMessage(thread: Thread, message: Message): Thread {
   const msgs = uniqBy(
     m => m.messageId,
-    thread.flatMap(getMessages).push(message)
+    m.concat(m.mapcat(getMessages, thread), [message])
   )
   let [toplevel, replies] = partition(msg => (
-    !msgs.some(m => ancestorOf(msg, m))
+    !m.some(m => ancestorOf(msg, m), msgs)
   ), msgs)
-  return toplevel.map(msg => assembleTree(msg, replies))
+  return m.map(msg => assembleTree(msg, replies), toplevel)
 }
 
-function assembleTree(message: Message, messages: List<Message>): [Message, Thread] {
-  const descendents = messages.filter(msg => msg !== message && ancestorOf(msg, message))
+function assembleTree(message: Message, messages: Seqable<Message>): [Message, Thread] {
+  const descendents = m.filter(msg => msg !== message && ancestorOf(msg, message), messages)
   let [replies, subreplies] = partition(msg => (
-    !descendents.some(m => ancestorOf(msg, m))
+    !m.some(m => ancestorOf(msg, m), descendents)
   ), descendents)
-  const subthread = replies.map(msg => assembleTree(msg, subreplies))
+  const subthread = m.map(msg => assembleTree(msg, subreplies), replies)
   return [message, sortReplies(subthread)]
 }
 
-function getMessages([message, replies]: Thread): List<Message> {
-  return replies.flatMap(getMessages).unshift(message)
+function getMessages(thread: Thread): Seq<Message> {
+  const allMsgs = m.mapcat(([msg, subthread]) => m.cons(msg, getMessages(subthread)))
+  return m.sortBy(msg => msg.receivedDate, allMsgs)
 }
 
 function parentOf(msg: Message, msg_: Message): boolean {
-  return !!msg.inReplyTo && msg.inReplyTo.some(ref => ref === msg_.messageId)
+  return !!msg.inReplyTo && !!m.some(ref => ref === msg_.messageId, msg.inReplyTo)
 }
 
 function ancestorOf(msg: Message, msg_: Message): boolean {
-  return !!msg.references && msg.references.some(ref => ref === msg_.messageId)
+  return !!msg.references && !!m.some(ref => ref === msg_.messageId, msg.references)
 }
 
 function hasReferences(message: Message): boolean {
-  return !!message.references && message.references.length > 0
+  return !!message.references && !m.isEmpty(message.references)
 }
 
 function sortReplies(replies: Thread): Thread {
-  return replies.sortBy(([msg, _]) => msg.receivedDate)
+  return m.sortBy(([msg, _]) => msg.receivedDate, replies)
 }
 
-function foldrThread<T>(reducer: (accum: T, msg: Message) => T, init: T, thread: Thread): T {
-  return thread.reduceRight((t, [msg, subthread]) => {
-    const accum = reducer(t, msg)
-    return foldrThread(reducer, accum, subthread)
-  }, init)
+function foldThread<T>(reducer: (accum: T, msg: Message) => T, init: T, thread: Thread): T {
+  return m.reduce(reducer, init, getMessages(thread))
 }

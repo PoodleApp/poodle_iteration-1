@@ -1,26 +1,26 @@
 /* @flow */
 
-import * as Sunshine   from 'sunshine-framework/react'
-import React           from 'react'
-import { List }        from 'immutable'
-import { uniqBy }      from '../util/immutable'
-import { catMaybes }   from '../util/maybe'
-import * as Act        from '../derivedActivity'
-import * as C          from '../conversation'
-import * as A          from '../models/address'
-import * as ViewEvent  from '../event/viewEvent'
+import * as Sunshine                  from 'sunshine-framework/react'
+import React                          from 'react'
+import * as m                         from 'mori'
+import { join, uniqBy }               from '../util/mori'
+import { catMaybes }                  from '../util/maybe'
+import * as Act                       from '../derivedActivity'
+import * as C                         from '../conversation'
+import * as A                         from '../models/address'
+import * as ViewEvent                 from '../event/viewEvent'
 import { actorAvatar, addressAvatar } from './avatar'
 import { Avatar
        , ListItem
        } from 'material-ui'
 
-import type { IndexedIterable, IndexedSeq } from 'immutable'
-import type { DerivedActivity }     from '../derivedActivity'
-import type { Conversation }        from '../conversation'
-import type { ActivityObject, URI } from '../activity'
+import type { Seq, Seqable, Vector } from 'mori'
+import type { DerivedActivity }      from '../derivedActivity'
+import type { Conversation }         from '../conversation'
+import type { ActivityObject, URI }  from '../activity'
 
 export type HeaderProps = {
-  activities: List<DerivedActivity>,
+  activities: Seqable<DerivedActivity>,
   conversation: Conversation,
   user: ?URI,
 }
@@ -30,7 +30,7 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
     const { conversation, user } = this.props
     const activities  = getActivities(user, this.props.activities)
     const verb        = primeVerb(activities)
-    const activities_ = activities.filter(act => Act.verb(act) === verb)
+    const activities_ = m.filter(act => Act.verb(act) === verb, activities)
 
     if (primeVerb === 'conflict') {
       return <ConflictHeader {...this.props} activities={activities_} />
@@ -40,14 +40,14 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
     const names   = joinNames(user, actors)
     const verbed  = displayVerb(verb, actors)
     const ppl     = C.flatParticipants(conversation)
-    const partStr = ppl.map(A.displayName).join(', ')
-    const last    = activities_.last()
+    const partStr = join(', ', m.map(A.displayName, ppl))
+    const last    = m.last(activities_)
 
     if (!last) { throw "no last activity" }
 
     return (
       <ListItem
-        leftAvatar={actorAvatar(actors.first())}
+        leftAvatar={actorAvatar(m.first(actors))}
         primaryText={`${names} ${verbed} "${conversation.subject}"`}
         secondaryText={<p>{partStr} — {Act.published(last).fromNow()}</p>}
         onTouchTap={() => this.onSelect(conversation)}
@@ -63,7 +63,7 @@ export class ActivityHeader extends Sunshine.Component<{},HeaderProps,{}> {
 class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
   render(): React.Element {
     const { activities, conversation } = this.props
-    const act = activities.last()
+    const act = m.last(activities)
     const published = act ? Act.published(act).fromNow() : ''
     return (
       <ListItem
@@ -80,38 +80,39 @@ class ConflictHeader extends Sunshine.Component<{},HeaderProps,{}> {
   }
 }
 
-function primeVerb(activities: List<DerivedActivity>): string {
+function primeVerb(activities: Seqable<DerivedActivity>): string {
   const verb = ['conflict', 'post', 'reply', 'edit', 'like'].find(v => (
-    activities.some(act => Act.verb(act) === v)
+    m.some(act => Act.verb(act) === v, activities)
   ))
-  const first = activities.first()
+  const first = m.first(activities)
   if (!first) { throw "no activities" }
   return verb || Act.verb(first)
 }
 
-function getActivities(user: ?URI, activities: List<DerivedActivity>): List<DerivedActivity> {
-  const othersActivities = activities.filter(act => {
+function getActivities(user: ?URI, activities: Seqable<DerivedActivity>): Seqable<DerivedActivity> {
+  const othersActivities = m.filter(act => {
     const p = Act.actor(act)
     return !p || !user || (p.uri !== user)
-  })
-  return othersActivities.size > 0 ? othersActivities : activities
+  }, activities)
+  return !m.isEmpty(othersActivities) ? othersActivities : activities
 }
 
-function getActors(user: ?URI, activities: IndexedIterable<DerivedActivity>): IndexedSeq<ActivityObject> {
-  const actors = catMaybes(activities.map(act => Act.actor(act)))
+function getActors(user: ?URI, activities: Seqable<DerivedActivity>): Seq<ActivityObject> {
+  const actors = catMaybes(m.map(Act.actor, activities))
   return uniqBy(a => a.uri, actors)
 }
 
-function joinNames(user: ?URI, actors: IndexedIterable<ActivityObject>): string {
-  const ns = actors.map((a, i) => displayName(user, a, i))
-  if (ns.count() === 2) {
-    return ns.join(' and ')
+function joinNames(user: ?URI, actors: Seqable<ActivityObject>): string {
+  const ns = m.mapIndexed((idx, a) => displayName(user, a, idx), actors)
+  const count = m.count(ns)
+  if (count === 2) {
+    return join(' and ', ns)
   }
-  else if (ns.count() > 2) {
-    return `${ns.butLast().join(', ')}, and ${ns.last()}`
+  else if (count > 2) {
+    return `${join(', ', m.take(count - 1, ns))}, and ${m.last(ns)}`
   }
   else {
-    return ns.join(', ')
+    return join(', ', ns)
   }
 }
 
@@ -127,7 +128,7 @@ function displayName(user: ?URI, actor: ?ActivityObject, idx: number): string {
   }
 }
 
-function displayVerb(v: string, actors: IndexedIterable<ActivityObject>): string {
+function displayVerb(v: string, actors: Seqable<ActivityObject>): string {
   if (v === 'reply') {
     return 'commented on'
   }
@@ -135,7 +136,7 @@ function displayVerb(v: string, actors: IndexedIterable<ActivityObject>): string
     return 'edited'
   }
   else if (v === 'like') {
-    return actors.count() > 1 ? 'like' : 'likes'
+    return m.count(actors) > 1 ? 'like' : 'likes'
   }
   else {
     return v+'ed'

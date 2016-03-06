@@ -2,7 +2,7 @@
 
 import * as Sunshine    from 'sunshine-framework/react'
 import React            from 'react'
-import { List }         from 'immutable'
+import * as m           from 'mori'
 import { get, lookup }  from 'safety-lens'
 import { mailtoUri }    from '../activity'
 import * as Act         from '../derivedActivity'
@@ -12,6 +12,7 @@ import * as State          from '../state'
 import * as Ev             from '../event'
 import * as ViewEvent      from '../event/viewEvent'
 import { activityStream }  from '../stream'
+import { join }            from '../util/mori'
 import { ActivityView }    from './activities'
 import { ActivityHeader }  from './activityHeaders'
 import { ComposeReply }    from './compose'
@@ -31,13 +32,14 @@ import { Card
        , ToolbarTitle
        } from 'material-ui'
 
+import type { Seqable }         from 'mori'
 import type { Address }         from '../models/address'
 import type { Activity, URI }   from '../activity'
 import type { Conversation }    from '../conversation'
 import type { DerivedActivity } from '../derivedActivity'
 
 type ConversationsState = {
-  conversations: ?List<Conversation>,
+  conversations: ?Seqable<Conversation>,
   loading: boolean,
   searchQuery: ?string,
   username: ?string,
@@ -61,14 +63,15 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
   render(): React.Element {
     const { conversations, useremail } = this.state
     const user = useremail ? mailtoUri(useremail) : null
-    const activities = conversations ? activityStream(user, conversations) : List()
-    const headers = activities.map(([acts, conv], i) => (
-      <div key={acts.map(Act.activityId).join(';')}>
+    const activities = conversations ? activityStream(user, conversations) : m.vector()
+    const activityCount = m.count(activities)
+    const headers = m.intoArray(m.mapIndexed((i, [acts, conv]) => (
+      <div key={join(';', m.map(Act.activityId, acts))}>
         <ActivityHeader activities={acts} conversation={conv} user={user} />
-        {i < activities.size - 1 ?
+        {i < activityCount - 1 ?
           <ListDivider inset={true} /> : ''}
       </div>
-    )).toArray()
+    ), activities))
     return (
       <div>
         <Toolbar>
@@ -140,7 +143,7 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
     const styles = this.getStyles()
     const { subject } = conversation
 
-    const activities = conversation.activities.map(act => (
+    const activities = m.map(act => (
       <ActivityView
         activity={act}
         conversation={conversation}
@@ -150,9 +153,10 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
         useremail={this.props.useremail}
         key={Act.activityId(act)}
         />
-    ))
+    )
+    , conversation.activities)
 
-    const people = flatParticipants(conversation).map(addr => {
+    const people = m.map(addr => {
       const disp = displayName(addr)
       return (
         <ListItem
@@ -163,7 +167,8 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
           key={addr.address}
           />
       )
-    })
+    }
+    , flatParticipants(conversation))
 
     const doc = getDocument(conversation)
 
@@ -198,6 +203,6 @@ ConversationView.contextTypes = {
 }
 
 function getDocument(conv: Conversation): ?DerivedActivity {
-  const act = conv.activities.first()
+  const act = m.first(conv.activities)
   if (act && Act.objectType(act) === 'document') { return act }
 }

@@ -1,17 +1,18 @@
 /* @flow */
 
-import * as Sunshine       from 'sunshine-framework/react'
-import React               from 'react'
+import * as Sunshine            from 'sunshine-framework/react'
+import React                    from 'react'
+import * as m                   from 'mori'
 import { compose, get, lookup } from 'safety-lens'
-import { parseAddressList} from 'email-addresses'
-import * as Act            from '../derivedActivity'
-import { participants }    from '../conversation'
-import * as State          from '../state'
-import * as CS             from '../composer/state'
-import * as Ev             from '../event'
-import * as CE             from '../composer/event'
-import * as Create         from '../activityTypes'
-import { ActivityOptsMenu } from './activityMenu'
+import { parseAddressList}      from 'email-addresses'
+import * as Act                 from '../derivedActivity'
+import { participants }         from '../conversation'
+import * as State               from '../state'
+import * as CS                  from '../composer/state'
+import * as Ev                  from '../event'
+import * as CE                  from '../composer/event'
+import * as Create              from '../activityTypes'
+import { ActivityOptsMenu }     from './activityMenu'
 import { FlatButton
        , IconButton
        , IconMenu
@@ -243,7 +244,7 @@ export class ComposeReply extends Sunshine.Component<{},ReplyProps,ReplyState> {
   onSend(event: Event) {
     event.preventDefault()
     const conversation            = this.props.inReplyTo
-    const activity                = conversation.activities.findLast(a => !Act.isSynthetic(a))
+    const activity                = m.last(m.filter(a => !Act.isSynthetic(a), conversation.activities))
     const message                 = activity ? Act.getMessage(activity) : null
     const { username, useremail } = this.state
     if (!username || !useremail) {
@@ -397,7 +398,7 @@ class ComposeOptsMenu extends Sunshine.Component<{},{ showAddPeople: boolean },{
 }
 
 function textContent(activity: DerivedActivity): ?string {
-  const part = Act.objectContent(activity).first()
+  const part = m.first(Act.objectContent(activity))
   if (part && part.contentType.startsWith('text/')) {
     return part.content.toString('utf8')
   }

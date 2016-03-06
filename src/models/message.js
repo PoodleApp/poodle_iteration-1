@@ -1,9 +1,10 @@
 /* @flow */
 
-import { List } from 'immutable'
+import * as m from 'mori'
 
-import type { ReadStream } from 'fs'
-import type { Address }    from './address'
+import type { List, Seq, Seqable } from 'mori'
+import type { ReadStream }         from 'fs'
+import type { Address }            from './address'
 
 export type Message = {
   messageId:     MessageId,
@@ -82,53 +83,57 @@ export {
   toplevelParts,
 }
 
-function flatParts(msg: Message): List<MessagePart> {
-  const subparts = part => !!part.mimeMultipart ? List(part.childNodes).flatMap(subparts) : List.of(part)
+function flatParts(msg: Message): Seq<MessagePart> {
+  const subparts = part => !!part.mimeMultipart ? m.mapcat(subparts, part.childNodes) : m.seq([part])
   return subparts(msg.mimeTree)
 }
 
-function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): List<MessagePart> {
+function toplevelParts(predicate: (_: MessagePart) => boolean, msg: Message): Seq<MessagePart> {
   return toplevelRec(predicate, msg.mimeTree)
 }
 
-function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): List<MessagePart> {
+function toplevelRec(predicate: (_: MessagePart) => boolean, part: MIMETree): Seq<MessagePart> {
   const multi = part.mimeMultipart
-  const children = List(part.childNodes)
+  const children = part.childNodes
   if (!multi) {
-    return predicate(part) ? List.of(part) : List()
+    return predicate(part) ? m.seq([(part: MessagePart)]) : m.seq([])
   }
   // mixed: get all parts
   else if (multi === 'mixed') {
-    return children.flatMap(toplevelRec.bind(null, predicate))
+    return m.mapcat(part => toplevelRec(predicate, part), children)
   }
   // alternative: get the last matching part
   else if (multi === 'alternative') {
-    return children.map(toplevelRec.bind(null, predicate)).findLast(parts => parts.some(predicate)) || List()
+    return m.last(
+      m.filter(parts => m.some(predicate, parts),
+      m.map(part => toplevelRec(predicate, part)
+      , children))) || m.seq([])
   }
   // related: get the first part
   else if (multi === 'related') {
-    return children.isEmpty() ?
-      List() :
-      toplevelRec(predicate, children.first())
+    return m.isEmpty(children) ?
+      m.seq([]) :
+      toplevelRec(predicate, m.first(children))
   }
   // signed: get the first part
   else if (multi.indexOf('signature') > -1) {
-    return children.isEmpty() ?
-      List() :
-      toplevelRec(predicate, children.first())
+    return m.isEmpty(children) ?
+      m.seq([]) :
+      toplevelRec(predicate, m.first(children))
   }
   else {
     // TODO: What to do when encountering unknown multipart subtype?
-    return List()
+    console.log(`Unhandled multipart subtype: multipart/${multi}`)
+    return m.seq([])
   }
 }
 
-function textParts(msg: Message): List<MessagePart> {
-  return flatParts(msg).filter(part => part.contentType.match(/text\/plain/i))
+function textParts(msg: Message): Seq<MessagePart> {
+  return m.filter(part => part.contentType.match(/text\/plain/i), flatParts(msg))
 }
 
-function htmlParts(msg: Message): List<MessagePart> {
-  return flatParts(msg).filter(part => part.contentType.match(/text\/html/i))
+function htmlParts(msg: Message): Seq<MessagePart> {
+  return m.filter(part => part.contentType.match(/text\/html/i), flatParts(msg))
 }
 
 function midUri(message: Message): URI {

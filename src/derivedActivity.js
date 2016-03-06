@@ -1,14 +1,15 @@
 /* @flow */
 
-import { List, Map, Record, Stack } from 'immutable'
-import { set }                      from 'safety-lens'
-import { prop }                     from 'safety-lens/es2015'
-import { catMaybes, maybeToList }   from './util/maybe'
-import { constructor }              from './util/record'
-import { resolveUri }               from './models/message'
-import * as Act                     from './activity'
-import * as A                       from './models/address'
+import * as m                        from 'mori'
+import { set }                       from 'safety-lens'
+import { prop }                      from 'safety-lens/es2015'
+import { catMaybes, maybeToSeqable } from './util/maybe'
+import { constructor }               from './util/record'
+import { resolveUri }                from './models/message'
+import * as Act                      from './activity'
+import * as A                        from './models/address'
 
+import type { List, Map, Seq, Seqable, Vector }     from 'mori'
 import type { Moment }                              from 'moment'
 import type { Activity, ActivityObject, URI, Zack } from './activity'
 import type { Address }                             from './models/address'
@@ -19,19 +20,19 @@ export type DerivedActivity = {
   id:        string,
   activity?: Activity,  // original, unmutated activity
   actor?:    ActivityObject,
-  aside?:    List<DerivedActivity>,
+  aside?:    Seqable<DerivedActivity>,
   likes:     Map<URI, ActivityObject>,
   message?:  Message,   // message containing original activity, for context
-  revisions: Stack<DerivedActivity>,
+  revisions: List<DerivedActivity>,
   verb?:     DerivedVerb,
-  allActivities?: List<DerivedActivity>,
+  allActivities?: Seqable<DerivedActivity>,
   attachments: List<{ contentType: string, content: Buffer, uri: URI }>,
 }
 
 const newDerivedActivity: Constructor<{ id: string },DerivedActivity> = constructor({
-  likes:     Map(),
-  revisions: Stack(),
-  attachments: List(),
+  likes:       m.hashMap(),
+  revisions:   m.list(),
+  attachments: m.list(),
 })
 
 // Some derived activities are synthetic, and use verbs that are not available
@@ -43,89 +44,99 @@ export type DerivedVerb = 'post' | 'reply' | 'share' | 'edit' | 'like' | 'unknow
 // }
 
 function collapseLikes(
-  context: List<DerivedActivity>,
+  context: Seqable<DerivedActivity>,
   activity: DerivedActivity
-): List<DerivedActivity> {
+): Vector<DerivedActivity> {
   if (verb(activity) === 'like') {
-    return List()  // likes are not directly visible
+    return m.vector()  // likes are not directly visible
   }
 
-  var thisId = activityId(activity)
-  var likes  = context.reduce((ppl, otherAct) => {
+  const thisId = activityId(activity)
+  const likes = m.reduce((ppl, otherAct) => {
     if (verb(otherAct) === 'like' && targetUri(otherAct) === thisId) {
-      var p = actor(otherAct)
-      return p ? ppl.set(p.uri, p) : ppl
+      const p = actor(otherAct)
+      return p ? m.assoc(ppl, p.uri, p) : ppl
     }
-    return ppl
-  }, Map())
+    else {
+      return ppl
+    }
+  }
+  , m.hashMap(), context)
 
-  return List.of(
+  return m.vector(
     set(prop('likes'), likes, activity)
   )
 }
 
 function collapseEdits(
-  context: List<DerivedActivity>,
+  context: Seqable<DerivedActivity>,
   activity: DerivedActivity
-): List<DerivedActivity> {
+): Vector<DerivedActivity> {
   if (verb(activity) === 'edit') {
-    return List()
+    return m.vector()
   }
 
-  var thisId = activityId(activity)
-  var [revisions, conflicts] = context.reduce((accum, other) => {
-    var [rs, cs] = accum
-    var uri      = targetUri(other)
-    if (verb(other) === 'edit' && uri && canEdit(activity, other)) {
-      var i = rs.findIndex(a => activityId(a) === uri)
-      if (i === 0) {
-        return [rs.unshift(other), cs]
+  const thisId = activityId(activity)
+  const [revisions, conflicts] = m.reduce(([rs, cs], otherAct) => {
+    const uri = targetUri(otherAct)
+    if (verb(otherAct) === 'edit' && uri && canEdit(activity, otherAct)) {
+      const idx = m.first(
+        m.keepIndexed((i, act) => activityId(act) === uri ? i : undefined, rs)
+      )
+      if (idx === 0) {
+        return [m.conj(rs, otherAct), cs]
       }
-      else if (i >= 1) {
-        return [rs, cs.push(conflict(other))]
+      else if (idx >= 1) {
+        return [rs, m.conj(cs, conflict(otherAct))]
+      }
+      else {
+        return [rs, cs]
       }
     }
-    return accum
-  }, [Stack.of(activity), List()])
+    return [rs, cs]
+  }
+  , [m.list(activity), m.vector()], context)
+  // `conj` puts items on the front of a list, and at the end of a vector.
 
-  return conflicts.unshift(
-    set(prop('revisions'), revisions.filter(r => r !== activity), activity)
-  )
+  return m.conj(conflicts, (
+    set(prop('revisions'), m.filter(r => r !== activity, revisions), activity)
+  ))
 }
 
-var _syntheticId = 0
+let _syntheticId = 0
 function syntheticId(): URI {
   return `synthetic:${_syntheticId++}`
 }
 
 // Assumes context is ordered
 function insertJoins(
-  context:  List<DerivedActivity>,
-  activity: DerivedActivity,
-  idx:      number
-): List<DerivedActivity> {
-  var prev  = context.takeUntil(a => activityId(a) === activityId(activity))
-  var ppl   = Act.flatParticipants(catMaybes(prev.map(getMessage)))
+  context:  Seqable<DerivedActivity>,
+  activity: DerivedActivity
+): Vector<DerivedActivity> {
+  const prev  = m.takeWhile(a => activityId(a) !== activityId(activity), context)
+  const ppl   = Act.flatParticipants(catMaybes(m.map(getMessage, prev)))
+  const added = m.filter(p => (
+    !m.some(p_ => p.address === p_.address, ppl)
+  )
+  , Act.flatParticipants(maybeToSeqable(getMessage(activity))))
 
-  var added = Act.flatParticipants(maybeToList(getMessage(activity))).filter(p => (
-    !ppl.some(p_ => p.address === p_.address)
-  ))
-  if (added.isEmpty() || prev.isEmpty()) {
-    return List.of(activity)
+  if (m.isEmpty(added) || m.isEmpty(prev)) {
+    return m.vector(activity)
   }
-  else if (added.every(p => {
+  else if (m.every(p => {
     const a = actor(activity)
     return !!a && (Act.mailtoUri(p.address) === a.uri)
-  })) {
-    return List.of(activity)
+  }, added)) {
+    return m.vector(activity)
   }
-  var addedActs = added.map(p => (
+
+  const addedActs = m.map(p => (
     set(prop('actor'), { uri: Act.mailtoUri(p.address), objectType: 'person', displayName: A.displayName(p) },
     set(prop('verb'), 'join',
     set(prop('id'), syntheticId(),
     activity)))
-  ))
-  return List(addedActs).push(activity)
+  ), added)
+  return m.conj(m.into(m.vector(), addedActs), activity)
 }
 
 function canEdit(x: DerivedActivity, y: DerivedActivity): boolean {
@@ -158,11 +169,11 @@ function isSynthetic(activity: DerivedActivity): boolean {
 }
 
 function likes({ likes }: DerivedActivity): Map<URI, ActivityObject> {
-  return likes || Map()
+  return likes
 }
 
 function likeCount(activity: DerivedActivity): number {
-  return likes(activity).size
+  return m.count(likes(activity))
 }
 
 function getActivity(activity: DerivedActivity): ?Activity {
@@ -171,7 +182,7 @@ function getActivity(activity: DerivedActivity): ?Activity {
 }
 
 function latestRevision(activity: DerivedActivity): DerivedActivity {
-  return activity.revisions.first() || activity
+  return m.first(activity.revisions) || activity
 }
 
 function getMessage(activity: DerivedActivity): ?Message {
@@ -184,7 +195,7 @@ function object(activity: DerivedActivity): ?ActivityObject {
   return act ? act.object : undefined
 }
 
-function objectContent(activity: DerivedActivity): List<{ contentType: string, content: Buffer, uri: URI }> {
+function objectContent(activity: DerivedActivity): Seq<{ contentType: string, content: Buffer, uri: URI }> {
   const act = getActivity(activity)
   const obj = act ? act.object : undefined
   const msg = getMessage(activity)
@@ -200,7 +211,7 @@ function objectContent(activity: DerivedActivity): List<{ contentType: string, c
 
   const z = zack(activity)
   const uri = z ? Act.objectContent(z) : null
-  return activity.attachments.filter(a => a.uri === uri)
+  return m.filter(a => a.uri === uri, activity.attachments)
 }
 
 function objectType(activity: DerivedActivity): ?string {
@@ -216,7 +227,7 @@ function published(activity: DerivedActivity): Moment {
   if (act && msg) {
     return Act.published([act, msg])
   } else if (activity.aside) {
-    const first = activity.aside.first()
+    const first = m.first(activity.aside)
     if (!first) { throw "no first activity in aside" } // TODO
     return published(first)
   }
@@ -228,7 +239,7 @@ function lastEdited(activity: DerivedActivity): Moment {
 }
 
 function edited(activity: DerivedActivity): boolean {
-  return activity.revisions.size > 0
+  return !m.isEmpty(activity.revisions)
 }
 
 function target(activity: DerivedActivity): ?ActivityObject {
@@ -271,7 +282,7 @@ function rawVerb(activity: DerivedActivity): ?Act.Verb {
 }
 
 function zack(activity: DerivedActivity): ?Zack {
-  var rev = activity.revisions.first()
+  const rev = m.first(activity.revisions)
   if (!rev) {
     var { activity: act, message: msg } = activity
     if (act && msg) {
