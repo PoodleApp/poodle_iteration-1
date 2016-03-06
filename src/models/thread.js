@@ -27,7 +27,7 @@ function singleton(message: Message): Thread {
 function insertMessage(thread: Thread, message: Message): Thread {
   const msgs = uniqBy(
     m => m.messageId,
-    m.concat(m.mapcat(getMessages, thread), [message])
+    m.concat(getMessages(thread), [message])
   )
   let [toplevel, replies] = partition(msg => (
     !m.some(m => ancestorOf(msg, m), msgs)
