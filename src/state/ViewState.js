@@ -1,5 +1,6 @@
 /* @flow */
 
+import * as m    from 'mori'
 import { List }  from 'immutable'
 import { lens }  from 'safety-lens'
 import { index } from 'safety-lens/immutable'
@@ -18,8 +19,8 @@ export type View = RootView
 
 class RootView {
   searchQuery: ?string;
-  conversations: ?List<Conversation>;
-  constructor(searchQuery: ?string = null, conversations: ?List<Conversation> = null) {
+  conversations: ?m.List<Conversation>;
+  constructor(searchQuery: ?string = null, conversations: ?m.List<Conversation> = null) {
     this.searchQuery = searchQuery
     this.conversations = conversations
   }
@@ -45,7 +46,7 @@ class AddAccountView {}
 
 export type ViewState = List<View>
 
-const initialState: List<View> = List.of(new RootView(null, List()))
+const initialState: List<View> = List.of(new RootView(null, m.list()))
 
 
 /* lenses & helpers */
