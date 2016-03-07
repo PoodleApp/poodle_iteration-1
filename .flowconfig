@@ -6,8 +6,6 @@
 .*/node_modules/fbjs/.*
 .*/node_modules/babel.*
 .*/node_modules/jsverify.*
-.*[^e].json
-.*mappingTable.json
 static/.*
 
 [include]
