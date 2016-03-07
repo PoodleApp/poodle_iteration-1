@@ -114,7 +114,7 @@ function flatParticipants(messages: Seqable<Message>): Seq<Address> {
   var { from, to, cc } = participants(messages)
   return uniqBy(
     addr => addr.address,
-    m.concat(m.reverse(from), m.reverse(to), m.reverse(cc)),
+    m.concat(m.reverse(from), m.reverse(to), m.reverse(cc))
   )
 }
 
