@@ -187,14 +187,13 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
 
   showError(error: string): React.Element {
     const actions = [
-      { text: 'Ok', onTouchTap: this.dismissError.bind(this), ref: 'ok' }
+      <FlatButton label='Ok' primary={true} onTouchTap={this.dismissError.bind(this)} />
     ]
     return (
       <Dialog
         title='Excuse me,'
         actions={actions}
-        actionFocus='ok'
-        openImmediately={true}
+        open={!!error}
         >
         <p style={styles.body}>{error}</p>
       </Dialog>
