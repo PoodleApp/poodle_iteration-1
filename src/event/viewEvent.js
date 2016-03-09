@@ -7,6 +7,7 @@ import {
   reduce,
   update,
 } from 'sunshine-framework'
+import * as m                   from 'mori'
 import { List, Map, fromJS }    from 'immutable'
 import { lookup }               from 'safety-lens'
 import { prop }                 from 'safety-lens/es2015'
@@ -69,14 +70,14 @@ const reducers: Reducers<ViewState> = [
       asyncResult: loadAccount().then(account => {
         const tokenGenerator = AuthState.getTokenGenerator(account)
         return Gmail.search(query, tokenGenerator).scan(
-          (threads, thread) => threads.push(thread), List()
+          (threads, thread) => m.conj(threads, thread), m.vector()
         )
         .last()
         .toPromise()
       })
       .then(threads => {
-        const convPromises = threads.map(threadToConversation)
-        return Promise.all(convPromises.toArray()).then(List)
+        const convPromises = m.map(threadToConversation, threads)
+        return Promise.all(m.intoArray(convPromises)).then(cs => m.into(m.vector(), cs))
       })
       .then(convs => asyncUpdate(state_ => {
         const view_ = lookup(State.view, state_)

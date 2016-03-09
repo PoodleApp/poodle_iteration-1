@@ -19,8 +19,8 @@ export type View = RootView
 
 class RootView {
   searchQuery: ?string;
-  conversations: ?m.List<Conversation>;
-  constructor(searchQuery: ?string = null, conversations: ?m.List<Conversation> = null) {
+  conversations: ?m.Vector<Conversation>;
+  constructor(searchQuery: ?string = null, conversations: ?m.Vector<Conversation> = null) {
     this.searchQuery = searchQuery
     this.conversations = conversations
   }
@@ -46,7 +46,7 @@ class AddAccountView {}
 
 export type ViewState = List<View>
 
-const initialState: List<View> = List.of(new RootView(null, m.list()))
+const initialState: List<View> = List.of(new RootView(null, m.vector()))
 
 
 /* lenses & helpers */
@@ -90,5 +90,3 @@ export {
   replaceView,
   view,
 }
-
-
