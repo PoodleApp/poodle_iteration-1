@@ -45,7 +45,7 @@ function assembleTree(message: Message, messages: Seqable<Message>): [Message, T
 }
 
 function getMessages(thread: Thread): Seq<Message> {
-  const allMsgs = m.mapcat(([msg, subthread]) => m.cons(msg, getMessages(subthread)))
+  const allMsgs = m.mapcat(([msg, subthread]) => m.cons(msg, getMessages(subthread)), thread)
   return m.sortBy(msg => msg.receivedDate, allMsgs)
 }
 
