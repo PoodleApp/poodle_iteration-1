@@ -1,7 +1,7 @@
 /* @flow */
 
 import * as Kefir         from 'kefir'
-import { List }           from 'immutable'
+import * as m             from 'mori'
 import { MailParser }     from 'mailparser'
 import * as imap          from './google-imap'
 import { tokenGenerator } from './tokenGenerator'
@@ -21,7 +21,7 @@ function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread,
   .flatMap(messages => {
     const msgStreams = messages.map(parseMessage)
     const msgListStream = Kefir.merge(msgStreams.toArray()).scan(
-      (msgs, msg) => msgs.push(msg), List()
+      (msgs, msg) => m.conj(msgs, msg), m.vector()
     )
     .last()
     return msgListStream.map(buildThread)
