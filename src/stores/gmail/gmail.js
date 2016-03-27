@@ -32,7 +32,7 @@ function parseMessage(messageStream: ReadStream): Stream<Message,any> {
   return Kefir.stream(emitter => {
     const mailparser = new MailParser({
       includeMimeTree:   true,
-      streamAttachments: true,
+      streamAttachments: false,
       defaultCharset:    'utf8',
     })
     mailparser.on('end', mail => {
