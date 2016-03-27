@@ -2,8 +2,8 @@
 
 import * as Sunshine  from 'sunshine-framework/react'
 import React          from 'react'
-import { mailtoUri }  from '../activity'
-import * as Act       from '../derivedActivity'
+import { mailtoUri }  from 'arfe/activity'
+import * as Act       from 'arfe/derivedActivity'
 import * as Ev        from '../event'
 import * as CE        from '../composer/event'
 import { AppBar
@@ -16,8 +16,8 @@ import { AppBar
 import MenuItem     from 'material-ui/lib/menus/menu-item'
 import MoreVertIcon from 'material-ui/lib/svg-icons/navigation/more-vert'
 
-import type { DerivedActivity } from '../derivedActivity'
-import type { Conversation }    from '../conversation'
+import type { DerivedActivity } from 'arfe/derivedActivity'
+import type { Conversation }    from 'arfe/conversation'
 
 type ActivityProps = {
   activity:     DerivedActivity,

@@ -5,7 +5,7 @@ import { set }            from 'safety-lens'
 import * as CS            from './state'
 
 import type { Reducers }        from 'sunshine-framework'
-import type { DerivedActivity } from '../derivedActivity'
+import type { DerivedActivity } from 'arfe/derivedActivity'
 
 class Edit {
   activity: DerivedActivity;

@@ -7,15 +7,15 @@ import randomstring      from 'randomstring'
 import uuid              from 'uuid'
 import moment            from 'moment'
 import objectAssign      from 'object-assign'
-import { objectContent } from './activity'
-import { parseMidUri }   from './models/message'
+import { objectContent } from 'arfe/activity'
+import { parseMidUri }   from 'arfe/models/message'
 
 import type { Seqable }            from 'mori'
 import type { ReadStream }         from 'fs'
 import type { Content }            from 'mailcomposer'
-import type { Activity }           from './activity'
-import type { Address }            from './models/address'
-import type { Message, MessageId } from './models/message'
+import type { Activity }           from 'arfe/activity'
+import type { Address }            from 'arfe/models/address'
+import type { Message, MessageId } from 'arfe/models/message'
 
 export type ComposerAttachment = {
   cid:                string,

@@ -6,7 +6,7 @@ import { lens }  from 'safety-lens'
 import { index } from 'safety-lens/immutable'
 
 import type { Lens_ }        from 'safety-lens'
-import type { Conversation } from '../conversation'
+import type { Conversation } from 'arfe/conversation'
 
 
 /* state types */

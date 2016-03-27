@@ -3,13 +3,13 @@
 import * as Sunshine   from 'sunshine-framework/react'
 import React           from 'react'
 import stringHash      from 'string-hash'
-import { displayName } from '../models/address'
+import { displayName } from 'arfe/models/address'
 import { Avatar
        , Styles
        } from 'material-ui'
 
-import type { Address } from '../models/address'
-import type { ActivityObject } from '../activity'
+import type { Address }        from 'arfe/models/address'
+import type { ActivityObject } from 'arfe/activity'
 
 export {
   actorAvatar,

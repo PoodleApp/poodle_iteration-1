@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { Thread } from '../models/thread'
+import type { Thread } from 'arfe/models/thread'
 
 export type ThreadDoc = {
   _id: string,

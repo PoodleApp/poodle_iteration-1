@@ -5,12 +5,12 @@ import * as m             from 'mori'
 import { MailParser }     from 'mailparser'
 import * as imap          from './google-imap'
 import { tokenGenerator } from './tokenGenerator'
-import { buildThread }    from '../../models/thread'
+import { buildThread }    from 'arfe/models/thread'
 
 import type { ReadStream }       from 'fs'
 import type { Stream }           from 'kefir'
-import type { Message }          from '../../models/message'
-import type { Thread }           from '../../models/thread'
+import type { Message }          from 'arfe/models/message'
+import type { Thread }           from 'arfe/models/thread'
 import type { XOAuth2Generator } from './tokenGenerator'
 
 function search(query: string, tokenGenerator: XOAuth2Generator): Stream<Thread,any> {

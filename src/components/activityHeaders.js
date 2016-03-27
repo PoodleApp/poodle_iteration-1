@@ -5,9 +5,9 @@ import React                          from 'react'
 import * as m                         from 'mori'
 import { join, uniqBy }               from '../util/mori'
 import { catMaybes }                  from '../util/maybe'
-import * as Act                       from '../derivedActivity'
-import * as C                         from '../conversation'
-import * as A                         from '../models/address'
+import * as Act                       from 'arfe/derivedActivity'
+import * as C                         from 'arfe/conversation'
+import * as A                         from 'arfe/models/address'
 import * as ViewEvent                 from '../event/viewEvent'
 import { actorAvatar, addressAvatar } from './avatar'
 import { Avatar
@@ -15,9 +15,9 @@ import { Avatar
        } from 'material-ui'
 
 import type { Seq, Seqable, Vector } from 'mori'
-import type { DerivedActivity }      from '../derivedActivity'
-import type { Conversation }         from '../conversation'
-import type { ActivityObject, URI }  from '../activity'
+import type { DerivedActivity }      from 'arfe/derivedActivity'
+import type { Conversation }         from 'arfe/conversation'
+import type { ActivityObject, URI }  from 'arfe/activity'
 
 export type HeaderProps = {
   activities: Seqable<DerivedActivity>,

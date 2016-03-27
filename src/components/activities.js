@@ -6,16 +6,16 @@ import React         from 'react'
 import moment        from 'moment'
 import repa          from 'repa'
 import marked        from 'marked'
-import { mailtoUri } from '../activity'
-import { allNames, asideToConversation, flatParticipants } from '../conversation'
-import { displayName } from '../models/address'
+import { mailtoUri } from 'arfe/activity'
+import { allNames, asideToConversation, flatParticipants } from 'arfe/conversation'
+import { displayName } from 'arfe/models/address'
 import * as Ev       from '../event'
 import * as State    from '../state'
 import { ComposeReply, EditNote }  from './compose'
 import { ActivityOptsMenu } from './activityMenu'
 import { actorAvatar } from './avatar'
 import { join } from '../util/mori'
-import * as Act from '../derivedActivity'
+import * as Act from 'arfe/derivedActivity'
 import { activityId
        , actor
        , edited
@@ -26,7 +26,7 @@ import { activityId
        , objectType
        , published
        , verb
-       } from '../derivedActivity'
+       } from 'arfe/derivedActivity'
 import { Card
        , CardHeader
        , FlatButton
@@ -34,8 +34,8 @@ import { Card
        , Styles
        } from 'material-ui'
 
-import type { DerivedActivity } from '../derivedActivity'
-import type { Conversation }    from '../conversation'
+import type { DerivedActivity } from 'arfe/derivedActivity'
+import type { Conversation }    from 'arfe/conversation'
 
 export type ActivityProps = {
   activity:     DerivedActivity,

@@ -6,8 +6,8 @@ import { prop }                       from 'safety-lens/es2015'
 import { constructor }                from '../util/record'
 
 import type { Getter, Lens_, Traversal_ } from 'safety-lens'
-import type { Address }                   from '../models/address'
-import type { DerivedActivity }           from '../derivedActivity'
+import type { Address }                   from 'arfe/models/address'
+import type { DerivedActivity }           from 'arfe/derivedActivity'
 import type { Constructor }               from '../util/record'
 
 export type ComposerState = {

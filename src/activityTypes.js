@@ -1,15 +1,15 @@
 /* @flow */
 
 import randomstring    from 'randomstring'
-import * as Act        from './derivedActivity'
-import { mailtoUri }   from './activity'
-import { displayName } from './models/address'
+import * as Act        from 'arfe/derivedActivity'
+import { mailtoUri }   from 'arfe/activity'
+import { displayName } from 'arfe/models/address'
 
-import type { DerivedActivity }                from './derivedActivity'
-import type { Activity, ActivityObject, Verb } from './activity'
+import type { DerivedActivity }                from 'arfe/derivedActivity'
+import type { Activity, ActivityObject, Verb } from 'arfe/activity'
+import type { Address, Email }                 from 'arfe/models/address'
+import type { URI }                            from 'arfe/models/message'
 import type { Burger, ComposerAttachment }     from './compose'
-import type { Address, Email }                 from './models/address'
-import type { URI }                            from './models/message'
 
 export {
   document,

@@ -14,13 +14,13 @@ import { prop }                 from 'safety-lens/es2015'
 import * as State               from '../state/ViewState'
 import * as AuthState           from '../auth/state'
 import * as Gmail               from '../stores/gmail/gmail'
-import { parseMidUri }          from '../models/message'
+import { parseMidUri }          from 'arfe/models/message'
 import { loadAccount }          from '../config'
-import { threadToConversation } from '../conversation'
+import { threadToConversation } from 'arfe/conversation'
 
 import type { EventResult, Reducers } from 'sunshine-framework'
-import type { URI }                   from '../activity'
-import type { Conversation }          from '../conversation'
+import type { URI }                   from 'arfe/activity'
+import type { Conversation }          from 'arfe/conversation'
 import type { ViewState }             from '../state/ViewState'
 
 
