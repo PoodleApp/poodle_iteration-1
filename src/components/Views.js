@@ -106,13 +106,12 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
       $(ViewState.ConversationView, ({ id, uri, conversation }) => {
         if (!useremail) { throw "email address is required" }  // TODO
         return {
-          content: <ConversationView
-                    conversation={conversation}
-                    editing={editing}
-                    username={username || '<no name>'}
-                    useremail={useremail}
-                    loading={loading}
-                    />,
+          content: <ConversationView conversation={conversation}
+                                     editing={editing}
+                                     username={username || '<no name>'}
+                                     useremail={useremail}
+                                     loading={loading}
+                                     />,
           iconLeft: backButton,
           title: conversation ? conversation.subject : '...',
         }

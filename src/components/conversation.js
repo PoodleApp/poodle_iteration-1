@@ -132,7 +132,7 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
     const styles = this.getStyles()
     const { subject } = conversation
 
-    const activities = m.map(act => (
+    const activities = m.intoArray(m.map(act => (
       <ActivityView
         activity={act}
         conversation={conversation}
@@ -143,9 +143,9 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
         key={Act.activityId(act)}
         />
     )
-    , conversation.activities)
+    , conversation.activities))
 
-    const people = m.map(addr => {
+    const people = m.intoArray(m.map(addr => {
       const disp = displayName(addr)
       return (
         <ListItem
@@ -157,7 +157,7 @@ export class ConversationView extends Sunshine.Component<void,ConversationViewPr
           />
       )
     }
-    , flatParticipants(conversation))
+    , flatParticipants(conversation)))
 
     const doc = getDocument(conversation)
 
