@@ -94,7 +94,12 @@ export class App extends Sunshine.Component<{},{},AppComponentState> {
 
     const { content, iconLeft, title } = match(
       $(ViewState.RootView, ({ searchQuery, conversations }) => ({
-        content:  <Conversations />,
+        content:  <Conversations conversations={conversations}
+                                 loading={!conversations}
+                                 searchQuery={searchQuery}
+                                 username={username}
+                                 useremail={useremail}
+                                 />,
         iconLeft: undefined,
         title:    'Activity Stream',
       })),

@@ -38,7 +38,7 @@ import type { Activity, URI }   from 'arfe/activity'
 import type { Conversation }    from 'arfe/conversation'
 import type { DerivedActivity } from 'arfe/derivedActivity'
 
-type ConversationsState = {
+type ConversationsProps = {
   conversations: ?Seqable<Conversation>,
   loading: boolean,
   searchQuery: ?string,
@@ -48,20 +48,9 @@ type ConversationsState = {
 
 const { Colors, Spacing } = Styles
 
-export class Conversations extends Sunshine.Component<{},{},ConversationsState> {
-  getState(state: State.AppState): ConversationsState {
-    const conversations = lookup(State.conversations, state)
-    return {
-      conversations,
-      loading:       !conversations,
-      searchQuery:   lookup(State.routeParam('q'), state),
-      username:      lookup(State.username, state),
-      useremail:     lookup(State.useremail, state),
-    }
-  }
-
+export class Conversations extends Sunshine.Component<{},ConversationsProps,{}> {
   render(): React.Element {
-    const { conversations, useremail } = this.state
+    const { conversations, useremail } = this.props
     const user = useremail ? mailtoUri(useremail) : null
     const activities = conversations ? activityStream(user, conversations) : m.vector()
     const activityCount = m.count(activities)
@@ -81,12 +70,12 @@ export class Conversations extends Sunshine.Component<{},{},ConversationsState> 
               <ToolbarTitle text='Enter query'/>
               <TextField
                 hintText='newer_than:1d'
-                defaultValue={this.state.searchQuery || 'newer_than:1d'}
+                defaultValue={this.props.searchQuery || 'newer_than:1d'}
                 ref='query'
                 />
               </label>
               &nbsp;
-              <RaisedButton label='Search' disabled={this.state.loading} onTouchTap={this.onSearch.bind(this)} />
+              <RaisedButton label='Search' disabled={this.props.loading} onTouchTap={this.onSearch.bind(this)} />
             </form>
           </ToolbarGroup>
         </Toolbar>
