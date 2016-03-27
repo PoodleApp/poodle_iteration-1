@@ -245,7 +245,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
       act.verb === 'aside' && m.equals(act.allActivities, activity.allActivities)
     ), conversation.activities)))
 
-    const activities = m.map(act => (
+    const activities = m.intoArray(m.map(act => (
       <ActivityView
         {...this.props}
         activity={act}
@@ -253,7 +253,7 @@ class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
         key={activityId(act)}
         nestLevel={nestLevel+1}
         />
-    ), activity.aside || m.list())
+    ), activity.aside || m.list()))
 
     const { palette } = (this.context: any).muiTheme.baseTheme
 
