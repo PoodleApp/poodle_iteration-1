@@ -74,6 +74,7 @@
     "safety-lens": "1.4.0",
     "string-hash": "~1.1.0",
     "uuid": "~2.0.1",
+    "vocabs-as": "^0.12.0",
     "xoauth2": "~1.1.0"
   }
 }

@@ -1,4 +1,4 @@
-/* @flow */
+/* @noflow */
 
 import { emit, noChange, reduce, update } from 'sunshine-framework'
 import { set }                  from 'safety-lens'

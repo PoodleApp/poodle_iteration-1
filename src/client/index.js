@@ -7,8 +7,8 @@ import { routerMiddleware }             from 'react-router-redux'
 import { applyMiddleware, createStore } from 'redux'
 import logger                           from 'redux-logger'
 import sagaMiddleware                   from 'redux-saga'
-import reducers                         from './src/reducers'
-import sagas                            from './src/sagas'
+import reducers                         from '../reducers'
+import sagas                            from '../sagas'
 import './polyfills'
 
 import {
@@ -16,7 +16,7 @@ import {
 } from 'react-router'
 
 import App            from '../components/App'
-import ActivityStream from '../component/ActivityStream'
+import ActivityStream from '../components/ActivityStream'
 
 export {
   run,

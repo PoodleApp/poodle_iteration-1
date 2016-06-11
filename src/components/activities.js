@@ -1,32 +1,19 @@
 /* @flow */
 
-import * as m        from 'mori'
-import * as Sunshine from 'sunshine-framework/react'
-import React         from 'react'
-import moment        from 'moment'
-import repa          from 'repa'
-import marked        from 'marked'
-import { mailtoUri } from 'arfe/activity'
+import * as Vocab                                          from 'vocabs-as'
+import * as m                                              from 'mori'
+import React                                               from 'react'
+import moment                                              from 'moment'
+import repa                                                from 'repa'
+import marked                                              from 'marked'
+import { mailtoUri }                                       from 'arfe/models/uri'
 import { allNames, asideToConversation, flatParticipants } from 'arfe/conversation'
-import { displayName } from 'arfe/models/address'
-import * as Ev       from '../event'
-import * as State    from '../state'
-import { ComposeReply, EditNote }  from './compose'
-import { ActivityOptsMenu } from './activityMenu'
-import { actorAvatar } from './avatar'
-import { join } from '../util/mori'
-import * as Act from 'arfe/derivedActivity'
-import { activityId
-       , actor
-       , edited
-       , lastEdited
-       , likes
-       , likeCount
-       , objectContent
-       , objectType
-       , published
-       , verb
-       } from 'arfe/derivedActivity'
+import { displayName }                                     from 'arfe/models/address'
+import { ComposeReply, EditNote }                          from './compose'
+import { ActivityOptsMenu }                                from './activityMenu'
+import { actorAvatar }                                     from './avatar'
+import { join }                                            from '../util/mori'
+import * as Act                                            from 'arfe/derivedActivity'
 import { Card
        , CardHeader
        , FlatButton
@@ -79,30 +66,28 @@ var styles = {
 }
 
 const contextTypes = {
-  _sunshineApp: React.PropTypes.instanceOf(Sunshine.Session).isRequired,
-  _sunshineLens: React.PropTypes.func,
   muiTheme: React.PropTypes.object.isRequired,
 }
 
-export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
+export class ActivityView extends React.Component<void,ActivityProps,void> {
   render(): React.Element {
-    var activity = this.props.activity
-    var v = verb(activity)
-    if (v === 'conflict') {
+    const activity = this.props.activity
+    const { Aside, Conflict, Join } = Act.syntheticTypes
+    if (Act.hasType(Conflict, activity)) {
       return <ConflictView {...this.props} />
     }
-    else if (v === 'join') {
+    else if (Act.hasType(Join, activity)) {
       return <JoinView {...this.props} />
     }
-    else if (v === 'aside') {
+    else if (Act.hasType(Aside, activity)) {
       return <AsideView {...this.props} />
     }
-    else if (objectType(activity) === 'note') {
+    else if (Act.hasObjectType(Vocab.Note, activity)) {
       return this.editingThis() ?
         <EditNote {...this.props} /> :
         <NoteView {...this.props} />
     }
-    else if (objectType(activity) === 'document') {
+    else if (Act.hasObjectType(Vocab.Document, activity)) {
       // TODO: special edit view for document
       return this.editingThis() ?
         <EditNote {...this.props} /> :
@@ -124,158 +109,150 @@ export class ActivityView extends Sunshine.Component<{},ActivityProps,{}> {
   }
 
   editingThis(): boolean {
-    var { activity, editing } = this.props
-    return !!editing && activityId(editing) === activityId(activity)
+    const { activity, editing } = this.props
+    return !!editing && Act.getId(editing) === Act.getId(activity)
   }
 }
 
-class ActivityCard extends Sunshine.Component<{},{ nestLevel: ?number, children?: any },{}> {
-  render(): React.Element {
-    return (
-      <div style={styles.activityCard}>
-        <Paper {...this.props} zDpeth={this.props.nestLevel || 1}>
-          {this.props.children}
-        </Paper>
+function ActivityCard(props: { nestLevel: ?number, children?: any }): React.Element {
+  return (
+    <div style={styles.activityCard}>
+      <Paper {...props} zDpeth={props.nestLevel || 1}>
+        {props.children}
+      </Paper>
+    </div>
+  )
+}
+
+function NoteView(props: ActivityProps): React.Element {
+  const { activity, nestLevel } = props
+  const from    = Act.getActor(activity)  // TODO: `from` is now an AS.models.Object
+  const fromStr = (from && from.displayName) || '[unknown sender]'
+  const dateStr = Act.getPublishTime(activity).fromNow()
+  return (
+    <ActivityCard nestLevel={nestLevel}>
+      <CardHeader
+        title={fromStr}
+        subtitle={dateStr}
+        avatar={from && actorAvatar(from)}
+        >
+        <LikeButton style={{ float:'right' }} {...props} />
+        <ActivityOptsMenu style={styles.menu} {...props} />
+      </CardHeader>
+      {Act.isEdited(activity) ?
+        <p style={styles.inlineNoticeUnderHeader}>
+          <em>Last edited {Act.getLatestEditTime(activity).fromNow()}</em>
+        </p> : ''}
+      {displayContent(activity)}
+    </ActivityCard>
+  )
+}
+
+function DocumentView(props: ActivityProps): React.Element {
+  const { activity, conversation } = props
+  const from    = Act.getActor(activity)  // TODO: `from` is now an AS.models.Object
+  const fromStr = (from && from.displayName) || '[unknown author]'
+  const editor  = Act.getActor(Act.getLatestRevision(activity))  // TODO: `editor` is now an AS.models.Object
+  const editStr = (from && from.displayName) || '[unknown author]'
+  const dateStr = Act.getPublishTime(activity).fromNow()
+  return (
+    <div>
+      <h2>{conversation.subject}</h2>
+      {Act.isEdited(activity) ?
+        <p>
+          <em>Last edited {Act.getLatestEditTime(activity).fromNow()} by {editStr}</em>
+        </p> :
+        <p>
+          <em>Posted {dateStr} by {fromStr}</em>
+        </p>}
+      {displayContent(activity, styles.documentBody)}
+    </div>
+  )
+}
+
+function ConflictView(props: ActivityProps): React.Element {
+  const { activity, nestLevel, useremail } = props
+  const from    = Act.getActor(activity)  // TODO `from` is now an AS.models.Object
+  const fromStr = (from && from.displayName) || '[unknown sender]'
+  const dateStr = Act.getPublishTime(activity).fromNow()
+  // const { palette } = (this.context: any).muiTheme.baseTheme  // TODO
+  // const backgroundColor = palette.borderColor
+  const backgroundColor = 'red'  // TODO
+  return (
+    <ActivityCard nestLevel={nestLevel} style={{backgroundColor: backgroundColor}}>
+      <div style={styles.inlineNotice}>
+        <strong>Edit failed due to a conflict with another edit.</strong>
       </div>
-    )
-  }
-}
-
-class NoteView extends Sunshine.Component<{},ActivityProps,{}> {
-  render(): React.Element {
-    var { activity } = this.props
-    var from    = actor(activity)
-    var fromStr = (from && from.displayName) || '[unknown sender]'
-    var dateStr = published(activity).fromNow()
-    return (
-      <ActivityCard nestLevel={this.props.nestLevel}>
-        <CardHeader
-          title={fromStr}
-          subtitle={dateStr}
-          avatar={from && actorAvatar(from)}
-          >
-          <LikeButton style={{ float:'right' }} {...this.props} />
-          <ActivityOptsMenu style={styles.menu} {...this.props} />
-        </CardHeader>
-        {edited(activity) ?
-          <p style={styles.inlineNoticeUnderHeader}>
-            <em>Last edited {lastEdited(activity).fromNow()}</em>
-          </p> : ''}
-        {displayContent(activity)}
-      </ActivityCard>
-    )
-  }
-}
-
-class DocumentView extends Sunshine.Component<{},ActivityProps,{}> {
-  render(): React.Element {
-    var { activity, conversation } = this.props
-    var from    = actor(activity)
-    var fromStr = (from && from.displayName) || '[unknown author]'
-    var editor  = actor(Act.latestRevision(activity))
-    var editStr = (from && from.displayName) || '[unknown author]'
-    var dateStr = published(activity).fromNow()
-    return (
-      <div>
-        <h2>{conversation.subject}</h2>
-        {edited(activity) ?
-          <p>
-            <em>Last edited {lastEdited(activity).fromNow()} by {editStr}</em>
-          </p> :
-          <p>
-            <em>Posted {Act.published(activity).fromNow()} by {fromStr}</em>
-          </p>}
-        {displayContent(activity, styles.documentBody)}
-      </div>
-    )
-  }
-}
-
-class ConflictView extends Sunshine.Component<{},ActivityProps,{}> {
-  render(): React.Element {
-    var { activity, useremail } = this.props
-    var from    = actor(activity)
-    var fromStr = (from && from.displayName) || '[unknown sender]'
-    var dateStr = published(activity).fromNow()
-    var { palette } = (this.context: any).muiTheme.baseTheme
-    return (
-      <ActivityCard nestLevel={this.props.nestLevel} style={{backgroundColor: palette.borderColor}}>
-        <div style={styles.inlineNotice}>
-          <strong>Edit failed due to a conflict with another edit.</strong>
-        </div>
-        {displayContent(activity)}
-      </ActivityCard>
-    )
-  }
+      {displayContent(activity)}
+    </ActivityCard>
+  )
 }
 
 ConflictView.contextTypes = contextTypes
 
-class JoinView extends Sunshine.Component<{},ActivityProps,{}> {
-  render(): React.Element {
-    var { activity } = this.props
-    var from    = actor(activity)
-    var fromStr = (from && from.displayName) || '[unknown sender]'
-    var { palette } = (this.context: any).muiTheme.baseTheme
-    return (
-      <ActivityCard nestLevel={this.props.nestLevel} style={{backgroundColor: palette.borderColor}}>
-        <CardHeader
-          title={fromStr}
-          subtitle='joined the discussion'
-          avatar={from && actorAvatar(from)}
-          >
-        </CardHeader>
-      </ActivityCard>
-    )
-  }
+function JoinView(props: ActivityProps): React.Element {
+  const { activity, nestLevel } = props
+  const from    = Act.getActor(activity)  // TODO: `from` is now an AS.models.Object
+  const fromStr = (from && from.displayName) || '[unknown sender]'
+  // const { palette } = (this.context: any).muiTheme.baseTheme  // TODO
+  // const backgroundColor = palette.borderColor
+  const backgroundColor = 'red'  // TODO
+  return (
+    <ActivityCard nestLevel={nestLevel} style={{backgroundColor: backgroundColor}}>
+      <CardHeader
+        title={fromStr}
+        subtitle='joined the discussion'
+        avatar={from && actorAvatar(from)}
+        >
+      </CardHeader>
+    </ActivityCard>
+  )
 }
 
 JoinView.contextTypes = contextTypes
 
-class AsideView extends Sunshine.Component<{},ActivityProps,{}> {
-  render(): React.Element {
-    const nestLevel = this.props.nestLevel || 1
-    const { activity, conversation } = this.props
+function AsideView(props: ActivityProps): React.Element {
+  const nestLevel = props.nestLevel || 1
+  const { activity, conversation } = props
 
-    const conv = asideToConversation(activity)
-    const ppl = join(', ', allNames(conv))
+  const conv = asideToConversation(activity)
+  const ppl = join(', ', allNames(conv))
 
-    // TODO: a bit hackish
-    const showReplyForm = m.equals(activity, m.last(m.filter(act => (
-      act.verb === 'aside' && m.equals(act.allActivities, activity.allActivities)
-    ), conversation.activities)))
+  // TODO: will not work anymore
+  const showReplyForm = m.equals(activity, m.last(m.filter(act => (
+    act.verb === 'aside' && m.equals(act.allActivities, activity.allActivities)
+  ), conversation.activities)))
 
-    const activities = m.intoArray(m.map(act => (
-      <ActivityView
-        {...this.props}
-        activity={act}
-        conversation={conv}
-        key={activityId(act)}
-        nestLevel={nestLevel+1}
-        />
-    ), activity.aside || m.list()))
+  const activities = m.intoArray(m.map(act => (
+    <ActivityView
+      {...this.props}
+      activity={act}
+      conversation={conv}
+      key={activityId(act)}
+      nestLevel={nestLevel+1}
+      />
+  ), activity.aside || m.list()))
 
-    const { palette } = (this.context: any).muiTheme.baseTheme
+  const { palette } = (this.context: any).muiTheme.baseTheme
 
-    return (
-      <ActivityCard nestLevel={nestLevel} style={{backgroundColor: palette.primary3Color}}>
-        <CardHeader
-          title='private aside'
-          subtitle={ppl}
-          avatar={<span></span>}
-          >
-        </CardHeader>
-        <div style={styles.asideContainer}>
-          {activities}
-          {showReplyForm ?
-            <ComposeReply
-              inReplyTo={conv}
-              hintText='Compose private reply'
-              /> : ''}
-        </div>
-      </ActivityCard>
-    )
-  }
+  return (
+    <ActivityCard nestLevel={nestLevel} style={{backgroundColor: palette.primary3Color}}>
+      <CardHeader
+        title='private aside'
+        subtitle={ppl}
+        avatar={<span></span>}
+        >
+      </CardHeader>
+      <div style={styles.asideContainer}>
+        {activities}
+        {showReplyForm ?
+          <ComposeReply
+            inReplyTo={conv}
+            hintText='Compose private reply'
+            /> : ''}
+      </div>
+    </ActivityCard>
+  )
 }
 
 AsideView.contextTypes = contextTypes

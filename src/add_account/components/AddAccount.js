@@ -2,16 +2,16 @@
 
 import React                    from 'react'
 import { connect }              from 'react-redux'
+import { go }                   from 'react-router-redux'
 import { compose, get, lookup } from 'safety-lens'
-import * as AS                  from '../state'
-import * as AE                  from '../event'
+import * as A                   from '../actions'
 import { FlatButton
        , Paper
        , TextField
        } from 'material-ui'
 
 import type { State }  from '../../reducers'
-import type { Action } from '../../actions'
+import type { Action } from '../actions'
 
 type AddAccountProps = {
   dispatch:  (_: Action) => void,
@@ -68,7 +68,7 @@ class GetEmail extends React.Component<void,AddAccountProps,void> {
   }
 }
 
-class AllDone extends Sunshine.Component<{},AddAccountState,{}> {
+class AllDone extends React.Component<void,AddAccountProps,void> {
   render(): React.Element {
     var { loading, username, useremail } = this.props
     return (
@@ -89,7 +89,7 @@ class AllDone extends Sunshine.Component<{},AddAccountState,{}> {
   }
 
   onContinue() {
-    window.location = '#/'
+    this.props.dispatch(go('/'))
   }
 }
 
@@ -97,8 +97,8 @@ function mapStateToProps({ config }: State): $Shape<AddAccountProps> {
   const { username, useremail } = config
   return {
     loading:   false,  // TODO
-    username:  'Jesse Hallett',  // TODO
-    useremail: 'jesse@sitr.us',  // TODO
+    username,
+    useremail,
   }
 }
 
