@@ -1,15 +1,16 @@
 /* @flow */
 
+import * as AS         from 'activitystrea.ms'
 import randomstring    from 'randomstring'
 import * as Act        from 'arfe/derivedActivity'
-import { mailtoUri }   from 'arfe/activity'
 import { displayName } from 'arfe/models/address'
+import { mailtoUri }   from 'arfe/models/uri'
 
-import type { DerivedActivity }                from 'arfe/derivedActivity'
-import type { Activity, ActivityObject, Verb } from 'arfe/activity'
-import type { Address, Email }                 from 'arfe/models/address'
-import type { URI }                            from 'arfe/models/message'
-import type { Burger, ComposerAttachment }     from './compose'
+import type { DerivedActivity }            from 'arfe/derivedActivity'
+import type { Activity }                   from 'arfe/activity'
+import type { Address, Email }             from 'arfe/models/address'
+import type { URI }                        from 'arfe/models/message'
+import type { Burger, ComposerAttachment } from './compose'
 
 export {
   document,
@@ -34,7 +35,7 @@ function edit({ amended, target }: EditOpts): Burger {
     },
     target: {
       objectType: 'activity',
-      uri:        Act.activityId(target),
+      uri:        Act.getId(target),
     }
   }
   var activityId = randomstring.generate()
@@ -42,7 +43,7 @@ function edit({ amended, target }: EditOpts): Burger {
   return [cidUri(activityId), activity, attachments]
 }
 
-function like(target: ActivityObject): Burger {
+function like(target: AS.models.Object): Burger {
   var activity = {
     verb: 'like',
     target,

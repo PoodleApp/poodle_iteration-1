@@ -1,4 +1,3 @@
-/* @flow */
 
 import * as Sunshine from 'sunshine-framework'
 import * as State    from './state'

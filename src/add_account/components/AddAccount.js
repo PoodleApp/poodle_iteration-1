@@ -1,17 +1,20 @@
 /* @flow */
 
-import * as Sunshine    from 'sunshine-framework/react'
-import React            from 'react'
-import { compose, get, lookup }  from 'safety-lens'
-import * as State       from '../../state'
-import * as AS          from '../state'
-import * as AE          from '../event'
+import React                    from 'react'
+import { connect }              from 'react-redux'
+import { compose, get, lookup } from 'safety-lens'
+import * as AS                  from '../state'
+import * as AE                  from '../event'
 import { FlatButton
        , Paper
        , TextField
        } from 'material-ui'
 
-type AddAccountState = {
+import type { State }  from '../../reducers'
+import type { Action } from '../../actions'
+
+type AddAccountProps = {
+  dispatch:  (_: Action) => void,
   loading:   boolean,
   username:  ?string,
   useremail: ?string,
@@ -25,26 +28,16 @@ var styles = {
   }
 }
 
-export default class AddAccount extends Sunshine.Component<{},{},AddAccountState> {
-  getState(state: State.AppState): AddAccountState {
-    return {
-      loading:   get(State.isLoading, state),
-      username:  lookup(State.username, state),
-      useremail: lookup(State.useremail, state),
-    }
+export function AddAccount(props: AddAccountProps): React.Element {
+  if (!props.useremail) {
+    return <GetEmail {...props} />
   }
-
-  render(): React.Element {
-    if (!this.state.useremail) {
-      return <GetEmail loading={this.state.loading} />
-    }
-    else {
-      return <AllDone {...this.state} />
-    }
+  else {
+    return <AllDone {...props} />
   }
 }
 
-class GetEmail extends Sunshine.Component<{},{ loading: boolean },{}> {
+class GetEmail extends React.Component<void,AddAccountProps,void> {
   render(): React.Element {
     return (
       <Paper>
@@ -69,8 +62,9 @@ class GetEmail extends Sunshine.Component<{},{ loading: boolean },{}> {
 
   onEmail(event: Event) {
     event.preventDefault()
-    var email = this.refs.email.getValue()
-    this.emit(new AE.NewAccount(email))
+    const { dispatch } = this.props
+    const email = this.refs.email.getValue()
+    dispatch(A.newAccount(email))
   }
 }
 
@@ -98,3 +92,14 @@ class AllDone extends Sunshine.Component<{},AddAccountState,{}> {
     window.location = '#/'
   }
 }
+
+function mapStateToProps({ config }: State): $Shape<AddAccountProps> {
+  const { username, useremail } = config
+  return {
+    loading:   false,  // TODO
+    username:  'Jesse Hallett',  // TODO
+    useremail: 'jesse@sitr.us',  // TODO
+  }
+}
+
+export default connect(mapStateToProps)(AddAccount)

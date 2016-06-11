@@ -1,4 +1,3 @@
-/* @flow */
 
 import { emit, reduce } from 'sunshine-framework'
 import ipc              from 'electron-safe-ipc/guest'
@@ -14,7 +13,7 @@ class NewAccount {
   }
 }
 
-// TODO: Rearrange things so that we do not have to import from '../event'
+// TODO: Turn this event handler into a saga
 
 const reducers: Reducers<AS.AddAccountState> = [
 
