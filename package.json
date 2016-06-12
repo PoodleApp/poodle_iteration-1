@@ -25,12 +25,14 @@
       "es2015-node5"
     ],
     "plugins": [
-      "transform-class-properties"
+      "transform-class-properties",
+      "transform-object-rest-spread"
     ]
   },
   "devDependencies": {
     "babel-cli": "6.6.4",
     "babel-plugin-transform-class-properties": "6.6.0",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-preset-es2015-node5": "1.1.2",
     "babel-preset-react": "6.5.0",
     "chai": "3.5.0",
