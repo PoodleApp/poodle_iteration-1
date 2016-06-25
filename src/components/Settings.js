@@ -1,18 +1,19 @@
 /* @flow */
 
-import * as Sunshine             from 'sunshine-framework/react'
 import React                     from 'react'
+import { connect }               from 'react-redux'
 import { compose, get, lookup }  from 'safety-lens'
 import { List }                  from 'immutable'
-import * as Ev                   from '../event'
-import * as State                from '../state'
 import { newAccount, newConfig } from '../config'
 import { FlatButton
        , Paper
        , TextField
        } from 'material-ui'
 
-type SettingsState = {
+import type { State } from '../reducers'
+
+type SettingsProps = {
+  dispatch:    (action: Object) => void,
   loading:     boolean,
   likeMessage: ?string,
   username:    ?string,
@@ -27,18 +28,10 @@ const styles = {
   }
 }
 
-export default class Settings extends Sunshine.Component<{},{},SettingsState> {
-  getState(state: State.AppState): SettingsState {
-    return {
-      loading:     get(State.isLoading, state),
-      likeMessage: lookup(State.likeMessage, state),
-      username:    lookup(State.username, state),
-      useremail:   lookup(State.useremail, state),
-    }
-  }
+export class Settings extends React.Component<void,SettingsProps,void> {
 
   render(): React.Element {
-    const { loading, likeMessage, username, useremail } = this.state
+    const { loading, likeMessage, username, useremail } = this.props
     return (
       <Paper>
         <form style={styles.body} onSubmit={this.saveSettings.bind(this)}>
@@ -84,6 +77,7 @@ export default class Settings extends Sunshine.Component<{},{},SettingsState> {
 
   saveSettings(event: Event) {
     event.preventDefault()
+    const { dispatch } = this.props
     const name  = this.refs.name.getValue()
     const email = this.refs.email.getValue()
     const likeMessage = this.refs.likeMessage.getValue()
@@ -94,6 +88,24 @@ export default class Settings extends Sunshine.Component<{},{},SettingsState> {
         email,
       }))
     })
+    dispatch()
     this.emit(new Ev.SaveConfig(config))
   }
 }
+
+function mapStateToProps(state: State): $Shape<SettingsProps> {
+  return {
+    loading:     false,            // TODO
+    likeMessage: '+1',             // TODO
+    username:    'jesse',          // TODO
+    useremail:   'jesse@sitr.us',  // TODO
+  }
+  // return {
+  //   loading:     get(State.isLoading, state),
+  //   likeMessage: lookup(State.likeMessage, state),
+  //   username:    lookup(State.username, state),
+  //   useremail:   lookup(State.useremail, state),
+  // }
+}
+
+export default connect(mapStateToProps)(Settings)

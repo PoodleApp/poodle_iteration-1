@@ -27,6 +27,7 @@ import type { Conversation }    from 'arfe/conversation'
 export type ActivityProps = {
   activity:     DerivedActivity,
   conversation: Conversation,
+  dispatch:     (_: Object) => void,
   editing:      ?DerivedActivity,
   loading:      boolean,
   username:     string,

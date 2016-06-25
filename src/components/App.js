@@ -150,7 +150,7 @@ export class App extends React.Component<void,AppProps,void> {
     )
   }
 
-  showError(error: string): React.Element {
+  showError(error: Error): React.Element {
     const actions = [
       <FlatButton label='Ok' primary={true} onTouchTap={this.dismissError.bind(this)} />
     ]
@@ -160,7 +160,7 @@ export class App extends React.Component<void,AppProps,void> {
         actions={actions}
         open={!!error}
         >
-        <p style={styles.body}>{error}</p>
+        <p style={styles.body}>{String(error)}</p>
       </Dialog>
     )
   }

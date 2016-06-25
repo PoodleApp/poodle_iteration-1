@@ -10,11 +10,11 @@ export type Action =
   | { type: 'showLink',         activity: ?DerivedActivity }
   | { type: 'showNotification', notification: string }
 
-const dismissError = Object.freeze({
+const dismissError: Action = Object.freeze({
   type: 'dismissError'
 })
 
-const dismissNotify = Object.freeze({
+const dismissNotify: Action = Object.freeze({
   type: 'dismissNotify'
 })
 
