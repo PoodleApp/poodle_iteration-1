@@ -5,6 +5,7 @@ import { connect }               from 'react-redux'
 import { compose, get, lookup }  from 'safety-lens'
 import { List }                  from 'immutable'
 import { newAccount, newConfig } from '../config'
+import * as A                    from '../settings/actions'
 import { FlatButton
        , Paper
        , TextField
@@ -88,8 +89,7 @@ export class Settings extends React.Component<void,SettingsProps,void> {
         email,
       }))
     })
-    dispatch()
-    this.emit(new Ev.SaveConfig(config))
+    dispatch(A.saveConfig(config))
   }
 }
 

@@ -50,7 +50,7 @@ function run(domElement: Element) {
   )
 }
 
-          // <Route path="compose/:activityType" component={ComposeView} /> 
+          // <Route path="compose/:activityType" component={ComposeView} />
           // <Route path="conversations/:id"     component={Conversation} />
           // <Route path="activities/:uri"       component={Conversation} />
           // <Route path="settings"              component={Settings} />

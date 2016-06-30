@@ -14,6 +14,7 @@ import { ActivityOptsMenu }                                from './activityMenu'
 import { actorAvatar }                                     from './avatar'
 import { join }                                            from '../util/mori'
 import * as Act                                            from 'arfe/derivedActivity'
+import * as A                                              from '../actions'
 import { Card
        , CardHeader
        , FlatButton
@@ -171,7 +172,7 @@ function DocumentView(props: ActivityProps): React.Element {
   )
 }
 
-function ConflictView(props: ActivityProps): React.Element {
+function ConflictView(props: ActivityProps, context: Object): React.Element {
   const { activity, nestLevel, useremail } = props
   const from    = Act.getActor(activity)  // TODO `from` is now an AS.models.Object
   const fromStr = (from && from.displayName) || '[unknown sender]'
@@ -191,7 +192,7 @@ function ConflictView(props: ActivityProps): React.Element {
 
 ConflictView.contextTypes = contextTypes
 
-function JoinView(props: ActivityProps): React.Element {
+function JoinView(props: ActivityProps, context: Object): React.Element {
   const { activity, nestLevel } = props
   const from    = Act.getActor(activity)  // TODO: `from` is now an AS.models.Object
   const fromStr = (from && from.displayName) || '[unknown sender]'
@@ -219,25 +220,27 @@ function AsideView(props: ActivityProps): React.Element {
   const conv = asideToConversation(activity)
   const ppl = join(', ', allNames(conv))
 
-  // TODO: will not work anymore
+  // TODO: This is a bit of a hack
   const showReplyForm = m.equals(activity, m.last(m.filter(act => (
-    act.verb === 'aside' && m.equals(act.allActivities, activity.allActivities)
+    Act.hasType(Act.syntheticTypes.Aside, act) && m.equals(act.aside, activity.aside)
   ), conversation.activities)))
 
   const activities = m.intoArray(m.map(act => (
     <ActivityView
-      {...this.props}
+      {...props}
       activity={act}
       conversation={conv}
-      key={activityId(act)}
+      key={Act.getId(act)}
       nestLevel={nestLevel+1}
       />
   ), activity.aside || m.list()))
 
-  const { palette } = (this.context: any).muiTheme.baseTheme
+  // const { palette } = (this.context: any).muiTheme.baseTheme
+  // const backgroundColor = palette.primary3Color
+  const backgroundColor = 'red'  // TODO
 
   return (
-    <ActivityCard nestLevel={nestLevel} style={{backgroundColor: palette.primary3Color}}>
+    <ActivityCard nestLevel={nestLevel} style={{backgroundColor: backgroundColor}}>
       <CardHeader
         title='private aside'
         subtitle={ppl}
@@ -258,39 +261,37 @@ function AsideView(props: ActivityProps): React.Element {
 
 AsideView.contextTypes = contextTypes
 
-class UnknownView extends Sunshine.Component<{},ActivityProps,{}> {
-  render(): React.Element {
-    var activity = this.props.activity
-    var from     = actor(activity)
-    var fromStr  = (from && from.displayName) || '[unknown sender]'
-    var dateStr  = published(activity).fromNow()
-    return (
-      <ActivityCard nestLevel={this.props.nestLevel}>
-        <CardHeader
-          title={fromStr}
-          subtitle={dateStr}
-          avatar={from && actorAvatar(from)}
-          />
-        {displayContent(activity)}
-      </ActivityCard>
-    )
-  }
+function UnknownView(props: ActivityProps): React.Element {
+  const { activity, nestLevel } = props
+  const from     = Act.getActor(activity)  // TODO: `from` is now an AS.models.Object
+  const fromStr  = (from && from.displayName) || '[unknown sender]'
+  const dateStr  = Act.getPublishTime(activity).fromNow()
+  return (
+    <ActivityCard nestLevel={nestLevel}>
+      <CardHeader
+        title={fromStr}
+        subtitle={dateStr}
+        avatar={from && actorAvatar(from)}
+        />
+      {displayContent(activity)}
+    </ActivityCard>
+  )
 }
 
 type LikeButtonProps = ActivityProps & {
   style?: Object
 }
 
-class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
+class LikeButton extends React.Component<void,LikeButtonProps,void> {
   render(): React.Element {
-    var { activity, loading, useremail, style } = this.props
-    var me           = mailtoUri(useremail)
-    var alreadyLiked = !!m.some((uri, _) => uri === me, likes(activity))
-    var mine         = myContent(activity, useremail)
+    const { activity, loading, useremail, style } = this.props
+    const me           = mailtoUri(useremail)
+    const alreadyLiked = !!m.some((uri, _) => uri === me, Act.getLikes(activity))
+    const mine         = myContent(activity, useremail)
     return (
       <FlatButton
         style={style || {}}
-        label={`+${likeCount(activity)+1}`}
+        label={`+${Act.getLikeCount(activity)+1}`}
         onTouchTap={this.like.bind(this)}
         disabled={mine || alreadyLiked || loading}
         />
@@ -298,7 +299,8 @@ class LikeButton extends Sunshine.Component<{},LikeButtonProps,{}> {
   }
 
   like() {
-    this.emit(new Ev.Like(this.props.activity, this.props.conversation))
+    const { activity, conversation, dispatch } = this.props
+    dispatch(A.like(activity, conversation))
   }
 }
 
