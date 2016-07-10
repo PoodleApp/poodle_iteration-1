@@ -2,16 +2,24 @@
 
 import * as Kefir         from 'kefir'
 import keytar             from 'keytar'
+import PouchDB            from 'pouchdb'
 import { search }         from '../gmail'
 import { tokenGenerator } from '../tokenGenerator'
+import ApiClient          from '../../../imap-store/ApiClient'
 
 import type { XOAuth2Generator } from '../tokenGenerator'
 
 function fetchMessages() {
+  const db = new PouchDB('poodle')
   return Kefir.fromPromise(
     getTokenGenerator('jesse@sitr.us')
   )
-  .flatMap(tokgen => search('poodle talking points', tokgen, onAttachment))
+  .flatMap(tokgen => {
+    const client = new ApiClient(tokgen, db)
+    return Kefir.fromPromise(
+      client.get('/activities', { params: { q: 'poodle talking points' }, fetchConfig: {} })
+    )
+  })
   .onValue(val => {
     console.log(val)
     console.log("---\n")
@@ -35,7 +43,7 @@ function getTokenGenerator(email: string): Promise<XOAuth2Generator> {
 }
 
 function onAttachment(attachment, mail) {
-  console.log('##### attachment', attachment)
+  console.log('##### attachment', attachment, mail.messageId)
 }
 
 fetchMessages()

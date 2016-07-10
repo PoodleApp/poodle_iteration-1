@@ -25,7 +25,7 @@ type Attachment = {
 }
 
 function search(
-  query: string, tokenGenerator: XOAuth2Generator, onAttachment?: ?(_: Attachment) => void
+  query: string, tokenGenerator: XOAuth2Generator, onAttachment?: ?(a: Attachment, m: Message) => any
 ): Stream<Thread,any> {
   return Kefir.fromPromise(
     imap.getConnection(tokenGenerator)
@@ -42,7 +42,7 @@ function search(
 }
 
 function parseMessage(
-  messageStream: ReadStream, onAttachment?: ?(_: Attachment) => void
+  messageStream: ReadStream, onAttachment?: ?(a: Attachment, m: Message) => any
 ): Stream<Message,any> {
   return Kefir.stream(emitter => {
     const mailparser = new MailParser({

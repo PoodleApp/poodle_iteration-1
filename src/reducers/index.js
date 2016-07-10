@@ -9,10 +9,12 @@ import settingsReducer     from './settings/reducers'
 import type { State as ConfigState }   from './config'
 import type { State as ChromeState }   from './chrome'
 import type { State as SettingsState } from './settings/reducers'
+import type { State as ImapState }     from '../imap-store/reducers'
 
 export type State = {
   config:   ConfigState,
   chrome:   ChromeState,
+  imap:     ImapState,
   routing:  Object,
   settings: SettingsState,
 }
