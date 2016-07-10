@@ -11,24 +11,19 @@ import type { XOAuth2Generator } from '../tokenGenerator'
 
 function fetchMessages() {
   const db = new PouchDB('poodle')
-  return Kefir.fromPromise(
-    getTokenGenerator('jesse@sitr.us')
-  )
-  .flatMap(tokgen => {
+  getTokenGenerator('jesse@sitr.us').then(tokgen => {
     const client = new ApiClient(tokgen, db)
-    return Kefir.fromPromise(
-      client.get('/activities', { params: { q: 'poodle talking points' }, fetchConfig: {} })
-    )
+    return client.get('/activities', { params: { q: 'poodle talking points' }, fetchConfig: {} })
   })
-  .onValue(val => {
+  .then(val => {
     console.log(val)
     console.log("---\n")
+    process.exit(0)
   })
-  .onError(err => {
+  .catch(err => {
     console.log(err)
     process.exit(1)
   })
-  .onEnd(() => process.exit(0))
 }
 
 function getTokenGenerator(email: string): Promise<XOAuth2Generator> {

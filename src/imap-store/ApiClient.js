@@ -6,6 +6,7 @@
  */
 
 import * as Kefir               from 'kefir'
+import * as m                   from 'mori'
 import { threadToConversation } from 'arfe/conversation'
 import { midPartUri }           from 'arfe/models/message'
 import * as gmail               from '../stores/gmail/gmail'
@@ -13,6 +14,7 @@ import { tokenGenerator }       from '../stores/gmail/tokenGenerator'
 
 import type { PouchDB }          from 'pouchdb'
 import type { DerivedActivity }  from 'arfe/derivedActivity'
+import type { Message }          from 'arfe/models/message'
 import type { XOAuth2Generator } from '../stores/gmail/tokenGenerator'
 
 export default class ApiClient {
@@ -52,10 +54,14 @@ function getActivities(
   tokGen: XOAuth2Generator,
   query:  string
 ): Promise<{ data: DerivedActivity[] }> {
-  return gmail.search(query, tokGen, attachment => storeAttachment(db, attachment))
+  return gmail.search(query, tokGen, (attachment, msg) => storeAttachment(db, attachment, msg))
+  .scan(
+    (threads, thread) => m.conj(threads, thread), m.vector()
+  )
+  .toPromise()
 }
 
-function storeAttachment(db: PouchDB, attachment: Object): Promise<void> {
+function storeAttachment(db: PouchDB, attachment: Object, message: Message): Promise<void> {
   const doc: AttachmentDoc = {
     _id:        midPartUri(attachment, message),
     type:       'attachment',
