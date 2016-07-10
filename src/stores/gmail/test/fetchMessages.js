@@ -11,7 +11,7 @@ function fetchMessages() {
   return Kefir.fromPromise(
     getTokenGenerator('jesse@sitr.us')
   )
-  .flatMap(tokgen => search('poodle talking points', tokgen))
+  .flatMap(tokgen => search('poodle talking points', tokgen, onAttachment))
   .onValue(val => {
     console.log(val)
     console.log("---\n")
@@ -32,6 +32,10 @@ function getTokenGenerator(email: string): Promise<XOAuth2Generator> {
   else {
     return Promise.reject(new Error('OAuth credentials are not available.'))
   }
+}
+
+function onAttachment(attachment, mail) {
+  console.log('##### attachment', attachment)
 }
 
 fetchMessages()

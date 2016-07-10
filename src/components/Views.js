@@ -1,4 +1,8 @@
-/* @flow */
+/*
+ * TODO: This module is not used anymore. It is here for reference while
+ * converting to redux.
+ */
+/* @noflow */
 
 import * as Sunshine                       from 'sunshine-framework/react'
 import React                               from 'react'
