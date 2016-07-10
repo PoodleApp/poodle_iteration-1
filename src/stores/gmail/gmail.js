@@ -5,6 +5,7 @@ import * as m             from 'mori'
 import { MailParser }     from 'mailparser'
 import * as imap          from './google-imap'
 import { tokenGenerator } from './tokenGenerator'
+import { getActivities }  from 'arfe/activity'
 import { buildThread }    from 'arfe/models/thread'
 
 import type { ReadStream }       from 'fs'
@@ -32,35 +33,13 @@ function search(
   )
   .flatMap(conn => imap.fetchConversations(query, conn, 100))
   .flatMap((messages: List<ReadStream>) => {
-    const msgStreams = messages.map(msg => parseMessage(msg, onAttachment))
-    const msgListStream = Kefir.merge(msgStreams.toArray()).scan(
-      (msgs, msg) => m.conj(msgs, msg), m.vector()
+    const activityPromises = messages.map(msg => getActivities(msg, onAttachment)).toArray()
+    return Kefir.fromPromise(
+      Promise.all(activityPromises).then(activitySets => {
+        const flattened = m.mapcat(acts => acts, activitySets)
+        return buildThread(flattened)
+      })
     )
-    .last()
-    return msgListStream.map(buildThread)
-  })
-}
-
-function parseMessage(
-  messageStream: ReadStream, onAttachment?: ?(a: Attachment, m: Message) => any
-): Stream<Message,any> {
-  return Kefir.stream(emitter => {
-    const mailparser = new MailParser({
-      includeMimeTree:   true,
-      streamAttachments: true,
-      defaultCharset:    'utf8',
-    })
-    if (onAttachment) {
-      mailparser.on('attachment', onAttachment)
-    }
-    mailparser.on('end', mail => {
-      emitter.emit(mail)
-      emitter.end()
-    })
-    mailparser.on('error', err => {
-      emitter.error(err)
-    })
-    messageStream.pipe(mailparser)
   })
 }
 
