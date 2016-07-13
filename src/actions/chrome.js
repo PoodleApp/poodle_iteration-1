@@ -9,6 +9,8 @@ export type Action =
   | { type: 'showError',        error: Error }
   | { type: 'showLink',         activity: ?DerivedActivity }
   | { type: 'showNotification', notification: string }
+  | { type: 'indicateLoading',  id: string, message: string }
+  | { type: 'doneLoading',      id: string }
 
 const dismissError: Action = Object.freeze({
   type: 'dismissError'
@@ -46,9 +48,26 @@ function showNotification(notification: string): Action {
   }
 }
 
+function indicateLoading(id: string, message: string): Action {
+  return {
+    type: 'indicateLoading',
+    message,
+    id,
+  }
+}
+
+function doneLoading(id: string): Action {
+  return {
+    type: 'doneLoading',
+    id,
+  }
+}
+
 export {
   dismissError,
   dismissNotify,
+  doneLoading,
+  indicateLoading,
   leftNavToggle,
   showError,
   showLink,

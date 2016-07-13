@@ -1,13 +1,13 @@
 /* @flow */
 
 export type Action = {
-  type: 'newAccount',
+  type: 'add_account/newAccount',
   email: ?string,
 }
 
 function newAccount(email: ?string): Action {
   return {
-    type: 'newAccount',
+    type: 'add_account/newAccount',
     email,
   }
 }

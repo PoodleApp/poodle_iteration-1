@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "arfe": "hallettj/arfe#master",
-    "electron-safe-ipc": "0.6.1",
     "email-addresses": "~2.0.1",
     "googleapis": "~2.1.3",
     "imap": "~0.8.15",

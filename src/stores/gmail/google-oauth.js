@@ -5,10 +5,10 @@
  * @flow
  */
 
-import BrowserWindow from 'browser-window'
-import google        from 'googleapis'
-import { stringify } from 'querystring';
-import fetch         from 'node-fetch'
+import { BrowserWindow } from 'electron'
+import google            from 'googleapis'
+import { stringify }     from 'querystring';
+import fetch             from 'node-fetch'
 
 export {
   getAccessToken,
