@@ -4,7 +4,7 @@ import React                      from 'react'
 import { connect }                from 'react-redux'
 import { select }                 from 'redux-crud-store'
 import * as Act                   from 'arfe/derivedActivity'
-import * as A                     from '../actions'
+import * as actions               from '../actions'
 import { fetchActivitiesByQuery } from '../imap-store/actions'
 import { AppBar
        , AppCanvas
@@ -65,7 +65,7 @@ export class ActivityStream extends React.Component<void,ActivityStreamProps,voi
           <form onSubmit={this.onSearch.bind(this)}>
             <input type="text" ref="query" defaultValue={query} />
             <input type="submit" value="search" />
-          </from>
+          </form>
           {rows}
         </div>
       )
