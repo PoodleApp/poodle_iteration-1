@@ -291,7 +291,7 @@ class LikeButton extends React.Component<void,LikeButtonProps,void> {
     return (
       <FlatButton
         style={style || {}}
-        label={`+${Act.getLikeCount(activity)+1}`}
+        label={`+${Act.getLikeCount(activity)+1}`}  // `
         onTouchTap={this.like.bind(this)}
         disabled={mine || alreadyLiked || loading}
         />

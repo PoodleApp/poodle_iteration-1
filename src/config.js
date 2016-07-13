@@ -71,7 +71,7 @@ function saveConfig(conf: Config): Promise<void> {
 function loadAccount(): Promise<Account> {
   return loadConfig().then(config => {
     const account = config.accounts.first()
-    return account || Promise.reject("Please configure account settings")
+    return account || Promise.reject(new Error("Please configure account settings"))
   })
 }
 

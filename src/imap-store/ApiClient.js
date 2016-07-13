@@ -35,7 +35,7 @@ export default class ApiClient {
 
   get(path, { params, fetchConfig }: Object): Promise<{ data: any }> {
     if (path === '/activities') {
-      const query = params.q
+      const query = params.query
       return getActivities(this.db, this.tokenGenerator, query)
     }
     else {
