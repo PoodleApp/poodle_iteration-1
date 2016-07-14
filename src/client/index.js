@@ -41,7 +41,7 @@ function run(domElement: Element) {
   render(
     <Provider store={store}>
       <Router history={history}>
-        <Route component={App}>
+        <Route path="/" component={App}>
           <IndexRoute component={ActivityStream} />
         </Route>
       </Router>
