@@ -1,28 +1,21 @@
-.PHONY: all build clean run typecheck
+.PHONY: all build clean
 
-SRC = $(shell find src)
+src_files = $(shell find src -name '*.js')
+out_files = $(patsubst src/%,build/%,$(src_files))
+map_files = $(patsubst src/%.js,build/%.js,$(src_files))
 
 all: build
 
-build: node_modules $(SRC)
-	node_modules/.bin/babel src \
-		--out-dir build \
-		--source-maps
+build: node_modules $(sort $(dir $(out_files))) $(out_files)
 
-watch: node_modules
-	node_modules/.bin/babel src \
-		--out-dir build \
-		--source-maps \
-		--watch
+build/%.js: src/%.js
+	babel $< --out-file $@ --source-maps
+
+%/:
+	mkdir -p $@
 
 clean:
 	rm -rf build
-
-run: node_modules build
-	node_modules/.bin/electron build
-
-typecheck: node_modules
-	node_modules/.bin/flow
 
 node_modules: package.json
 	npm install

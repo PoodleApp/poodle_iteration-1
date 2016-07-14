@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Experimental email client with social features",
   "scripts": {
-    "start": "make && electron build",
+    "make": "make",
+    "make:watch": "watch 'npm run make' src",
+    "run": "electron build",
+    "start": "npm run make && npm run run",
     "test": "babel-node node_modules/.bin/_mocha --full-trace --recursive -R spec -C --check-leaks test/"
   },
   "repository": {
@@ -40,7 +43,8 @@
     "chai-immutable": "1.5.3",
     "electron-prebuilt": "1.2.7",
     "flow-bin": "0.28.0",
-    "mocha": "2.4.5"
+    "mocha": "2.4.5",
+    "watch": "latest"
   },
   "dependencies": {
     "arfe": "hallettj/arfe#master",
