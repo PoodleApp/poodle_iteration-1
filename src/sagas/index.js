@@ -1,12 +1,12 @@
 /* @flow */
 
-import { crudSaga }             from 'redux-crud-store'
-import { takeLatest }           from 'redux-saga'
-import { call, cancelled, put } from 'redux-saga'
-import * as actions             from '../actions'
-import * as Config              from '../config'
-import * as ipc                 from '../ipc'
-import { tokenGenerator }       from '../stores/gmail/tokenGenerator'
+import { crudSaga }                  from 'redux-crud-store'
+import { takeLatest }                from 'redux-saga'
+import { call, cancelled fork, put } from 'redux-saga'
+import * as actions                  from '../actions'
+import * as Config                   from '../config'
+import * as ipc                      from '../ipc'
+import { tokenGenerator }            from '../stores/gmail/tokenGenerator'
 
 import type { Effect } from 'redux-saga'
 

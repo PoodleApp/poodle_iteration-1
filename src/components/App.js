@@ -1,17 +1,13 @@
 /* @flow */
 
-import React                               from 'react'
-import { connect }                         from 'react-redux'
-import { go, goBack }                      from 'react-router-redux'
-import { compose, get, lookup }            from 'safety-lens'
-import { match, $ }                        from '../util/adt'
-import { parseMidUri }                     from 'arfe/models/message'
-import * as Act                            from 'arfe/derivedActivity'
-import * as A                              from '../actions'
-import { ComposeView }                     from './compose'
-import Settings                            from './Settings'
-import { Conversations, ConversationView } from './conversation'
-import AddAccount                          from '../add_account/components/AddAccount'
+import React                    from 'react'
+import { connect }              from 'react-redux'
+import { go, goBack }           from 'react-router-redux'
+import { compose, get, lookup } from 'safety-lens'
+import { match, $ }             from '../util/adt'
+import { parseMidUri }          from 'arfe/models/message'
+import * as Act                 from 'arfe/derivedActivity'
+import * as A                   from '../actions'
 import { AppBar
        , AppCanvas
        , Dialog
@@ -27,13 +23,12 @@ import { AppBar
        } from 'material-ui'
 import ContentCreate from 'material-ui/svg-icons/content/create'
 import ArrowBack     from 'material-ui/svg-icons/navigation/arrow-back'
+import { spacing }   from 'material-ui/styles'
 
 import type { DerivedActivity } from 'arfe/derivedActivity'
 import type { Conversation }    from 'arfe/conversation'
 import type { Action }          from '../actions'
 import type { State }           from '../reducers'
-
-const { Spacing } = Styles
 
 const styles = {
   body: {
@@ -61,14 +56,14 @@ export class App extends React.Component<void,AppProps,void> {
   getStyles(): Object {
     return {
       root: {
-        paddingTop: Spacing.desktopKeylineIncrement + 'px',
+        paddingTop: spacing.desktopKeylineIncrement + 'px',
         paddingBottom: '25em',
         position: 'relative',
       },
       content: {
         boxSizing: 'border-box',
-        padding: Spacing.desktopGutter + 'px',
-        // maxWidth: (Spacing.desktopKeylineIncrement * 14) + 'px',
+        padding: spacing.desktopGutter + 'px',
+        // maxWidth: (spacing.desktopKeylineIncrement * 14) + 'px',
         minHeight: '800px',
       }
     }

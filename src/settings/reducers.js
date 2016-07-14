@@ -5,7 +5,9 @@ import type { Action } from './actions'
 
 export type State = ?Config
 
-export default function reducer(state: State, action: Action): State {
+const initialState = null
+
+export default function reducer(state: State = initialState, action: Action | {}): State {
   switch (action.type) {
     case 'gotConfig':
       return action.config
