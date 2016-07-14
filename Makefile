@@ -1,21 +1,24 @@
 .PHONY: all build clean
 
-src_files = $(shell find src -name '*.js')
+# Define function to recursively search directory for files matching a pattern.
+rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+src_files = $(call rwildcard,src/,%.js)
 out_files = $(patsubst src/%,build/%,$(src_files))
-map_files = $(patsubst src/%.js,build/%.js,$(src_files))
+out_dirs  = $(sort $(dir $(out_files)))
 
 all: build
 
-build: node_modules $(sort $(dir $(out_files))) $(out_files)
+build: node_modules $(out_dirs) $(out_files)
 
 build/%.js: src/%.js
 	babel $< --out-file $@ --source-maps
 
 %/:
-	mkdir -p $@
+	mkdirp $@
 
 clean:
-	rm -rf build
+	rimraf build
 
 node_modules: package.json
 	npm install
