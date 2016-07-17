@@ -28,7 +28,7 @@ import type { State }           from '../reducers'
 
 type ActivityStreamProps = {
   activities: Selection<DerivedActivity[]>,
-  dispatch:   (action: Object) => void,
+  dispatch:   (action: any) => void,
   query:      string,
 }
 
@@ -49,7 +49,7 @@ export class ActivityStream extends React.Component<void,ActivityStreamProps,voi
     }
   }
 
-  render(): React.Element {
+  render(): React.Element<*> {
     const { activities, dispatch, query } = this.props
     if (activities.isLoading) {
       return <p>loading...</p>
@@ -70,9 +70,6 @@ export class ActivityStream extends React.Component<void,ActivityStreamProps,voi
         </div>
       )
     }
-    return (
-      <div>(activity stream)</div>
-    )
   }
 
   onSearch(event: Event) {
@@ -83,7 +80,7 @@ export class ActivityStream extends React.Component<void,ActivityStreamProps,voi
 
 }
 
-function ActivityRow(props: Object): React.Element {
+function ActivityRow(props: Object): React.Element<*> {
   return <div>{String(props.activity)}<hr/></div>
 }
 
@@ -92,7 +89,8 @@ function mapStateToProps(
 ): $Shape<ActivityStreamProps> {
   const { query } = state.activityStream
   return {
-    activities: select(fetchActivitiesByQuery(query), state.models)
+    activities: select(fetchActivitiesByQuery(query), state.models),
+    query,
   }
 }
 

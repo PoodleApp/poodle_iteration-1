@@ -1,5 +1,6 @@
 /* @flow */
 
+import { MuiThemeProvider }             from 'material-ui/styles'
 import React                            from 'react'
 import { render }                       from 'react-dom'
 import { Provider }                     from 'react-redux'
@@ -7,6 +8,7 @@ import { routerMiddleware }             from 'react-router-redux'
 import { applyMiddleware, createStore } from 'redux'
 import logger                           from 'redux-logger'
 import sagaMiddleware                   from 'redux-saga'
+import { PoodleTheme }                  from '../themes'
 import reducers                         from '../reducers'
 import sagas                            from '../sagas'
 import './polyfills'
@@ -37,14 +39,17 @@ const store = createStore(
 
 saga.run(sagas)
 
+
 function run(domElement: Element) {
   render(
     <Provider store={store}>
-      <Router history={history}>
-        <Route path="/" component={App}>
-          <IndexRoute component={ActivityStream} />
-        </Route>
-      </Router>
+      <MuiThemeProvider muiTheme={PoodleTheme}>
+        <Router history={history}>
+          <Route path="/" component={App}>
+            <IndexRoute component={ActivityStream} />
+          </Route>
+        </Router>
+      </MuiThemeProvider>
     </Provider>,
     domElement
   )

@@ -11,19 +11,20 @@ import * as A                   from '../actions'
 import { AppBar
        , AppCanvas
        , Dialog
+       , Drawer
        , FlatButton
        , IconButton
        , IconMenu
-       , LeftNav
        , MenuItem
        , RefreshIndicator
        , Snackbar
        , Styles
        , TextField
-       } from 'material-ui'
-import ContentCreate from 'material-ui/svg-icons/content/create'
-import ArrowBack     from 'material-ui/svg-icons/navigation/arrow-back'
-import { spacing }   from 'material-ui/styles'
+       }                        from 'material-ui'
+import ContentCreate            from 'material-ui/svg-icons/content/create'
+import ArrowBack                from 'material-ui/svg-icons/navigation/arrow-back'
+import { getMuiTheme, spacing } from 'material-ui/styles'
+import withWidth                from 'material-ui/utils/withWidth'
 
 import type { DerivedActivity } from 'arfe/derivedActivity'
 import type { Conversation }    from 'arfe/conversation'
@@ -35,14 +36,15 @@ const styles = {
     padding: '16px',
     paddingTop: 0,
     whiteSpace: 'pre-wrap',
-  }
+  },
 }
 
 type AppProps = {
-  children:     React.Element[],
+  children:     React.Element<any>[],
   dispatch:     (_: Action) => void,
   loading:      boolean,
   leftNavOpen:  boolean,
+  location:     Object,  // injected by react-router
   editing:      ?DerivedActivity,
   error:        ?Error,
   notification: ?string,
@@ -69,7 +71,7 @@ export class App extends React.Component<void,AppProps,void> {
     }
   }
 
-  render(): React.Element {
+  render(): React.Element<*> {
     const {
       children,
       dispatch,
@@ -77,6 +79,7 @@ export class App extends React.Component<void,AppProps,void> {
       error,
       loading,
       leftNavOpen,
+      location,
       notification,
       showLink,
       username,
@@ -101,7 +104,7 @@ export class App extends React.Component<void,AppProps,void> {
     ))
 
     return (
-      <AppCanvas>
+      <div>
         <AppBar
           title={title}
           iconElementLeft={iconLeft}
@@ -120,13 +123,6 @@ export class App extends React.Component<void,AppProps,void> {
             </IconMenu>
           }
           />
-        <LeftNav
-          open={leftNavOpen}
-          docked={false}
-          onRequestChange={(s) => this.leftNavToggle(s)}
-          >
-          {menuItems}
-        </LeftNav>
         <div style={styles.root}
              onClick={interceptMidUris.bind(null, dispatch)}
              className={loading ? 'wait' : ''}
@@ -135,17 +131,24 @@ export class App extends React.Component<void,AppProps,void> {
             {children}
           </div>
         </div>
+        <Drawer
+          open={leftNavOpen}
+          docked={false}
+          onRequestChange={s => this.leftNavToggle(s)}
+          >
+          {menuItems}
+        </Drawer>
         {error ? this.showError(error) : ''}
         {notification ? this.showNotification(notification) : ''}
         {loading ?
           <RefreshIndicator size={40} left={400} top={100} status="loading" /> : ''
         }
         {showLink ? this.showLink(showLink) : '' }
-      </AppCanvas>
+      </div>
     )
   }
 
-  showError(error: Error): React.Element {
+  showError(error: Error): React.Element<*> {
     const actions = [
       <FlatButton label='Ok' primary={true} onTouchTap={this.dismissError.bind(this)} />
     ]
@@ -160,7 +163,7 @@ export class App extends React.Component<void,AppProps,void> {
     )
   }
 
-  showNotification(message: string): React.Element {
+  showNotification(message: string): React.Element<*> {
     return (
       <Snackbar
         message={message}
@@ -170,7 +173,7 @@ export class App extends React.Component<void,AppProps,void> {
     )
   }
 
-  showLink(activity: DerivedActivity): React.Element {
+  showLink(activity: DerivedActivity): React.Element<*> {
     const { dispatch } = this.props
     const actions = [
       { text: 'Ok', onTouchTap: () => dispatch(A.showLink(null)), ref: 'ok' }
@@ -196,14 +199,20 @@ export class App extends React.Component<void,AppProps,void> {
   }
 
   onCompose(event: Event, item: Object) {
+    const { dispatch } = this.props
     const activityType = item.props.value
-    window.location = `#/compose/${activityType}`
+    dispatch(go(`/compose/${activityType}`))  // `
   }
 
   onNavChange(route: string) {
     const { dispatch } = this.props
     dispatch(A.leftNavToggle(false))
     dispatch(go(route))
+  }
+
+  handleChangeList(event: Event, value: string) {
+    const { dispatch } = this.props
+    dispatch(go(value))
   }
 
   dismissError() {
@@ -255,4 +264,4 @@ function mapStateToProps({ config, chrome }: State): $Shape<AppProps> {
   // }
 }
 
-export default connect(mapStateToProps)(App)
+export default connect(mapStateToProps)(withWidth()(App))

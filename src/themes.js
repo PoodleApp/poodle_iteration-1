@@ -1,25 +1,22 @@
-import Colors           from 'material-ui/lib/styles/colors'
-import ColorManipulator from 'material-ui/lib/utils/color-manipulator'
-import Spacing          from 'material-ui/lib/styles/spacing'
+import { getMuiTheme } from 'material-ui/styles'
+import * as colors     from 'material-ui/styles/colors'
+import { fade }        from 'material-ui/utils/colorManipulator'
+import Spacing         from 'material-ui/styles/spacing'
 
-const PoodleTheme = {
+export const PoodleTheme = getMuiTheme({
   spacing: Spacing,
   fontFamily: 'Roboto, sans-serif',
   palette: {
-    primary1Color: Colors.brown500,
-    primary2Color: Colors.brown700,
-    primary3Color: Colors.brown100,
-    accent1Color: Colors.lightBlueA400,
-    accent2Color: Colors.lightBlueA700,
-    accent3Color: Colors.lightBlueA200,
-    textColor: Colors.darkBlack,
-    alternateTextColor: Colors.white,
-    canvasColor: Colors.white,
-    borderColor: Colors.grey300,
-    disabledColor: ColorManipulator.fade(Colors.darkBlack, 0.3),
+    primary1Color:      colors.brown500,
+    primary2Color:      colors.brown700,
+    primary3Color:      colors.brown100,
+    accent1Color:       colors.lightBlueA400,
+    accent2Color:       colors.lightBlueA700,
+    accent3Color:       colors.lightBlueA200,
+    textColor:          colors.darkBlack,
+    alternateTextColor: colors.white,
+    canvasColor:        colors.white,
+    borderColor:        colors.grey300,
+    disabledColor:      fade(colors.darkBlack, 0.3),
   }
-}
-
-export {
-  PoodleTheme,
-}
+})

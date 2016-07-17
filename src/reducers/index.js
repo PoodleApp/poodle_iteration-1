@@ -25,9 +25,10 @@ export type State = {
 }
 
 export default combineReducers({
-  config:   configReducer,
-  chrome:   chromeReducer,
-  models:   crudReducer,
-  routing:  routerReducer,
-  settings: settingsReducer,
+  activityStream: activityStreamReducer,
+  config:         configReducer,
+  chrome:         chromeReducer,
+  models:         crudReducer,
+  routing:        routerReducer,
+  settings:       settingsReducer,
 })
