@@ -1,11 +1,11 @@
 /* @flow */
 
-import React                      from 'react'
-import { connect }                from 'react-redux'
-import { select }                 from 'redux-crud-store'
-import * as Act                   from 'arfe/derivedActivity'
-import * as actions               from '../actions'
-import { fetchActivitiesByQuery } from '../imap-store/actions'
+import React                   from 'react'
+import { connect }             from 'react-redux'
+import { select }              from 'redux-crud-store'
+import * as Act                from 'arfe/derivedActivity'
+import * as actions            from '../actions'
+import { fetchThreadsByQuery } from '../imap-store/actions'
 import { AppBar
        , AppCanvas
        , Dialog
@@ -24,42 +24,44 @@ import type { Selection }       from 'redux-crud-store'
 import type { DerivedActivity } from 'arfe/derivedActivity'
 import type { Conversation }    from 'arfe/conversation'
 import type { Action }          from '../actions'
+import type { ThreadResult }    from '../imap-store/actions'
 import type { State }           from '../reducers'
 
 type ActivityStreamProps = {
-  activities: Selection<DerivedActivity[]>,
-  dispatch:   (action: any) => void,
-  query:      string,
+  threads:  Selection<ThreadResult[]>,
+  creds:    Object,  // opaque object
+  dispatch: (action: any) => void,
+  query:    string,
 }
 
 export class ActivityStream extends React.Component<void,ActivityStreamProps,void> {
 
   componentWillMount() {
-    const { dispatch, activities } = this.props
-    if (activities.needsFetch) {
-      dispatch(activities.fetch)
+    const { dispatch, threads } = this.props
+    if (threads.needsFetch) {
+      dispatch(threads.fetch)
     }
   }
 
   componentWillReceiveProps(nextProps: ActivityStreamProps) {
-    const { activities } = nextProps
+    const { threads } = nextProps
     const { dispatch }   = this.props
-    if (activities.needsFetch) {
-      dispatch(activities.fetch)
+    if (threads.needsFetch) {
+      dispatch(threads.fetch)
     }
   }
 
   render(): React.Element<*> {
-    const { activities, dispatch, query } = this.props
-    if (activities.isLoading) {
+    const { threads, dispatch, query } = this.props
+    if (threads.isLoading) {
       return <p>loading...</p>
     }
-    else if (activities.error) {
-      return <h2>Error: {String(activities.error)}</h2>
+    else if (threads.error) {
+      return <h2>Error: {String(threads.error)}</h2>
     }
     else {
-      const data = activities.data || []
-      const rows = data.map(activity => <ActivityRow activity={activity} dispatch={dispatch}/>)
+      const data = threads.data || []
+      const rows = data.map(thread => <ActivityRow thread={thread} dispatch={dispatch}/>)
       return (
         <div>
           <form onSubmit={this.onSearch.bind(this)}>
@@ -81,7 +83,7 @@ export class ActivityStream extends React.Component<void,ActivityStreamProps,voi
 }
 
 function ActivityRow(props: Object): React.Element<*> {
-  return <div>{String(props.activity)}<hr/></div>
+  return <div>{String(props.thread)}<hr/></div>
 }
 
 function mapStateToProps(
@@ -89,7 +91,8 @@ function mapStateToProps(
 ): $Shape<ActivityStreamProps> {
   const { query } = state.activityStream
   return {
-    activities: select(fetchActivitiesByQuery(query), state.models),
+    threads: select(fetchThreadsByQuery(query), state.models),
+    creds:   state.auth.creds,  // depend on credentials to trigger re-render on updates
     query,
   }
 }

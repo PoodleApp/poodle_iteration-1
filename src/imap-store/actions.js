@@ -8,13 +8,18 @@ import {
   deleteRecord,
 } from 'redux-crud-store'
 
-import type { CrudAction }      from 'redux-crud-store'
-import type { DerivedActivity } from 'arfe/derivedActivity'
+import type { CrudAction } from 'redux-crud-store'
+import type { Thread }     from 'arfe/models/thread'
 
-export function fetchLatestActivities(): CrudAction<DerivedActivity[]> {
-  return fetchCollection('activities', '/activities')
+export type ThreadResult = {
+  id:     string,
+  thread: Thread,
 }
 
-export function fetchActivitiesByQuery(query: string): CrudAction<DerivedActivity[]> {
-  return fetchCollection('activities', '/activities', { query })
+export function fetchLatestThreads(): CrudAction<ThreadResult[]> {
+  return fetchCollection('threads', '/threads')
+}
+
+export function fetchThreadsByQuery(query: string): CrudAction<ThreadResult[]> {
+  return fetchCollection('threads', '/threads', { query })
 }

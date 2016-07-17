@@ -9,12 +9,13 @@ import * as Kefir               from 'kefir'
 import * as m                   from 'mori'
 import { threadToConversation } from 'arfe/conversation'
 import { midPartUri }           from 'arfe/models/message'
+import * as T                   from 'arfe/models/thread'
 import * as gmail               from '../stores/gmail/gmail'
 import { tokenGenerator }       from '../stores/gmail/tokenGenerator'
 
 import type { PouchDB }          from 'pouchdb'
-import type { DerivedActivity }  from 'arfe/derivedActivity'
 import type { Message }          from 'arfe/models/message'
+import type { ThreadResult }     from './actions'
 import type { XOAuth2Generator } from '../stores/gmail/tokenGenerator'
 
 export default class ApiClient {
@@ -34,9 +35,9 @@ export default class ApiClient {
   }
 
   get(path, { params, fetchConfig }: Object): Promise<{ data: any }> {
-    if (path === '/activities') {
+    if (path === '/threads') {
       const query = params.query
-      return getActivities(this.db, this.tokenGenerator, query)
+      return getThreads(this.db, this.tokenGenerator, query)
     }
     else {
       return Promise.reject(new Error(`path not recognized: ${path}`))
@@ -49,16 +50,22 @@ export default class ApiClient {
 
 }
 
-function getActivities(
+function getThreads(
   db:     PouchDB,
   tokGen: XOAuth2Generator,
   query:  string
-): Promise<{ data: DerivedActivity[] }> {
+): Promise<{ data: ThreadResult[] }> {
   return gmail.search(query, tokGen, (attachment, msg) => storeAttachment(db, attachment, msg))
   .scan(
     (threads, thread) => m.conj(threads, thread), m.vector()
   )
   .toPromise()
+  .then(threads => {
+    const threadObjs = m.map(thread => ({ id: T.getId(thread), thread }), threads)
+    return {
+      data: m.toJs(threadObjs)
+    }
+  })
 }
 
 function storeAttachment(db: PouchDB, attachment: Object, message: Message): Promise<void> {

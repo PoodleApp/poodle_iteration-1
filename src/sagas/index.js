@@ -64,6 +64,7 @@ function* initImapStore({ email, creds }: Object): Generator<Effect,void,any> {
   const db        = new PouchDB('poodle')  // store db under $XDG_CACHE_HOME/
   const apiClient = new ApiClient(tokenGen, db)
   yield* crudSaga(apiClient)()
+  yield put({ type: 'redux-crud-store/clear-everything' })
 }
 
 export default function* root(): Generator<Effect,void,any> {
