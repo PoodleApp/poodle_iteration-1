@@ -89,7 +89,13 @@ declare module mori {
    * type allows the type checker to verify that keys and values given match the
    * key and value types for the map.
    */
-  declare class Pair<K,V> {}
+  declare type Pair<K,V> = {
+    @@iterator(): Iterator<K|V>,
+    @@ICollection: K|V,
+    @@IAssociative: [number,K|V],
+    @@keyed: [number,K|V],
+    @@ISequential: K|V,
+  }
 
   declare class Keyword {}
   declare class Symbol {}
@@ -286,9 +292,6 @@ declare module mori {
                              colla: Seqable<A>,
                              $?: null
                             ) => Seq<R>)
-                    & (<T,R>(f: (...values: T[]) => Seqable<R>,
-                             ...colls: Seqable<T>[]
-                             ) => Seq<R>)
 
   declare function mapIndexed<A,R>(f: (idx: number, a: A) => R, coll: Seqable<A>): Seq<R>
   declare function filter<A>(pred: (value: A) => booleany, coll: Seqable<A>): Seq<A>
@@ -465,9 +468,6 @@ declare module mori {
                                $?: null
                               ) => R)
                       & (<A>(x: A, $?: null) => A)
-                      & (<T,R>(x: T,
-                               ...fs: ((_: T) => R)[]
-                              ) => R)
 
   declare var partial: (<A,B,C,D,E,T,R>(f: (a: A, b: B, c: C, d: D, e: E, ...args: T[]) => R,
                                         a: A,
